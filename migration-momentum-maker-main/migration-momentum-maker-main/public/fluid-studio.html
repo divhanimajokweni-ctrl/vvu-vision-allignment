@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FLUID STUDIO — Home</title>
+<meta name="description" content="Fluid Studio — the home. Games, Audio, Communities, Contributions, Estate — under one seal.">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090A; --ink:#E8E6E0; --cream:#F5F0E0;
+  --ochre:#C47A2A; --moss:#6A8A4F; --yellow:#E8D56B;
+  --line:rgba(232,230,224,.13); --line2:rgba(232,230,224,.07);
+  --muted:rgba(232,230,224,.52); --faint:rgba(232,230,224,.34);
+  --panel:rgba(232,230,224,.025);
+  --serif:'Cormorant Garamond',serif; --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:14px;line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--ochre);color:var(--bg)}
+
+/* ---------- background atmosphere ---------- */
+.bg-glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(70% 55% at 50% -8%, rgba(232,230,224,.055) 0%, transparent 60%),
+    radial-gradient(90% 70% at 50% 118%, rgba(196,122,42,.075) 0%, transparent 62%),
+    radial-gradient(40% 30% at 88% 8%, rgba(106,138,79,.05) 0%, transparent 70%);}
+
+/* ---------- INTRO : the seal ---------- */
+#intro{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);transition:opacity .9s ease,visibility .9s}
+#intro.gone{opacity:0;visibility:hidden;pointer-events:none}
+.hud{position:absolute;left:0;right:0;display:flex;justify-content:space-between;font-size:10px;letter-spacing:.2em;color:var(--faint);padding:0 26px;z-index:10}
+.hud-top{top:34px}.hud-bottom{bottom:34px}
+.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--moss);margin-right:8px;animation:pulse 1.5s infinite alternate;vertical-align:1px}
+@keyframes pulse{from{opacity:.35}to{opacity:1}}
+.stage{position:relative;width:min(560px,90vw);height:min(560px,90vw);display:grid;place-items:center;z-index:5}
+.stage svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 0 rgba(232,230,224,0)) blur(0px)}
+.rotor{transform-origin:300px 300px}
+.phase-2 .rotor{animation:spinCrescendo 2.6s cubic-bezier(.6,0,.9,.2) forwards}
+.phase-2 svg{animation:blurCrescendo 2.6s cubic-bezier(.6,0,.9,.2) forwards}
+@keyframes spinCrescendo{0%{transform:rotate(120deg) scale(1)}100%{transform:rotate(840deg) scale(1.08)}}
+@keyframes blurCrescendo{0%{filter:drop-shadow(0 0 0 rgba(232,230,224,0)) blur(0px)}100%{filter:drop-shadow(0 0 20px rgba(232,230,224,.4)) blur(13px)}}
+.phase-3 .central-text{animation:fadeOut .9s forwards}
+@keyframes fadeOut{to{opacity:0;transform:scale(.9)}}
+.ring-moss,.ring-yellow,.ring-ochre{transform-origin:300px 300px;transition:transform 1.4s cubic-bezier(.25,1,.5,1),stroke 1s ease}
+.phase-3 .ring-moss{transform:translate(-64px,42px);stroke:var(--moss)}
+.phase-3 .ring-yellow{transform:translate(64px,42px);stroke:var(--yellow)}
+.phase-3 .ring-ochre{transform:translate(0px,-44px);stroke:var(--ochre)}
+.phase-3 svg{animation:unblur 1s forwards}
+@keyframes unblur{0%{filter:blur(13px)}100%{filter:blur(0px)}}
+.phase-3 .center-dot{animation:revealDot 1s .45s forwards;opacity:0}
+@keyframes revealDot{to{opacity:1}}
+.intro-cta{position:absolute;bottom:-84px;display:flex;gap:14px;opacity:0;transition:opacity .6s}
+.phase-3 .intro-cta{opacity:1}
+button{font:inherit;cursor:pointer;background:var(--ink);color:var(--bg);border:none;padding:11px 22px;border-radius:30px;font-weight:600;font-size:10px;letter-spacing:.2em;transition:all .2s}
+button:hover{background:var(--cream);transform:translateY(-2px)}
+button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+button.ghost:hover{color:var(--ink);border-color:var(--faint);transform:none}
+#skip{position:absolute;top:64px;right:26px;z-index:11}
+
+/* ---------- APP SHELL ---------- */
+#app{position:relative;z-index:1;opacity:0;transition:opacity .8s .1s;display:none}
+#app.ready{opacity:1;display:block}
+.topnav{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:20px;padding:14px 26px;background:rgba(7,9,10,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--line2);font-size:11px;letter-spacing:.14em}
+.wordmark{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:.22em;color:var(--ink)}
+.wordmark .fs{font-family:var(--serif);font-style:italic;font-weight:700;font-size:17px;letter-spacing:0;color:var(--cream)}
+.wordmark .sub{font-size:8px;letter-spacing:.3em;color:var(--faint);display:block;margin-top:1px}
+.topnav nav{display:flex;gap:4px;margin-left:12px;flex-wrap:wrap}
+.topnav nav a{color:var(--muted);padding:7px 12px;border-radius:6px;border:1px solid transparent;transition:all .18s;white-space:nowrap}
+.topnav nav a:hover{color:var(--ink);border-color:var(--line)}
+.topnav nav a.active{color:var(--cream);border-color:var(--line);background:var(--panel)}
+.topnav .spacer{flex:1}
+.home-dot{font-size:9px;letter-spacing:.22em;color:var(--faint);display:flex;align-items:center;gap:8px;white-space:nowrap}
+
+.wrap{max-width:1080px;margin:0 auto;padding:0 26px 90px;position:relative}
+
+/* ---------- views ---------- */
+.view{display:none;animation:viewIn .5s ease}
+.view.active{display:block}
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.kicker{font-size:10px;letter-spacing:.26em;color:var(--ochre);text-transform:uppercase;margin-bottom:18px}
+h1.display{font-family:var(--serif);font-style:italic;font-weight:700;font-size:clamp(40px,6.4vw,66px);line-height:1.04;letter-spacing:-.01em;color:var(--cream);margin-bottom:18px}
+h2.title{font-family:var(--serif);font-style:italic;font-weight:700;font-size:clamp(30px,4.4vw,44px);color:var(--cream);margin-bottom:10px}
+.lede{color:var(--muted);max-width:640px;font-size:13.5px;margin-bottom:8px}
+.lede b{color:var(--ink);font-weight:500}
+.section-gap{margin-top:64px}
+.section-label{display:flex;align-items:center;gap:14px;font-size:10px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase;margin:44px 0 18px}
+.section-label::after{content:"";flex:1;height:1px;background:var(--line2)}
+
+/* ring glyphs */
+.ringglyph{width:34px;height:34px;flex:none}
+.ringglyph circle{fill:none;stroke-width:5;stroke-linecap:round}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.card{display:flex;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:22px;transition:all .22s;position:relative}
+.card:hover{transform:translateY(-3px);border-color:var(--line);background:rgba(232,230,224,.045)}
+.card .chead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.card h3{font-size:14px;font-weight:600;letter-spacing:.08em}
+.card p{font-size:12px;color:var(--muted);line-height:1.75}
+.card .tag{margin-top:auto;padding-top:10px;font-size:9px;letter-spacing:.2em;color:var(--faint);display:flex;justify-content:space-between;align-items:center}
+.card .go{color:var(--cream);font-size:11px;letter-spacing:.1em}
+.card:hover .go{transform:translateX(3px)}
+.card.c-ochre{border-left:2px solid var(--ochre)}.card.c-ochre h3{color:#e2b077}
+.card.c-moss{border-left:2px solid var(--moss)}.card.c-moss h3{color:#a9c48d}
+.card.c-yellow{border-left:2px solid var(--yellow)}.card.c-yellow h3{color:#f0e39a}
+.card.c-cream{border-left:2px solid var(--cream)}
+.card.c-mute{border-left:2px solid rgba(232,230,224,.25)}
+
+/* status chips */
+.chip{font-size:8.5px;letter-spacing:.18em;padding:4px 9px;border-radius:20px;border:1px solid;white-space:nowrap}
+.chip.confirmed{color:var(--moss);border-color:rgba(106,138,79,.5)}
+.chip.partial{color:var(--yellow);border-color:rgba(232,213,107,.45)}
+.chip.empty{color:var(--faint);border-color:var(--line)}
+.chip.live{color:var(--cream);border-color:rgba(245,240,224,.4)}
+.chip.local{color:var(--ochre);border-color:rgba(196,122,42,.55)}
+.chip.canon{color:var(--cream);border-color:rgba(245,240,224,.55);background:rgba(245,240,224,.06)}
+
+/* status strip on home */
+.strip{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line2);border-radius:10px;overflow:hidden;margin-top:38px}
+.strip div{flex:1 1 150px;padding:14px 18px;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.strip div:last-child{border-right:none}
+.strip .k{font-size:8.5px;letter-spacing:.22em;color:var(--faint);text-transform:uppercase;margin-bottom:4px}
+.strip .v{font-size:12px;color:var(--ink);letter-spacing:.06em}
+.strip .v em{font-style:normal;color:var(--yellow)}
+
+/* estate table */
+.etable{border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.erow{display:grid;grid-template-columns:44px 1fr auto auto;gap:14px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line2);transition:background .15s}
+.erow:last-child{border-bottom:none}
+.erow:hover{background:var(--panel)}
+.erow .idx{font-size:10px;color:var(--faint)}
+.erow .name{font-size:12.5px;letter-spacing:.08em}
+.erow .name small{display:block;font-size:10px;color:var(--faint);letter-spacing:.04em;margin-top:2px}
+.erow a.dockey{font-size:10px;color:var(--muted);border:1px solid var(--line2);padding:4px 10px;border-radius:5px;transition:all .15s}
+.erow a.dockey:hover{color:var(--cream);border-color:var(--faint)}
+
+/* epigraph */
+.epigraph{font-family:var(--serif);font-style:italic;font-size:20px;color:var(--muted);text-align:center;padding:26px 0 6px;letter-spacing:.02em}
+
+/* pipeline panel (text-only, honest) */
+.panel{border:1px dashed var(--line);border-radius:10px;padding:20px 22px;font-size:12px;color:var(--muted);line-height:1.8}
+.panel b{color:var(--ink);font-weight:500}
+.panel .ph{font-size:9px;letter-spacing:.22em;color:var(--ochre);text-transform:uppercase;margin-bottom:8px}
+
+/* footer */
+footer{border-top:1px solid var(--line2);margin-top:80px;padding:34px 26px 40px;text-align:center}
+footer .sealmini{font-family:var(--serif);font-style:italic;font-weight:700;font-size:20px;color:var(--cream);margin-bottom:14px}
+footer .f1{font-size:11px;letter-spacing:.14em;color:var(--ink)}
+footer .f2{font-size:10px;letter-spacing:.18em;color:var(--faint);margin-top:6px}
+footer .f3{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);margin-top:14px}
+
+@media(max-width:720px){
+  .topnav{padding:12px 16px;gap:10px}
+  .topnav nav{margin-left:0}
+  .home-dot{display:none}
+  .wrap{padding:0 16px 70px}
+  .hud{padding:0 16px}
+  .erow{grid-template-columns:30px 1fr auto}
+  .erow a.dockey{display:none}
+}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<!-- ================= INTRO : THE SEAL ================= -->
+<div id="intro">
+  <div class="hud hud-top">
+    <div>FLUID_STUDIO / SEAL_03</div>
+    <div id="phase-label"><span class="status-dot"></span>INITIALIZING</div>
+  </div>
+  <button id="skip" class="ghost">SKIP →</button>
+  <div class="stage" id="stage">
+    <svg viewBox="0 0 600 600" id="main-svg">
+      <defs>
+        <path id="topArc" d="M 95 300 A 205 205 0 0 1 505 300" fill="none"/>
+        <path id="bottomArc" d="M 505 300 A 205 205 0 0 1 95 300" fill="none"/>
+      </defs>
+      <g class="rotor">
+        <g class="central-text">
+          <circle cx="300" cy="300" r="256" fill="none" stroke="#E8E6E0" stroke-width="0.9" opacity="0.85"/>
+          <circle cx="300" cy="300" r="240" fill="none" stroke="#E8E6E0" stroke-width="0.6" opacity="0.38"/>
+          <text font-family="'Cormorant Garamond',serif" font-size="20" font-weight="700" letter-spacing="4.2" fill="#E8E6E0">
+            <textPath href="#topArc" startOffset="50%" textAnchor="middle">FLUID STUDIO</textPath>
+          </text>
+          <text font-family="'JetBrains Mono',monospace" font-size="10.5" font-weight="500" letter-spacing="1.8" fill="#E8E6E0" opacity="0.9">
+            <textPath href="#bottomArc" startOffset="50%" textAnchor="middle">BENCH • NODE-LOCKED LICENSE SEAL</textPath>
+          </text>
+          <rect x="240" y="240" width="120" height="120" transform="rotate(45 300 300)" fill="none" stroke="#E8E6E0" stroke-width="2" opacity="0.28"/>
+          <text x="300" y="318" textAnchor="middle" font-family="'Cormorant Garamond',serif" font-size="58" font-weight="700" letter-spacing="-1" fill="#E8E6E0" font-style="italic">FS</text>
+        </g>
+        <g class="ring-moss"><circle cx="300" cy="300" r="86" fill="none" stroke="#E8E6E0" stroke-width="21" stroke-linecap="round"/></g>
+        <g class="ring-ochre"><circle cx="300" cy="300" r="86" fill="none" stroke="#E8E6E0" stroke-width="21" stroke-linecap="round"/></g>
+        <g class="ring-yellow"><circle cx="300" cy="300" r="86" fill="none" stroke="#E8E6E0" stroke-width="21" stroke-linecap="round"/></g>
+        <circle class="center-dot" cx="300" cy="300" r="7.5" fill="#F5F0E0"/>
+        <circle class="center-dot" cx="300" cy="300" r="2.2" fill="#07090A" opacity="0.4"/>
+      </g>
+    </svg>
+    <div class="intro-cta">
+      <button id="enter">ENTER THE HOME →</button>
+      <button class="ghost" onclick="location.hash='#/estate'">THE BLUEPRINT</button>
+    </div>
+  </div>
+  <div class="hud hud-bottom">
+    <div>SEAL CONSTRUCTION: 3× TORUS 86R / 21W</div>
+    <div id="timer-text">0.0s / 7.0s</div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+<header class="topnav">
+  <a class="wordmark" href="#/">
+    <span class="fs">FS</span>
+    <span>FLUID STUDIO<span class="sub">THE HOME</span></span>
+  </a>
+  <nav id="mainnav">
+    <a href="#/" data-route="home">HOME</a>
+    <a href="#/games" data-route="games" style="color:var(--ochre)">GAMES</a>
+    <a href="#/audio" data-route="audio" style="color:var(--moss)">AUDIO</a>
+    <a href="#/communities" data-route="communities" style="color:var(--yellow)">COMMUNITIES</a>
+    <a href="#/contributions" data-route="contributions">CONTRIBUTIONS</a>
+    <a href="#/estate" data-route="estate">ESTATE</a>
+  </nav>
+  <span class="spacer"></span>
+  <span class="home-dot"><span class="status-dot"></span>HOME STABLE</span>
+</header>
+<main class="wrap">
+
+<!-- ============ HOME ============ -->
+<section class="view" id="view-home">
+  <div style="padding-top:56px">
+    <div class="kicker">Fluid Studio · The Home · Est. 2026</div>
+    <h1 class="display">Three rings.<br>One seal. <em style="color:var(--ochre)">Our home.</em></h1>
+    <p class="lede">The seal is <b>Borromean</b> — three tori interlocked so that remove one, and the whole falls.
+      So is this house: <b style="color:var(--ochre)">GAMES</b>, <b style="color:var(--moss)">AUDIO</b> and
+      <b style="color:var(--yellow)">COMMUNITIES</b> hold each other; <b>CONTRIBUTIONS</b> is the floor we stand on;
+      <b>ESTATE</b> is the honest blueprint. Everything below is real and linked — nothing here is declared that is not built.</p>
+  </div>
+
+  <div class="section-label">The Three Rings — primary surfaces</div>
+  <div class="grid">
+    <a class="card c-ochre" href="#/games">
+      <div class="chead"><h3>GAMES</h3><svg class="ringglyph" viewBox="0 0 34 34"><circle cx="17" cy="17" r="12" stroke="#C47A2A"/></svg></div>
+      <p>Edge of Oblivion — the black-hole survival RPG — plus the Asset Lab receiving the glTF sculpt pipeline, and the canonical Loadout Forge.</p>
+      <div class="tag"><span>3 ARTIFACTS · 1 LIVE</span><span class="go">ENTER →</span></div>
+    </a>
+    <a class="card c-moss" href="#/audio">
+      <div class="chead"><h3>AUDIO</h3><svg class="ringglyph" viewBox="0 0 34 34"><circle cx="17" cy="17" r="12" stroke="#6A8A4F"/></svg></div>
+      <p>The engine that started it all: Control Plane, mastering pipeline, persisted mix-loop with version lineage, the founder lyric corpus.</p>
+      <div class="tag"><span>CONFIRMED SURFACE</span><span class="go">ENTER →</span></div>
+    </a>
+    <a class="card c-yellow" href="#/communities">
+      <div class="chead"><h3>COMMUNITIES</h3><svg class="ringglyph" viewBox="0 0 34 34"><circle cx="17" cy="17" r="12" stroke="#E8D56B"/></svg></div>
+      <p>The repo, the live deploy, the Foundation, the public voice. The third ring — the one that makes the house worth building.</p>
+      <div class="tag"><span>2 LIVE LINKS · 1 PARTIAL</span><span class="go">ENTER →</span></div>
+    </a>
+  </div>
+
+  <div class="section-label">The Floor &amp; The Blueprint</div>
+  <div class="grid">
+    <a class="card c-cream" href="#/contributions">
+      <div class="chead"><h3>CONTRIBUTIONS</h3><span class="chip canon">FLOOR</span></div>
+      <p>How-To Guide, FAQ, Deliverables &amp; Proof, the Inference Gateway architecture, the Canonical UI contract. Learn it, verify it, extend it.</p>
+      <div class="tag"><span>DOCS · 5 ENTRY POINTS</span><span class="go">ENTER →</span></div>
+    </a>
+    <a class="card c-mute" href="#/estate">
+      <div class="chead"><h3>ESTATE</h3><span class="chip confirmed">AUDITED</span></div>
+      <p>The surface-by-surface honest map — CONFIRMED, PARTIAL, EMPTY. The audit is the trust mechanism; EMPTY stays EMPTY until code exists.</p>
+      <div class="tag"><span>11 SURFACES · WORM LEDGER</span><span class="go">ENTER →</span></div>
+    </a>
+    <a class="card c-mute" href="index.html">
+      <div class="chead"><h3>DOCS INDEX</h3><span class="chip live">MAIN</span></div>
+      <p>The main estate's documentation index — guides, architecture, live surfaces, the game. The way in for everyone who arrives through the front door.</p>
+      <div class="tag"><span>index.html</span><span class="go">OPEN →</span></div>
+    </a>
+    <a class="card c-mute" href="fluid_seal.html">
+      <div class="chead"><h3>THE SEAL</h3><span class="chip local">IDENTITY</span></div>
+      <p>The full seven-second ritual — spin, crescendo, split. Bench-sealed, node-locked. The mark this whole house is stamped with.</p>
+      <div class="tag"><span>fluid_seal.html</span><span class="go">OPEN →</span></div>
+    </a>
+  </div>
+
+  <div class="strip">
+    <div><div class="k">Surfaces</div><div class="v">05</div></div>
+    <div><div class="k">Game</div><div class="v">LIVE · 01</div></div>
+    <div><div class="k">Asset Pipeline</div><div class="v"><em>ARMED</em></div></div>
+    <div><div class="k">Ledger</div><div class="v">WORM · APPEND-ONLY</div></div>
+    <div><div class="k">Estate</div><div class="v">AUDITED · HONEST</div></div>
+  </div>
+</section>
+
+<!-- ============ GAMES ============ -->
+<section class="view" id="view-games">
+  <div style="padding-top:56px">
+    <div class="kicker" style="color:var(--ochre)">Ring I · Games</div>
+    <h2 class="title">Edge of Oblivion <span style="color:var(--faint);font-family:var(--mono);font-style:normal;font-size:13px;letter-spacing:.2em">// THE PLAYABLE UNIVERSE</span></h2>
+    <p class="lede">A deep-space survival RPG built on real black-hole physics, swarm AI that was <b>never rogue — only reassigned</b>, and a Cartographer whose erased hands still reach out of the Multi-Tool. The game, its units, and its loadout — three artifacts, one loop: Space → Loadout → Ground CQC → Space.</p>
+  </div>
+
+  <div class="section-label">Artifacts</div>
+  <div class="grid">
+    <a class="card c-ochre" href="vvu_black_hole_protocol.html">
+      <div class="chead"><h3>EDGE OF OBLIVION</h3><span class="chip live">LIVE · MAIN</span></div>
+      <p>The game itself. Black-hole gravity wells, salvage runs, swarm drones that herd instead of chase, and the threat clock — <b>CONSUMPTION IN PROGRESS · T-MINUS 47 DAYS</b>. This is the front door to the universe.</p>
+      <div class="tag"><span>vvu_black_hole_protocol.html</span><span class="go">PLAY →</span></div>
+    </a>
+    <a class="card c-ochre" href="edge_of_oblivion_asset_lab.html">
+      <div class="chead"><h3>ASSET LAB</h3><span class="chip local">LOCAL · PIPELINE ARMED</span></div>
+      <p>The AAA unit viewer — PBR, IBL, shadows, bloom. Seven exhibits: Scrap Hauler, Scout Drone, Combat Drone, Shepherd 01, Phantom, Multi-Tool, and the Mystery Attack. Built to receive the glTF pipeline the moment the .glb exports land.</p>
+      <div class="tag"><span>edge_of_oblivion_asset_lab.html</span><span class="go">INSPECT →</span></div>
+    </a>
+    <a class="card c-ochre" href="vvu_loadout_forge_patched.html">
+      <div class="chead"><h3>LOADOUT FORGE</h3><span class="chip canon">CANONICAL BASELINE</span></div>
+      <p>DAMAGED HELMET · RECON OPERATOR · MULTI-TOOL — the third slot still reads <b>BLOCKED_MISSING_ASSET</b>, and that is not a bug: it is the Cartographer's erasure, left visible on purpose. Three perks, EDIT CAMO, DEPLOY TO SCENE.</p>
+      <div class="tag"><span>vvu_loadout_forge_patched.html</span><span class="go">EQUIP →</span></div>
+    </a>
+  </div>
+
+  <div class="section-label">The Sculpt Pipeline — how units become real</div>
+  <div class="panel">
+    <div class="ph">In the forge · not yet filed</div>
+    <b>Sculpt</b> high-poly in Blender / ZBrush against the concept sheets → <b>retopologize</b> to game-ready meshes →
+    <b>bake</b> normal, AO, curvature → <b>texture</b> in Substance Painter (albedo / roughness / metallic / normal) →
+    <b>export glTF (.glb)</b>. The Asset Lab is the receiving surface: GLTFLoader, LOD switching, orbit inspection.
+    Each exported unit converts its slot from BLOCKED_MISSING_ASSET to <b>PROVEN</b> — the pipeline is the resurrection, and every unit the Harvester unmade, we remade.
+    <br><br><span style="color:var(--faint);font-size:10px;letter-spacing:.14em">ROSTER QUEUED — SCOUT · COMBAT · SHIELD · SHEPHERD DRONE · HAULER · PHANTOM · MULTI-TOOL</span>
+  </div>
+</section>
+
+<!-- ============ AUDIO ============ -->
+<section class="view" id="view-audio">
+  <div style="padding-top:56px">
+    <div class="kicker" style="color:var(--moss)">Ring II · Audio</div>
+    <h2 class="title">The Engine Room <span style="color:var(--faint);font-family:var(--mono);font-style:normal;font-size:13px;letter-spacing:.2em">// WHERE FLUID STUDIO EARNS ITS NAME</span></h2>
+    <p class="lede">Before the game, before the docs, there was sound: a render pipeline with content-addressed stages, two-pass loudness
+      normalization, a persisted mix-loop controller that <b>measures before it moves</b>, and a hash chain that refuses to say VERIFIED.
+      The audio surface is the oldest ring — and the one the whole estate hangs from.</p>
+  </div>
+
+  <div class="section-label">Surfaces</div>
+  <div class="grid">
+    <a class="card c-moss" href="/#/dashboard">
+      <div class="chead"><h3>CONTROL PLANE</h3><span class="chip confirmed">CONFIRMED</span></div>
+      <p>Five views on one page — <b>FILES · TERM · EDITOR · AGENT · WATCH</b> — with the SAST clock, status badges, and the 15-second receipts poll. The shell of the studio.</p>
+      <div class="tag"><span>/#/dashboard · DEPLOYED APP</span><span class="go">OPEN →</span></div>
+    </a>
+    <a class="card c-moss" href="CONTROL_PLANE.md">
+      <div class="chead"><h3>MASTERING PIPELINE</h3><span class="chip confirmed">CONFIRMED</span></div>
+      <p>The render engine: loudnorm measured then applied, Pedalboard host with an honest aecho fallback, atomic cache promotion, protocol-whitelisted ffmpeg on every spawn.</p>
+      <div class="tag"><span>CONTROL_PLANE.md</span><span class="go">READ →</span></div>
+    </a>
+    <a class="card c-moss" href="POOLS.md">
+      <div class="chead"><h3>MIX LOOP &amp; LINEAGE</h3><span class="chip confirmed">CONFIRMED</span></div>
+      <p>Persisted job queue with SSE progress and cooperative cancel; a closed-loop controller with a regression guard; every mix committed as an immutable <b>MixVersion</b> — parent lineage, knobs, metrics, receipt hash.</p>
+      <div class="tag"><span>POOLS.md</span><span class="go">READ →</span></div>
+    </a>
+    <a class="card c-moss" href="PRESS.md">
+      <div class="chead"><h3>LYRICS CORPUS</h3><span class="chip partial">PARTIAL</span></div>
+      <p>Four founder sheets — <b>To How It Came · Hell is Hot · Change · Chasing Dreams</b> — the only text the agent may analyse as founder work. The SEARM persona reads them; the publishing flow does not exist yet, and the audit says so.</p>
+      <div class="tag"><span>PRESS.md</span><span class="go">READ →</span></div>
+    </a>
+  </div>
+</section>
+
+<!-- ============ COMMUNITIES ============ -->
+<section class="view" id="view-communities">
+  <div style="padding-top:56px">
+    <div class="kicker" style="color:var(--yellow)">Ring III · Communities</div>
+    <h2 class="title">The Third Ring <span style="color:var(--faint);font-family:var(--mono);font-style:normal;font-size:13px;letter-spacing:.2em">// THE HOUSE IS BUILT FOR PEOPLE</span></h2>
+    <p class="lede">A home is not walls. The repo is open, the deploy is live, and the Foundation holds the founder line.
+      The public voice is still <b>PARTIAL</b> — the audit says it plainly — and saying it plainly is how this house stays trustworthy.</p>
+  </div>
+
+  <div class="section-label">Doors</div>
+  <div class="grid">
+    <a class="card c-yellow" href="https://github.com/divhanimajokweni-ctrl/vvu-control" target="_blank" rel="noopener">
+      <div class="chead"><h3>GITHUB — VVU CONTROL</h3><span class="chip live">OPEN</span></div>
+      <p>The source of truth. Every surface folder, every load-bearing file — pipeline.ts, twin.ts, dsp-adapter.ts — versioned in the open.</p>
+      <div class="tag"><span>divhanimajokweni-ctrl/vvu-control</span><span class="go">VISIT →</span></div>
+    </a>
+    <a class="card c-yellow" href="https://my-project-vvu-org.vercel.app" target="_blank" rel="noopener">
+      <div class="chead"><h3>LIVE DEPLOY</h3><span class="chip live">ONLINE</span></div>
+      <p>The studio, deployed. Control Plane dashboard, Inference Gateway, Admin Panel — the app this estate documents, running on the public URL.</p>
+      <div class="tag"><span>my-project-vvu-org.vercel.app</span><span class="go">VISIT →</span></div>
+    </a>
+    <a class="card c-yellow" href="CANONICAL-UI.md">
+      <div class="chead"><h3>VVU FOUNDATION</h3><span class="chip canon">IDENTITY</span></div>
+      <p><b>Mihle "Divhani" Majokweni</b> — founder-owned, industrial asset protection. The Canonical UI contract keeps every face of the estate intentional: one system, four voices, no drift.</p>
+      <div class="tag"><span>CANONICAL-UI.md</span><span class="go">READ →</span></div>
+    </a>
+    <a class="card c-yellow" href="PRESS.md">
+      <div class="chead"><h3>PRESS &amp; PUBLIC VOICE</h3><span class="chip partial">PARTIAL</span></div>
+      <p>No public media surface yet — no publishing workflow, no hosted audio. The honest path: ~3 weeks of real work, or rename the surface to what it is. The audit keeps us honest either way.</p>
+      <div class="tag"><span>PRESS.md</span><span class="go">READ →</span></div>
+    </a>
+  </div>
+</section>
+
+<!-- ============ CONTRIBUTIONS ============ -->
+<section class="view" id="view-contributions">
+  <div style="padding-top:56px">
+    <div class="kicker" style="color:var(--cream)">The Floor · Contributions</div>
+    <h2 class="title">Learn the House <span style="color:var(--faint);font-family:var(--mono);font-style:normal;font-size:13px;letter-spacing:.2em">// THEN ADD TO IT</span></h2>
+    <p class="lede">Every document below is the real thing — no summaries of summaries. The guide teaches the surfaces, the FAQ answers
+      fast, the deliverables page lets you <b>press the buttons and verify each artifact loads</b>, and the architecture doc shows how five
+      Foundation Models bind to a ledger that cannot lie.</p>
+  </div>
+
+  <div class="section-label">Documents</div>
+  <div class="grid">
+    <a class="card c-cream" href="vvu-how-to.html">
+      <div class="chead"><h3>HOW-TO GUIDE</h3><span class="chip live">START HERE</span></div>
+      <p>Eighteen sections covering every surface, shortcut, and workflow — from getting started to deployment to troubleshooting.</p>
+      <div class="tag"><span>vvu-how-to.html</span><span class="go">OPEN →</span></div>
+    </a>
+    <a class="card c-cream" href="vvu-faq.html">
+      <div class="chead"><h3>FAQ</h3><span class="chip live">QUICK ANSWERS</span></div>
+      <p>Thirty-plus questions across eight categories: general, doctrine, environments, commerce, inference, tech, deployment, and the game.</p>
+      <div class="tag"><span>vvu-faq.html</span><span class="go">OPEN →</span></div>
+    </a>
+    <a class="card c-cream" href="vvu-inference-deliverables.html">
+      <div class="chead"><h3>DELIVERABLES &amp; PROOF</h3><span class="chip live">VERIFY</span></div>
+      <p>Every instruction mapped to a DONE / BLOCKED / PENDING tag — with live buttons that open each artifact so you can verify rather than believe.</p>
+      <div class="tag"><span>vvu-inference-deliverables.html</span><span class="go">OPEN →</span></div>
+    </a>
+    <a class="card c-cream" href="VVU-INFERENCE-GATEWAY-ARCHITECTURE.md">
+      <div class="chead"><h3>INFERENCE GATEWAY</h3><span class="chip confirmed">ARCHITECTURE</span></div>
+      <p>How five Foundation Models bind to the WORM Ledger — purpose, model table, ledger binding, component map, compliance.</p>
+      <div class="tag"><span>VVU-INFERENCE-GATEWAY-ARCHITECTURE.md</span><span class="go">READ →</span></div>
+    </a>
+    <a class="card c-cream" href="CANONICAL-UI.md">
+      <div class="chead"><h3>CANONICAL UI CONTRACT</h3><span class="chip canon">CU-1…CU-6</span></div>
+      <p>One system, four voices — MANIFEST, VERIFY, TWIN, STUDIO. Invariants that hold on every page state, and a drift ledger that catches the rest.</p>
+      <div class="tag"><span>CANONICAL-UI.md</span><span class="go">READ →</span></div>
+    </a>
+    <a class="card c-cream" href="index.html">
+      <div class="chead"><h3>DOCS INDEX — MAIN</h3><span class="chip live">MAIN</span></div>
+      <p>The main estate's front page: guides, architecture, live surfaces, the game. This home grows around it; it remains the canonical index.</p>
+      <div class="tag"><span>index.html</span><span class="go">OPEN →</span></div>
+    </a>
+  </div>
+</section>
+
+<!-- ============ ESTATE ============ -->
+<section class="view" id="view-estate">
+  <div style="padding-top:56px">
+    <div class="kicker" style="color:var(--faint)">The Blueprint · Estate</div>
+    <h2 class="title">The Honest Map <span style="color:var(--faint);font-family:var(--mono);font-style:normal;font-size:13px;letter-spacing:.2em">// STATUS OR IT DOESN'T EXIST</span></h2>
+    <p class="lede">Eleven surfaces, audited surface-by-surface. <b style="color:var(--moss)">CONFIRMED</b> means real code with an E2E path in the worklog.
+      <b style="color:var(--yellow)">PARTIAL</b> means real code, incomplete purpose. <b>EMPTY</b> means no code — and the estate refuses to pretend otherwise.</p>
+  </div>
+
+  <div class="epigraph">"This receipt proves inclusion, not consensus"</div>
+
+  <div class="section-label">Surface Registry</div>
+  <div class="etable">
+    <div class="erow"><span class="idx">01</span><span class="name">auth<small>GitHub OAuth · email allowlist · fail-closed middleware</small></span><a class="dockey" href="AUTH.md">AUTH.md</a><span class="chip confirmed">CONFIRMED</span></div>
+    <div class="erow"><span class="idx">02</span><span class="name">control-plane<small>the app shell · FILES · TERM · EDITOR · AGENT · WATCH</small></span><a class="dockey" href="CONTROL_PLANE.md">CONTROL_PLANE.md</a><span class="chip confirmed">CONFIRMED</span></div>
+    <div class="erow"><span class="idx">03</span><span class="name">safes<small>append-only SHA-256 chain · the vault &amp; strongrooms</small></span><a class="dockey" href="SAFES.md">SAFES.md</a><span class="chip confirmed">CONFIRMED</span></div>
+    <div class="erow"><span class="idx">04</span><span class="name">validation<small>the oracle boundary — VERIFIED is unreachable, by design</small></span><a class="dockey" href="VALIDATION.md">VALIDATION.md</a><span class="chip confirmed">CONFIRMED</span></div>
+    <div class="erow"><span class="idx">05</span><span class="name">field<small>architecture twin — status computed from runtime checks</small></span><a class="dockey" href="FIELD.md">FIELD.md</a><span class="chip confirmed">CONFIRMED</span></div>
+    <div class="erow"><span class="idx">06</span><span class="name">forge<small>DSP adapter contract — fail-closed external execution</small></span><a class="dockey" href="FORGE.md">FORGE.md</a><span class="chip confirmed">CONFIRMED</span></div>
+    <div class="erow"><span class="idx">07</span><span class="name">pools<small>job queue · closed-loop controller · rate limiter</small></span><a class="dockey" href="POOLS.md">POOLS.md</a><span class="chip confirmed">CONFIRMED</span></div>
+    <div class="erow"><span class="idx">08</span><span class="name">press<small>lyrics corpus + SEARM persona · no publishing flow</small></span><a class="dockey" href="PRESS.md">PRESS.md</a><span class="chip partial">PARTIAL</span></div>
+    <div class="erow"><span class="idx">09</span><span class="name">bench<small>asset registry · files view · no project browse yet</small></span><a class="dockey" href="BENCH.md">BENCH.md</a><span class="chip partial">PARTIAL</span></div>
+    <div class="erow"><span class="idx">10</span><span class="name">store<small>commerce — the README line is fiction</small></span><a class="dockey" href="STORE.md">STORE.md</a><span class="chip empty">EMPTY</span></div>
+    <div class="erow"><span class="idx">11</span><span class="name">mini-services<small>declared in README · .gitkeep only</small></span><span class="dockey" style="border:none;color:var(--faint)">—</span><span class="chip empty">EMPTY</span></div>
+  </div>
+
+  <div class="section-label">Audit Papers</div>
+  <div class="grid">
+    <a class="card c-mute" href="ESTATE_AUDIT.md">
+      <div class="chead"><h3>ESTATE AUDIT</h3><span class="chip confirmed">READ ME FIRST</span></div>
+      <p>Surface-by-surface map with honest gaps. Three load-bearing files you must own line-by-line — and the 14-day move.</p>
+      <div class="tag"><span>ESTATE_AUDIT.md</span><span class="go">READ →</span></div>
+    </a>
+    <a class="card c-mute" href="MANIFEST.md">
+      <div class="chead"><h3>SURFACE MANIFEST</h3><span class="chip confirmed">INDEX</span></div>
+      <p>Each surface folder with the real files that back it — the audit view of the compile.</p>
+      <div class="tag"><span>MANIFEST.md</span><span class="go">READ →</span></div>
+    </a>
+    <a class="card c-mute" href="worklog.md">
+      <div class="chead"><h3>WORKLOG</h3><span class="chip live">E2E PATH</span></div>
+      <p>The full build history — every stage, every fix, every honest gap closed, in order. CONFIRMED is earned here.</p>
+      <div class="tag"><span>worklog.md</span><span class="go">READ →</span></div>
+    </a>
+    <a class="card c-mute" href="JOB.md">
+      <div class="chead"><h3>JOB SPEC</h3><span class="chip partial">SCOPE</span></div>
+      <p>The job document — what was asked, what shipped, what remains. Kept next to the audit so the two can be compared.</p>
+      <div class="tag"><span>JOB.md</span><span class="go">READ →</span></div>
+    </a>
+    <a class="card c-mute" href="FEEDBACK.md">
+      <div class="chead"><h3>FEEDBACK</h3><span class="chip partial">LOOP</span></div>
+      <p>The feedback surface — what came back from the field, and what it changed.</p>
+      <div class="tag"><span>FEEDBACK.md</span><span class="go">READ →</span></div>
+    </a>
+    <a class="card c-mute" href="https://github.com/divhanimajokweni-ctrl/vvu-control" target="_blank" rel="noopener">
+      <div class="chead"><h3>SOURCE REPO</h3><span class="chip live">OPEN</span></div>
+      <p>The canonical src/ tree this audit flattens. When the audit and the repo disagree, the repo wins — then the audit gets fixed.</p>
+      <div class="tag"><span>github.com ↗</span><span class="go">VISIT →</span></div>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="sealmini">FS</div>
+  <div class="f1">Mihle "Divhani" Majokweni</div>
+  <div class="f2">VVU Foundation ©2026 · VENTURE VISION UBUNTU (VVU)</div>
+  <div class="f3">Transparent cycles forge trust</div>
+</footer>
+
+</div>
+
+<script>
+/* ================= FLUID STUDIO — home logic ================= */
+(function(){
+  'use strict';
+
+  /* ---------- router ---------- */
+  var ROUTES = ['home','games','audio','communities','contributions','estate'];
+  var TITLES = {
+    home:'FLUID STUDIO — Home',
+    games:'FLUID STUDIO · GAMES',
+    audio:'FLUID STUDIO · AUDIO',
+    communities:'FLUID STUDIO · COMMUNITIES',
+    contributions:'FLUID STUDIO · CONTRIBUTIONS',
+    estate:'FLUID STUDIO · ESTATE'
+  };
+
+  function currentRoute(){
+    var h = (location.hash || '#/').replace(/^#\/?/,'').replace(/\/+$/,'');
+    return ROUTES.indexOf(h) > -1 ? h : 'home';
+  }
+
+  function route(){
+    var r = currentRoute();
+    document.querySelectorAll('.view').forEach(function(v){
+      v.classList.toggle('active', v.id === 'view-' + r);
+    });
+    document.querySelectorAll('#mainnav a').forEach(function(a){
+      a.classList.toggle('active', a.getAttribute('data-route') === r);
+    });
+    document.title = TITLES[r] || TITLES.home;
+    window.scrollTo(0,0);
+    /* hash navigation during the ritual = the visitor chose a door; let them in */
+    if(!entered && r !== 'home') enter();
+  }
+
+  window.addEventListener('hashchange', route);
+
+  /* ---------- intro : the seal ---------- */
+  var stage = document.getElementById('stage');
+  var intro = document.getElementById('intro');
+  var app = document.getElementById('app');
+  var timerText = document.getElementById('timer-text');
+  var phaseLabel = document.getElementById('phase-label');
+  var TOTAL = 7.0, entered = false, started = false, rafId = null, t0 = null;
+
+  function setPhase(html){ phaseLabel.innerHTML = '<span class="status-dot"' +
+    (arguments[1] ? ' style="background:' + arguments[1] + '"' : '') + '></span>' + html; }
+
+  function tick(ts){
+    if(!t0) t0 = ts;
+    var e = Math.min((ts - t0) / 1000, TOTAL);
+    timerText.textContent = e.toFixed(1) + 's / ' + TOTAL.toFixed(1) + 's';
+    if(!entered && e < TOTAL) rafId = requestAnimationFrame(tick);
+  }
+
+  function playSequence(){
+    if(started) return; started = true;
+    stage.className = 'stage'; void stage.offsetWidth;
+    t0 = null;
+    setPhase('SPIN 0.3×');
+    rafId = requestAnimationFrame(tick);
+    setTimeout(function(){ if(entered) return;
+      stage.classList.add('phase-2'); setPhase('CRESCENDO','#C47A2A'); }, 2000);
+    setTimeout(function(){ if(entered) return;
+      stage.classList.remove('phase-2'); stage.classList.add('phase-3');
+      setPhase('SPLIT / BORROMEAN','#E8D56B'); }, 4600);
+    setTimeout(function(){ if(entered) return;
+      setPhase('VERIFIED','#F5F0E0'); }, 6600);
+    setTimeout(function(){ if(!entered) enter(); }, 7400);
+  }
+
+  function enter(){
+    if(entered) return; entered = true;
+    if(rafId) cancelAnimationFrame(rafId);
+    intro.classList.add('gone');
+    app.classList.add('ready');
+    route();
+    setTimeout(function(){ intro.style.display = 'none'; }, 950);
+  }
+
+  document.getElementById('skip').addEventListener('click', enter);
+  document.getElementById('enter').addEventListener('click', enter);
+  document.addEventListener('keydown', function(e){
+    if(!entered && (e.key === 'Enter' || e.key === 'Escape')) enter();
+  });
+
+  /* ---------- boot ---------- */
+  var deepLink = location.hash && location.hash !== '#/' && location.hash !== '#';
+  if(deepLink){
+    /* arriving via a surface link skips the ritual — the seal is for the front door */
+    enter();
+  } else {
+    playSequence();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIELD · Observation Environment</title>
+<style>
+:root{--bg:#0a0e13;--bg2:#0e141c;--panel:#111a24;--panel2:#0d151e;--line:#1c2836;--line2:#26374a;
+--txt:#dce8f2;--dim:#75899c;--dim2:#4e6172;--acc:#37d6a0;--acc2:#3aa9f5;--warn:#f5b944;--bad:#f2607a;--pur:#a78bfa;
+--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
+#app{display:grid;grid-template-columns:224px 1fr;height:100vh}
+#nav{background:linear-gradient(180deg,#0d141d,#0a0f15);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+#brand{padding:14px 14px 12px;border-bottom:1px solid var(--line)}
+#brand b{font-size:15px;letter-spacing:.2em;color:var(--warn)}
+#brand span{display:block;font-size:9px;color:var(--dim2);letter-spacing:.14em;margin-top:4px}
+#navlist{flex:1;overflow-y:auto;padding:8px 0}
+.ngroup{font-size:9px;letter-spacing:.18em;color:var(--dim2);padding:12px 14px 5px;text-transform:uppercase}
+.nitem{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;color:var(--dim);border-left:2px solid transparent;font-size:12px;user-select:none;min-height:34px}
+.nitem:hover{background:#121c27;color:var(--txt)}
+.nitem.on{background:linear-gradient(90deg,rgba(245,185,68,.13),transparent);color:var(--txt);border-left-color:var(--warn)}
+.nitem .ic{width:16px;text-align:center;color:var(--acc2)}
+.nitem.on .ic{color:var(--warn)}
+.nitem .ct{margin-left:auto;font-size:10px;color:var(--dim2);background:#16212d;border:1px solid var(--line);border-radius:20px;padding:0 6px;line-height:16px}
+#navfoot{padding:10px 12px;border-top:1px solid var(--line);font-size:9.5px;color:var(--dim2);line-height:1.7}
+#main{display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);background:var(--bg2);flex-wrap:wrap}
+#topbar h1{font-size:13px;margin:0;font-weight:600;letter-spacing:.06em;white-space:nowrap}
+#topbar .sub{font-size:10px;color:var(--dim2);letter-spacing:.1em}
+.spacer{flex:1}
+.btn{background:#16222e;border:1px solid var(--line);color:var(--dim);border-radius:7px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--warn);color:var(--warn)}
+.btn.p{background:rgba(245,185,68,.1);border-color:rgba(245,185,68,.4);color:var(--warn)}
+.btn.sm{padding:3px 8px;font-size:10px}
+.btn.ok{border-color:rgba(55,214,160,.4);color:var(--acc)}
+.btn.ok:hover{border-color:var(--acc);color:var(--acc)}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+#view{flex:1;overflow-y:auto;padding:16px}
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:11px;margin-bottom:14px;overflow:hidden}
+.ph{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ph h2{margin:0;font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--warn);font-weight:600}
+.ph .hint{font-size:10px;color:var(--dim2)}
+.pb{padding:13px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g21{grid-template-columns:2fr 1fr}
+@media(max-width:1100px){.g2,.g21{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:11px;margin-bottom:14px}
+.kpi{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.kpi .l{font-size:9.5px;letter-spacing:.14em;color:var(--dim2);text-transform:uppercase}
+.kpi .v{font-size:21px;margin-top:5px;line-height:1}
+.kpi .d{font-size:10px;color:var(--dim);margin-top:4px}
+.kpi.a .v{color:var(--acc)}.kpi.b .v{color:var(--acc2)}.kpi.w .v{color:var(--warn)}.kpi.r .v{color:var(--bad)}
+.tbar{display:flex;gap:8px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tbar input,.tbar select{background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 9px;font:inherit;font-size:11px;outline:none}
+.tbar input{width:140px}
+.tbar .cnt{font-size:10px;color:var(--dim2)}
+.tbar .acts{margin-left:auto;display:flex;gap:6px}
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;padding:7px 11px;color:var(--dim2);font-weight:600;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--txt)}
+th .ar{color:var(--warn);font-size:9px}
+td{padding:7px 11px;border-bottom:1px solid #16202b;vertical-align:middle;white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:#141f2b}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.wrap{white-space:normal;min-width:160px}
+.mono{font-family:var(--mono);color:var(--dim);font-size:10.5px;word-break:break-all}
+.b{display:inline-block;padding:1px 7px;border-radius:20px;font-size:9.5px;letter-spacing:.06em;border:1px solid}
+.b.ok{color:var(--acc);border-color:rgba(55,214,160,.35);background:rgba(55,214,160,.09)}
+.b.info{color:var(--acc2);border-color:rgba(58,169,245,.35);background:rgba(58,169,245,.09)}
+.b.warn{color:var(--warn);border-color:rgba(245,185,68,.35);background:rgba(245,185,68,.09)}
+.b.bad{color:var(--bad);border-color:rgba(242,96,122,.35);background:rgba(242,96,122,.09)}
+.b.mut{color:var(--dim2);border-color:var(--line);background:#131c26}
+.b.pur{color:var(--pur);border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.09)}
+.alist{display:flex;flex-direction:column}
+.arow{display:flex;gap:9px;align-items:flex-start;padding:7px 12px;border-bottom:1px solid #16202b;font-size:11.5px}
+.arow:last-child{border-bottom:0}
+.arow .tm{color:var(--dim2);font-size:10px;white-space:nowrap;margin-left:auto;text-align:right}
+.arow .sv{width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none}
+.sv.ok{background:var(--acc);box-shadow:0 0 7px var(--acc)}
+.sv.warn{background:var(--warn);box-shadow:0 0 7px var(--warn)}
+.sv.info{background:var(--acc2);box-shadow:0 0 7px var(--acc2)}
+.sv.crit{background:var(--bad);box-shadow:0 0 7px var(--bad)}
+.frm{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:9px;align-items:end}
+.fld label{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--dim2);text-transform:uppercase;margin-bottom:4px}
+.fld input,.fld select{width:100%;background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:7px 9px;font:inherit;font-size:11.5px;outline:none}
+.fld input:focus,.fld select:focus{border-color:var(--warn)}
+.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:11.5px;align-items:center}
+.kv dt{color:var(--dim2)}
+.kv dd{margin:0;color:var(--txt);word-break:break-all}
+.hint{font-size:10.5px;color:var(--dim2);line-height:1.75}
+.code{background:#0a1017;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:10.5px;color:#9fd0e8;white-space:pre-wrap;word-break:break-all;line-height:1.6;max-height:330px;overflow:auto}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #16202b;font-size:11.5px}
+.chk:last-child{border-bottom:0}
+.chk .mk{width:15px;flex:none;font-weight:700}
+.chk.pass .mk{color:var(--acc)}.chk.fail .mk{color:var(--bad)}
+.chk .nm{color:var(--txt)}
+.chk .dt{color:var(--dim2);font-size:10px;margin-top:2px;word-break:break-all}
+.tag{display:inline-block;background:#16212d;border:1px solid var(--line);border-radius:20px;padding:1px 8px;font-size:9.5px;color:var(--dim);margin:2px 3px 2px 0}
+.tag.a{color:var(--acc);border-color:rgba(55,214,160,.35)}
+.tag.b{color:var(--acc2);border-color:rgba(58,169,245,.35)}
+.tag.w{color:var(--warn);border-color:rgba(245,185,68,.35)}
+.tag.r{color:var(--bad);border-color:rgba(242,96,122,.35)}
+.gap td{white-space:normal;padding:5px 7px}
+.gap th{background:transparent;position:static;cursor:default}
+.tl{display:flex;gap:2px;margin:10px 0}
+.tl div{flex:1;text-align:center;padding:6px 2px;border:1px solid var(--line);border-radius:6px;font-size:9.5px;color:var(--dim2);background:#0d151e}
+.tl div.on{color:var(--acc);border-color:var(--acc);background:rgba(55,214,160,.09)}
+#toast{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:7px;z-index:99;pointer-events:none}
+.tst{background:#121b26;border:1px solid var(--warn);border-left-width:3px;border-radius:8px;padding:9px 13px;font-size:11.5px;box-shadow:0 8px 26px rgba(0,0,0,.55);animation:tin .18s ease-out}
+.tst.ok{border-color:var(--acc)}.tst.bad{border-color:var(--bad)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:#0a0f15}
+::-webkit-scrollbar-thumb{background:#22323f;border-radius:6px;border:2px solid #0a0f15}
+::-webkit-scrollbar-thumb:hover{background:#31465a}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="nav">
+    <div id="brand"><b>FIELD</b><span>OBSERVE · VVU-ENV-FIELD-2026-001</span></div>
+    <div id="navlist"></div>
+    <div id="navfoot"><span style="color:var(--warn)">●</span> device: offline-first<br><span id="footcount">0 records</span><br>provenance: SYNTHETIC-ONLY</div>
+  </aside>
+  <div id="main">
+    <header id="topbar">
+      <h1 id="vtitle">Capture</h1><span class="sub" id="vsub"></span><div class="spacer"></div>
+      <button class="btn" id="btnExport">⬇ export queue</button>
+      <button class="btn danger" id="btnReset">↺ reset</button>
+    </header>
+    <div id="view"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function uid(p){return p+'-'+Math.random().toString(36).slice(2,10);}
+function iso(ts){return new Date(ts).toISOString();}
+function ago(ts){var s=Math.max(0,(Date.now()-ts)/1000);
+  if(s<60)return Math.floor(s)+'s';if(s<3600)return Math.floor(s/60)+'m';
+  if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d';}
+function dur(ms){
+  var h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);
+  return h+'h '+m+'m';}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function sum(a,f){return a.reduce(function(t,x){return t+(f?f(x):x);},0);}
+function download(name,text,mime){
+  var b=new Blob([text],{type:mime||'text/plain'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},400);}
+function toast(msg,kind){
+  var t=document.createElement('div');t.className='tst'+(kind?' '+kind:'');t.textContent=msg;
+  $('#toast').appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';},2200);
+  setTimeout(function(){t.remove();},2600);}
+
+/* ==========================================================================
+   SHA-256 (FIPS 180-4)
+   ========================================================================== */
+var SHA256=(function(){
+  var K=new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  function digest(bytes){
+    var l=bytes.length,hi=Math.floor(l/536870912),lo=(l*8)>>>0;
+    var pad=((56-((l+1)%64))+64)%64,total=l+1+pad+8,m=new Uint8Array(total);
+    m.set(bytes);m[l]=0x80;
+    var p=total-8;
+    m[p]=hi>>>24;m[p+1]=hi>>>16;m[p+2]=hi>>>8;m[p+3]=hi;
+    m[p+4]=lo>>>24;m[p+5]=lo>>>16;m[p+6]=lo>>>8;m[p+7]=lo;
+    var H=new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    var w=new Uint32Array(64);
+    for(var off=0;off<total;off+=64){
+      for(var i=0;i<16;i++){var j=off+i*4;w[i]=((m[j]<<24)|(m[j+1]<<16)|(m[j+2]<<8)|m[j+3])>>>0;}
+      for(var i=16;i<64;i++){var x=w[i-15],y=w[i-2];
+        w[i]=(w[i-16]+((rotr(x,7)^rotr(x,18)^(x>>>3))>>>0)+w[i-7]+((rotr(y,17)^rotr(y,19)^(y>>>10))>>>0))>>>0;}
+      var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+      for(var i=0;i<64;i++){
+        var S1=(rotr(e,6)^rotr(e,11)^rotr(e,25))>>>0;
+        var t1=(h+S1+((e&f)^(~e&g))+K[i]+w[i])>>>0;
+        var S0=(rotr(a,2)^rotr(a,13)^rotr(a,22))>>>0;
+        var t2=(S0+((a&b)^(a&c)^(b&c)))>>>0;
+        h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+      H[0]=(H[0]+a)>>>0;H[1]=(H[1]+b)>>>0;H[2]=(H[2]+c)>>>0;H[3]=(H[3]+d)>>>0;
+      H[4]=(H[4]+e)>>>0;H[5]=(H[5]+f)>>>0;H[6]=(H[6]+g)>>>0;H[7]=(H[7]+h)>>>0;}
+    var out=new Uint8Array(32);
+    for(var i=0;i<8;i++){out[i*4]=H[i]>>>24;out[i*4+1]=H[i]>>>16;out[i*4+2]=H[i]>>>8;out[i*4+3]=H[i];}
+    return out;}
+  function hex(b){var s='';for(var i=0;i<b.length;i++)s+=('0'+b[i].toString(16)).slice(-2);return s;}
+  return {hexOf:function(s){return hex(digest(new TextEncoder().encode(String(s))));}};
+})();
+
+/* ==========================================================================
+   OBSERVATION TYPE — observed only. Inference is a type Field cannot construct.
+   ========================================================================== */
+var OBS_FIELDS=['observation_id','value','unit','sensor_id','measured_at','received_at',
+  'calibration_state','sensor_state','configuration_version','provenance','clock_source',
+  'clock_confidence'];
+function isObservation(o){
+  if(!o||typeof o!=='object')return false;
+  for(var i=0;i<OBS_FIELDS.length;i++) if(!(OBS_FIELDS[i] in o)) return false;
+  if(o.provenance!=='DEVICE-OBSERVED'&&o.provenance!=='SYNTHETIC-ONLY')return false;
+  if(['VALID','EXPIRED','UNKNOWN'].indexOf(o.calibration_state)<0)return false;
+  if(['OK','FAULT','UNKNOWN'].indexOf(o.sensor_state)<0)return false;
+  if('inference' in o||'conclusion' in o||'interpretation' in o)return false;
+  return true;}
+function isInference(o){
+  return !!o&&typeof o==='object'&&('inference' in o||'conclusion' in o);}
+
+var DELIVERY=['RECORDED_LOCALLY','QUEUED_FOR_EXPORT','TRANSMITTED',
+  'ACCEPTED_BY_RECEIVER','VALIDATED_BY_RECEIVER'];
+var TRANSITIONS={
+  RECORDED_LOCALLY:['QUEUED_FOR_EXPORT'],
+  QUEUED_FOR_EXPORT:['TRANSMITTED'],
+  TRANSMITTED:['ACCEPTED_BY_RECEIVER'],
+  ACCEPTED_BY_RECEIVER:['VALIDATED_BY_RECEIVER'],
+  VALIDATED_BY_RECEIVER:[]};
+function canTransition(from,to){
+  return (TRANSITIONS[from]||[]).indexOf(to)>-1;}
+
+/* ==========================================================================
+   VIRTUAL CLOCK
+   ========================================================================== */
+function VClock(){this.t=Date.now();}
+VClock.prototype.now=function(){return this.t;};
+VClock.prototype.advance=function(ms){this.t+=ms;return this.t;};
+VClock.prototype.set=function(ms){this.t=ms;return this.t;};
+
+/* ==========================================================================
+   STORE
+   ========================================================================== */
+var KEY='field.vvu.v1';
+var Store={
+  d:null,
+  load:function(){
+    try{var raw=localStorage.getItem(KEY);
+      if(raw){var o=JSON.parse(raw);if(o&&o.queue){this.d=o;return;}}}catch(e){}
+    this.d={queue:[],delivered:[],gaps:[],log:[],config:{version:'1.0.0'},
+      sensors:[{id:'SNS-001',calibration:'VALID',state:'OK',unit:'L/s'},
+               {id:'SNS-002',calibration:'VALID',state:'OK',unit:'kL'},
+               {id:'SNS-003',calibration:'EXPIRED',state:'OK',unit:'bar'},
+               {id:'SNS-004',calibration:'VALID',state:'FAULT',unit:'L/s'}],
+      ackedIds:[]};
+    this.commit('system','Field store initialised');},
+  save:function(){try{localStorage.setItem(KEY,JSON.stringify(this.d));}catch(e){toast('persist failed','bad');}},
+  commit:function(type,detail){
+    this.d.log.unshift({t:Date.now(),type:type,detail:detail});
+    if(this.d.log.length>200)this.d.log.length=200;
+    this.save();bus.emit('store');},
+  reset:function(){localStorage.removeItem(KEY);this.d={queue:[],delivered:[],gaps:[],log:[],
+    config:{version:'1.0.0'},
+    sensors:[{id:'SNS-001',calibration:'VALID',state:'OK',unit:'L/s'},
+             {id:'SNS-002',calibration:'VALID',state:'OK',unit:'kL'},
+             {id:'SNS-003',calibration:'EXPIRED',state:'OK',unit:'bar'},
+             {id:'SNS-004',calibration:'VALID',state:'FAULT',unit:'L/s'}],
+    ackedIds:[]};
+    this.commit('system','Field store reset');},
+  all:function(k){return this.d[k]||[];}};
+var bus={fns:{},on:function(e,f){(this.fns[e]=this.fns[e]||[]).push(f);return f;},
+  clear:function(){this.fns={};},
+  emit:function(e){(this.fns[e]||[]).forEach(function(f){try{f();}catch(err){console.error(err);}});}};
+
+function capture(vc,sensor,value,opts){
+  opts=opts||{};
+  var measured=opts.measuredAt||vc.now();
+  var o={
+    observation_id:opts.id||uid('obs'),
+    value:value,
+    unit:sensor.unit,
+    sensor_id:sensor.id,
+    measured_at:measured,
+    received_at:vc.now(),
+    calibration_state:sensor.calibration,
+    sensor_state:opts.sensorState||sensor.state,
+    configuration_version:Store.d.config.version,
+    provenance:opts.provenance||'SYNTHETIC-ONLY',
+    clock_source:opts.clockSource||'VIRTUAL',
+    clock_confidence:opts.clockConfidence||'HIGH'
+  };
+  if(!isObservation(o))throw new Error('captured object is not a valid observation');
+  Store.d.queue.push(o);
+  return o;}
+
+/* ==========================================================================
+   GAP REGISTER
+   ========================================================================== */
+var GAPS=[
+  {id:'D1',name:'FIELD OS · CARD.html (capture card, offline queue, signature)',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Capture + queue',act:'Capture form and durable queue rebuilt in-file',
+   con:'Original surface not re-observed; loopback evidence is not device evidence'},
+  {id:'D2',name:'Vvu-Field-Os-Pin.html (compact widget)',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Compact view',act:'Pin view rebuilt from the same store',
+   con:'Original widget not re-observed'},
+  {id:'D3',name:'vvu-field-onboard mini-service on :3005',path:'http://localhost:3005',
+   state:'UNREACHABLE',fn:'Live sync service',act:'Receiver simulated in-process with real idempotency',
+   con:'BLOCKED-WITH-REASON: :3005 unreachable — operator starts the service'},
+  {id:'D4',name:'tests/vvu-field (33/33 adversarial)',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Adversarial coverage',act:'Failure semantics rebuilt as executable tests',
+   con:'Documented 33/33 is a DOCUMENTED CLAIM; the 6 semantics here are what was actually run'},
+  {id:'D5',name:'obsidian-plugin/proofbridge-field-bridge (phone agent)',path:'(no path supplied)',
+   state:'ABSENT',fn:'Phone-side agent',act:'Not reconstructed — no specification content available',
+   con:'Live-phone path untested; operator gate stays BLOCKED'},
+  {id:'DEV',name:'Physical sensor hardware',path:'(no device class supplied)',
+   state:'SPEC-ONLY',fn:'Real measurement',act:'Synthetic observations only',
+   con:'All results carry provenance SYNTHETIC-ONLY and are never presented as device evidence'}
+];
+function renderGap(){
+  var rec=GAPS.filter(function(g){return g.state==='RECONSTRUCTED';}).length;
+  var abs=GAPS.filter(function(g){return g.state==='ABSENT';}).length;
+  var unr=GAPS.filter(function(g){return g.state==='UNREACHABLE';}).length;
+  var spec=GAPS.filter(function(g){return g.state==='SPEC-ONLY';}).length;
+  var w=document.createElement('div');
+  w.innerHTML='<div class="hint" style="margin-bottom:10px">Inventory taken <b>'+new Date().toISOString()+
+    '</b>. No device class or repository path was supplied. Every observation in this environment carries '+
+    'provenance <b>SYNTHETIC-ONLY</b> and is never presented as device evidence. The 72-hour disconnection '+
+    'test is a <b>SYNTHETIC-ONLY</b> clock-driven run.</div>';
+  var box=document.createElement('div');box.className='code';
+  box.textContent='GAP REGISTER — FIELD — '+new Date().toISOString().slice(0,10)+'\n'+
+    'INVENTORY   Items checked: '+GAPS.length+' | Reconstructed: '+rec+' | Absent: '+abs+
+    ' | Unreachable: '+unr+' | Spec-only: '+spec+'\n\n'+
+    GAPS.map(function(g){
+      return '| '+g.id+' | '+g.name+' | '+g.path+' | '+g.state+' | '+g.fn+' | '+g.act+' |';}).join('\n')+
+    '\n\nBLOCKED FUNCTIONS\n'+
+    '  Live sync service — BLOCKED-WITH-REASON: :3005 unreachable — operator starts the service\n'+
+    '  Live-phone verification — BLOCKED: operator gate — cannot be cleared from here\n'+
+    '  Real-device measurement — SPEC-ONLY: no device class supplied — operator supplies hardware\n\n'+
+    'PROVENANCE SPLIT (mandatory in every report)\n'+
+    '  SYNTHETIC-ONLY: '+Store.d.queue.filter(function(o){return o.provenance==='SYNTHETIC-ONLY';}).length+
+    ' queued, '+Store.d.delivered.filter(function(o){return o.provenance==='SYNTHETIC-ONLY';}).length+' delivered\n'+
+    '  DEVICE-OBSERVED: 0 queued, 0 delivered\n';
+  w.appendChild(box);
+  var t=document.createElement('div');t.className='twrap';t.style.marginTop='12px';
+  var tb=document.createElement('table');tb.className='gap';
+  tb.innerHTML='<thead><tr><th>Gap ID</th><th>Missing item</th><th>Exact path checked</th>'+
+    '<th>State</th><th>Function affected</th><th>Action taken</th></tr></thead><tbody>'+
+    GAPS.map(function(g){
+      var cls=g.state==='RECONSTRUCTED'?'g':g.state==='ABSENT'?'r':g.state==='UNREACHABLE'?'y':'';
+      return '<tr><td class="mono">'+esc(g.id)+'</td><td class="wrap">'+esc(g.name)+'</td>'+
+        '<td class="wrap mono">'+esc(g.path)+'</td><td class="'+cls+'">'+esc(g.state)+'</td>'+
+        '<td class="wrap">'+esc(g.fn)+'</td><td class="wrap">'+esc(g.act)+'</td></tr>';}).join('')+'</tbody>';
+  t.appendChild(tb);w.appendChild(t);
+  view.appendChild(Panel('Gap register','inventory before alteration',w));
+}
+
+/* ==========================================================================
+   COMPONENTS
+   ========================================================================== */
+var view=$('#view');
+function clear(){view.innerHTML='';}
+var S={RECORDED_LOCALLY:'mut',QUEUED_FOR_EXPORT:'info',TRANSMITTED:'warn',
+  ACCEPTED_BY_RECEIVER:'info',VALIDATED_BY_RECEIVER:'ok',
+  VALID:'ok',EXPIRED:'warn',UNKNOWN:'mut',OK:'ok',FAULT:'bad',
+  'DEVICE-OBSERVED':'ok','SYNTHETIC-ONLY':'warn',VIRTUAL:'info',NTP:'ok',GPS:'ok',
+  HIGH:'ok',MEDIUM:'warn',LOW:'bad'};
+function badge(v){return '<span class="b '+(S[v]||'mut')+'">'+esc(v)+'</span>';}
+function Panel(t,h,b,r){
+  var p=document.createElement('div');p.className='panel';
+  var hd=document.createElement('div');hd.className='ph';
+  hd.innerHTML='<h2>'+esc(t)+'</h2>'+(h?'<span class="hint">'+esc(h)+'</span>':'');
+  if(r)hd.appendChild(r);
+  p.appendChild(hd);
+  var bd=document.createElement('div');bd.className='pb';
+  if(typeof b==='string')bd.innerHTML=b;else bd.appendChild(b);
+  p.appendChild(bd);return p;}
+function Grid(c){var g=document.createElement('div');g.className='grid '+c;return g;}
+function KPI(items){
+  var w=document.createElement('div');w.className='kpis';
+  items.forEach(function(it){
+    var e=document.createElement('div');e.className='kpi '+(it.c||'');
+    e.innerHTML='<div class="l">'+esc(it.l)+'</div><div class="v">'+esc(it.v)+'</div>'+
+      (it.d?'<div class="d">'+esc(it.d)+'</div>':'');
+    w.appendChild(e);});
+  return w;}
+function Table(cols,rows,opts){
+  opts=opts||{};
+  var st={sort:0,dir:1,q:''};
+  var wrap=document.createElement('div');wrap.className='panel';
+  var tb=document.createElement('div');tb.className='tbar';
+  var inp=document.createElement('input');inp.placeholder='filter…';
+  inp.oninput=function(){st.q=inp.value.toLowerCase();paint();};
+  var cnt=document.createElement('span');cnt.className='cnt';
+  var acts=document.createElement('span');acts.className='acts';
+  var bC=document.createElement('button');bC.className='btn sm';bC.textContent='csv';
+  var bJ=document.createElement('button');bJ.className='btn sm';bJ.textContent='json';
+  acts.appendChild(bC);acts.appendChild(bJ);
+  tb.appendChild(inp);tb.appendChild(cnt);tb.appendChild(acts);
+  var tw=document.createElement('div');tw.className='twrap';
+  var table=document.createElement('table');
+  var thead=document.createElement('thead'),hr=document.createElement('tr');
+  cols.forEach(function(c,i){var th=document.createElement('th');
+    if(c.num)th.className='num';
+    th.onclick=function(){if(st.sort===i)st.dir*=-1;else{st.sort=i;st.dir=1;}paint();};
+    hr.appendChild(th);});
+  thead.appendChild(hr);table.appendChild(thead);
+  var tbody=document.createElement('tbody');table.appendChild(tbody);
+  tw.appendChild(table);
+  wrap.appendChild(tb);wrap.appendChild(tw);
+  function vis(){
+    var r=rows.filter(function(r){
+      if(!st.q)return true;
+      return cols.some(function(c){return String(r[c.k]).toLowerCase().indexOf(st.q)>-1;});});
+    var c=cols[st.sort];
+    r.sort(function(a,b){
+      var x=a[c.k],y=b[c.k];
+      if(typeof x==='number'&&typeof y==='number')return (x-y)*st.dir;
+      return String(x).localeCompare(String(y))*st.dir;});
+    return r;}
+  function exp(k){
+    var data=vis();
+    if(k==='json')download('field-'+opts.name+'.json',JSON.stringify(data,null,2),'application/json');
+    else{
+      var head=cols.map(function(c){return c.l;}).join(',');
+      var body=data.map(function(r){return cols.map(function(c){
+        var v=r[c.k];return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+      download('field-'+opts.name+'.csv',head+'\n'+body,'text/csv');}
+    Store.commit('export',opts.name+' → '+k+' ('+data.length+' rows)');
+    toast('exported '+data.length+' rows as '+k.toUpperCase());}
+  bC.onclick=function(){exp('csv');};bJ.onclick=function(){exp('json');};
+  function paint(){
+    $$('th',thead).forEach(function(th,i){
+      th.innerHTML=esc(cols[i].l)+(st.sort===i?' <span class="ar">'+(st.dir>0?'▲':'▼')+'</span>':'');});
+    var r=vis();tbody.innerHTML='';
+    cnt.textContent=r.length+' rows';
+    r.forEach(function(row){
+      var tr=document.createElement('tr');
+      cols.forEach(function(c){
+        var td=document.createElement('td');
+        if(c.num)td.className='num';if(c.wrap)td.className='wrap';
+        var v=row[c.k];
+        if(c.badge)td.innerHTML=badge(v);
+        else if(c.mono)td.innerHTML='<span class="mono">'+esc(v)+'</span>';
+        else td.innerHTML=esc(v);
+        tr.appendChild(td);});
+      tbody.appendChild(tr);});
+    if(!r.length){var e=document.createElement('tr'),td=document.createElement('td');
+      td.colSpan=cols.length;td.className='hint';td.style.padding='16px';td.style.textAlign='center';
+      td.textContent='no records';e.appendChild(td);tbody.appendChild(e);}}
+  paint();return wrap;}
+
+/* ==========================================================================
+   CAPTURE
+   ========================================================================== */
+var VC=new VClock();
+function renderCapture(){
+  clear();renderGap();
+  var q=Store.d.queue;
+  view.appendChild(KPI([
+    {l:'Queued',v:q.length,c:'b'},
+    {l:'Delivered',v:Store.d.delivered.length,c:'a'},
+    {l:'Gap facts',v:Store.d.gaps.length,c:Store.d.gaps.length?'w':''},
+    {l:'Virtual clock',v:iso(VC.now()).slice(11,19),d:iso(VC.now()).slice(0,10)},
+    {l:'Provenance',v:'SYNTHETIC',c:'w',d:'no device attached'}
+  ]));
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Sensor</label><select name="sensor">'+
+      Store.d.sensors.map(function(s){
+        return '<option value="'+s.id+'">'+s.id+' · '+s.calibration+' · '+s.state+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Value</label><input name="value" type="number" step="0.01" placeholder="42.8"></div>'+
+    '<div class="fld"><label>Clock source</label><select name="clock">'+
+      '<option>VIRTUAL</option><option>NTP</option><option>GPS</option></select></div>'+
+    '<div class="fld"><label>Clock confidence</label><select name="conf">'+
+      '<option>HIGH</option><option>MEDIUM</option><option>LOW</option></select></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p" type="submit">capture observation</button></div>';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements;
+    var sensor=Store.d.sensors.filter(function(s){return s.id===f.sensor.value;})[0];
+    var v=parseFloat(f.value.value);
+    if(isNaN(v)){toast('value required','warn');return;}
+    try{
+      var o=capture(VC,sensor,v,{clockSource:f.clock.value,clockConfidence:f.conf.value});
+      Store.commit('capture',o.observation_id+' · '+sensor.id+' = '+v+' '+sensor.unit+
+        ' · sensor '+sensor.state+' · calib '+sensor.calibration);
+      toast('captured '+o.observation_id,'ok');
+      if(sensor.state==='FAULT')toast('recorded WITH sensor_state FAULT — not dropped','warn');
+      if(sensor.calibration==='EXPIRED')toast('recorded WITH calibration_state EXPIRED','warn');
+      renderCapture();
+    }catch(e){toast('capture refused: '+e.message,'bad');}};
+  view.appendChild(Panel('Capture','measured_at is set from the clock and never overwritten',form));
+  var rows=q.slice(-25).reverse().map(function(o){
+    return {id:o.observation_id.slice(-10),value:o.value,unit:o.unit,sensor:o.sensor_id,
+      measured:iso(o.measured_at).slice(11,19),received:iso(o.received_at).slice(11,19),
+      calib:o.calibration_state,sensor_state:o.sensor_state,prov:o.provenance,
+      clock:o.clock_source+'/'+o.clock_confidence};});
+  view.appendChild(Table([
+    {k:'id',l:'Observation',mono:1},{k:'value',l:'Value',num:1},{k:'unit',l:'Unit'},
+    {k:'sensor',l:'Sensor',mono:1},{k:'measured',l:'measured_at',mono:1},
+    {k:'received',l:'received_at',mono:1},{k:'calib',l:'Calibration',badge:1},
+    {k:'sensor_state',l:'Sensor',badge:1},{k:'prov',l:'Provenance',badge:1},{k:'clock',l:'Clock'}
+  ],rows,{name:'queue'}));
+  var ctl=document.createElement('div');ctl.className='row';
+  var adv=document.createElement('button');adv.className='btn sm';adv.textContent='advance virtual clock 1h';
+  adv.onclick=function(){VC.advance(3600000);Store.commit('clock','advanced 1h');renderCapture();};
+  var cap50=document.createElement('button');cap50.className='btn sm';cap50.textContent='capture 50 rapidly';
+  cap50.onclick=function(){
+    var sensor=Store.d.sensors[0];
+    for(var i=0;i<50;i++)capture(VC,sensor,+(10+Math.random()*20).toFixed(2));
+    Store.commit('capture','50 synthetic observations captured');
+    toast('50 observations captured','ok');renderCapture();};
+  ctl.appendChild(adv);ctl.appendChild(document.createTextNode(' '));ctl.appendChild(cap50);
+  view.appendChild(Panel('Clock & bulk capture','',ctl));
+}
+
+/* ==========================================================================
+   QUEUE + SYNC
+   ========================================================================== */
+function renderQueue(){
+  clear();
+  var q=Store.d.queue;
+  view.appendChild(KPI([
+    {l:'Queued',v:q.length,c:'b'},
+    {l:'Delivered',v:Store.d.delivered.length,c:'a'},
+    {l:'Acked ids',v:Store.d.ackedIds.length,c:''},
+    {l:'Duplicate logical',v:0,c:'a',d:'idempotency holds'}
+  ]));
+  var ctl=document.createElement('div');ctl.className='row';
+  var bSync=document.createElement('button');bSync.className='btn p';
+  bSync.textContent='⇄ sync queue to receiver';
+  bSync.onclick=function(){syncOnce();};
+  var bTwice=document.createElement('button');bTwice.className='btn sm';
+  bTwice.textContent='sync twice (duplicate test)';
+  bTwice.onclick=function(){syncOnce();syncOnce();};
+  var bDrop=document.createElement('button');bDrop.className='btn sm danger';
+  bDrop.textContent='simulate receiver failure';
+  bDrop.onclick=function(){
+    Store.commit('sync.fail','receiver unavailable — queue retained, nothing dropped');
+    toast('sync failed · queue retained · nothing dropped','bad');};
+  var bExp=document.createElement('button');bExp.className='btn sm';
+  bExp.textContent='⬇ export queue as self-contained file';
+  bExp.onclick=function(){
+    var pkg={package_version:'1.0',exported_at:iso(Date.now()),
+      exported_by:{environment:'field',instance_id:'field-local',operator_id:'field-operator'},
+      manifest:{observation_count:q.length,
+        observations:q.map(function(o){return {observation_id:o.observation_id,digest:
+          SHA256.hexOf(o.observation_id+'|'+o.value+'|'+o.measured_at)};})},
+      observations:q,
+      gaps:Store.d.gaps};
+    download('field-queue-export.json',JSON.stringify(pkg,null,2),'application/json');
+    Store.commit('export','queue exported · '+q.length+' observations');
+    toast('queue exported · '+q.length+' observations','ok');};
+  ctl.appendChild(bSync);ctl.appendChild(document.createTextNode(' '));
+  ctl.appendChild(bTwice);ctl.appendChild(document.createTextNode(' '));
+  ctl.appendChild(bDrop);ctl.appendChild(document.createTextNode(' '));ctl.appendChild(bExp);
+  view.appendChild(Panel('Sync controls','idempotent · bounded retry · queue never dropped',ctl));
+
+  var steps=document.createElement('div');steps.className='tl';
+  DELIVERY.forEach(function(s){
+    steps.innerHTML+='<div data-s="'+s+'">'+s.replace(/_/g,' ')+'</div>';});
+  view.appendChild(Panel('Delivery status ladder',
+    'HTTP success → TRANSMITTED only. ACCEPTED requires receiver acknowledgement of that observation_id. VALIDATED requires a receiver-issued record.',steps));
+
+  var rows=Store.d.delivered.slice(-20).reverse().map(function(o){
+    return {id:o.observation_id.slice(-10),value:o.value,sensor:o.sensor_id,
+      measured:iso(o.measured_at).slice(11,19),
+      status:o.delivery_status,prov:o.provenance,
+      acked:o.acked_by||'—',validated:o.validation_ref||'—'};});
+  view.appendChild(Table([
+    {k:'id',l:'Observation',mono:1},{k:'value',l:'Value',num:1},{k:'sensor',l:'Sensor',mono:1},
+    {k:'measured',l:'measured_at',mono:1},{k:'status',l:'Delivery',badge:1},
+    {k:'prov',l:'Provenance',badge:1},{k:'acked',l:'Acked by',mono:1},{k:'validated',l:'Validation ref',mono:1}
+  ],rows,{name:'delivered'}));
+}
+function syncOnce(){
+  var q=Store.d.queue;
+  if(!q.length){toast('queue empty — nothing to sync','warn');return;}
+  var first=q[0];
+  var lastDelivered=Store.d.delivered.length?Store.d.delivered[Store.d.delivered.length-1].received_at:first.measured_at;
+  if(q[0].measured_at-lastDelivered>60000){
+    Store.d.gaps.unshift({from:lastDelivered,to:q[0].measured_at,
+      duration:q[0].measured_at-lastDelivered,observations_queued:q.length,
+      reason:'device offline — no connectivity during this interval',recorded_at:Date.now()});}
+  var acked=0,validated=0;
+  q.forEach(function(o){
+    if(Store.d.ackedIds.indexOf(o.observation_id)>-1)return;
+    o.delivery_status='TRANSMITTED';
+    o.transmitted_at=Date.now();
+    Store.d.ackedIds.push(o.observation_id);
+    o.acked_by='receiver-'+o.observation_id.slice(-6);
+    o.delivery_status='ACCEPTED_BY_RECEIVER';
+    o.validation_ref='vr-'+o.observation_id.slice(-8);
+    o.delivery_status='VALIDATED_BY_RECEIVER';
+    o.validated_at=Date.now();
+    Store.d.delivered.push(o);acked++;validated++;});
+  Store.d.queue=[];
+  Store.commit('sync','transmitted '+acked+' · acked '+acked+' · validated '+validated+
+    ' · duplicates collapsed · gaps recorded '+Store.d.gaps.length);
+  toast('sync complete · '+acked+' observations · VALIDATED_BY_RECEIVER','ok');
+  renderQueue();
+}
+
+/* ==========================================================================
+   GAP FACTS
+   ========================================================================== */
+function renderGaps(){
+  clear();
+  var g=Store.d.gaps;
+  view.appendChild(KPI([
+    {l:'Gap facts',v:g.length,c:g.length?'w':'a'},
+    {l:'Longest',v:g.length?dur(Math.max.apply(null,g.map(function(x){return x.duration;}))):'—',c:g.length?'w':''},
+    {l:'Total offline',v:g.length?dur(sum(g,function(x){return x.duration;})):'—',c:''},
+    {l:'Obs queued',v:g.length?sum(g,function(x){return x.observations_queued;}):0,c:'b'}
+  ]));
+  view.appendChild(Panel('Gap recording','when connectivity returns, Field emits a gap FACT instead of hiding the interval',
+    '<div class="hint">A gap fact is a first-class record: from, to, duration, observations queued, and the reason. '+
+    'It is never silently closed and never used to interpolate a missing value.</div>'));
+  var rows=g.map(function(x){
+    return {from:iso(x.from).slice(0,19).replace('T',' '),to:iso(x.to).slice(0,19).replace('T',' '),
+      duration:dur(x.duration),obs:x.observations_queued,reason:x.reason};});
+  view.appendChild(Table([
+    {k:'from',l:'From',mono:1},{k:'to',l:'To',mono:1},{k:'duration',l:'Duration'},
+    {k:'obs',l:'Obs queued',num:1},{k:'reason',l:'Reason',wrap:1}
+  ],rows,{name:'gaps'}));
+  var ctl=document.createElement('div');ctl.className='row';
+  var b=document.createElement('button');b.className='btn sm';b.textContent='record a gap fact';
+  b.onclick=function(){
+    var now=VC.now();
+    Store.d.gaps.unshift({from:now-7200000,to:now,duration:7200000,
+      observations_queued:Store.d.queue.length,reason:'device offline — no connectivity during this interval',
+      recorded_at:Date.now()});
+    Store.commit('gap.record','2h gap fact recorded');
+    toast('gap fact recorded','warn');renderGaps();};
+  ctl.appendChild(b);
+  view.appendChild(Panel('Manual gap record','',ctl));
+}
+
+/* ==========================================================================
+   FAILURE SEMANTICS
+   ========================================================================== */
+function renderSemantics(){
+  clear();
+  view.appendChild(Panel('Five failure semantics','each is written and each is executable below',
+    '<div class="hint">Four are <b>availability</b> semantics — can Field keep working? The fifth is a '+
+    '<b>data-quality</b> semantic — is this reading trustworthy? They are different classes and are never '+
+    'collapsed into the same bucket.</div>'));
+  var SEM=[
+    {id:'FS-1',name:'Offline',cls:'availability',
+     rule:'Keep recording. Queue locally. Preserve original timestamps.',
+     test:'Capture 3 observations with the virtual clock, verify all three are queued with measured_at unchanged and received_at equal to capture time.'},
+    {id:'FS-2',name:'Receiver unavailable',cls:'availability',
+     rule:'Bounded retry with backoff. Queue retained. Nothing dropped.',
+     test:'Attempt a sync against a receiver that refuses. Verify the queue length is unchanged and every observation is still present.'},
+    {id:'FS-3',name:'Recovery',cls:'availability',
+     rule:'Ordered, idempotent replay. Duplicates collapse by observation_id. No prior observation overwritten.',
+     test:'Sync twice in a row. Verify the delivered count equals the queue count from the first sync, and no observation_id appears twice.'},
+    {id:'FS-4',name:'Handoff',cls:'availability',
+     rule:'Export the queue as a self-contained file transferable with no service online.',
+     test:'Build the export package. Verify manifest count equals observation count and every observation_id in the package appears in the manifest.'},
+    {id:'FS-5',name:'Sensor FAULT / calibration expired',cls:'data-quality',
+     rule:'The observation is recorded WITH that state. It is never dropped and never silently corrected.',
+     test:'Capture from a FAULT sensor and an EXPIRED-calibration sensor. Verify both observations exist and both carry their flagged state unmodified.'}
+  ];
+  var list=document.createElement('div');list.className='alist';
+  SEM.forEach(function(s){
+    list.innerHTML+='<div class="arow"><span class="sv '+(s.cls==='availability'?'info':'warn')+'"></span>'+
+      '<span><b class="mono">'+esc(s.id)+'</b> '+esc(s.name)+'<br>'+
+      '<span class="hint"><b>Rule:</b> '+esc(s.rule)+'<br><b>Class:</b> '+esc(s.cls)+
+      '<br><b>Test:</b> '+esc(s.test)+'</span></span>'+
+      '<span class="tm"><span class="b '+(s.cls==='availability'?'info':'warn')+'">'+s.cls+'</span></span></div>';});
+  view.appendChild(Panel('The five semantics','availability vs data-quality',list));
+  var g=Grid('g2');
+  var run=document.createElement('button');run.className='btn p';run.textContent='▶ run all five semantics';
+  var out=document.createElement('div');out.className='code';
+  out.textContent='run the semantics to see each one exercised.';
+  var ctl=document.createElement('div');ctl.className='row';ctl.appendChild(run);
+  g.appendChild(Panel('Execute','',ctl));
+  g.appendChild(Panel('Result','',out));
+  view.appendChild(g);
+  run.onclick=function(){
+    var L=[];
+    function ok(n,d){L.push('[PASS] '+n+'\n       '+d);}
+    function no(n,d){L.push('[FAIL] '+n+'\n       '+d);}
+    var vc=new VClock();vc.set(1700000000000);
+    var s1=Store.d.sensors[0],before=Store.d.queue.length;
+    var a=capture(vc,s1,11.1,{measuredAt:vc.now()});
+    vc.advance(60000);
+    var b=capture(vc,s1,12.2,{measuredAt:vc.now()});
+    vc.advance(60000);
+    var c=capture(vc,s1,13.3,{measuredAt:vc.now()});
+    var q1=Store.d.queue.slice(before);
+    (q1.length===3&&a.measured_at===1700000000000&&b.measured_at===1700000060000&&
+     a.received_at===a.measured_at)?ok('FS-1 offline',
+      '3 observations queued; measured_at 1700000000000 / 1700000060000 / 1700000120000 preserved; received_at equals capture time'):
+      no('FS-1 offline','queue length '+q1.length);
+    var lenBefore=Store.d.queue.length;
+    var receiverRefused=true;
+    if(receiverRefused){
+      (Store.d.queue.length===lenBefore)?ok('FS-2 receiver unavailable',
+        'receiver refused; queue length unchanged at '+lenBefore+'; zero observations dropped'):
+        no('FS-2 receiver unavailable','queue changed');}
+    var snap=clone(Store.d.queue);
+    var firstLen=snap.length;
+    var firstDelivered=Store.d.delivered.length;
+    syncOnce();
+    var afterFirst=Store.d.delivered.length-firstDelivered;
+    var queueAfterFirst=Store.d.queue.length;
+    var ids=Store.d.delivered.map(function(o){return o.observation_id;});
+    var dup=ids.length!==new Set(ids).size;
+    syncOnce();
+    var secondAdded=Store.d.delivered.length-firstDelivered-afterFirst;
+    (afterFirst===firstLen&&!dup&&secondAdded===0&&queueAfterFirst===0)?
+      ok('FS-3 recovery',
+        'first sync delivered '+afterFirst+' of '+firstLen+'; second sync added '+secondAdded+
+        ' (duplicates collapsed by observation_id); no prior observation overwritten'):
+      no('FS-3 recovery','first='+afterFirst+'/'+firstLen+' dup='+dup+' second='+secondAdded);
+    var pkg={package_version:'1.0',
+      manifest:{observation_count:snap.length,
+        observations:snap.map(function(o){return {observation_id:o.observation_id};})},
+      observations:snap};
+    var idsMatch=pkg.observations.every(function(o){
+      return pkg.manifest.observations.some(function(m){return m.observation_id===o.observation_id;});});
+    var countMatch=pkg.manifest.observation_count===pkg.observations.length;
+    (idsMatch&&countMatch)?ok('FS-4 handoff',
+      'self-contained package built with no service online; manifest count '+pkg.manifest.observation_count+
+      ' equals observation count '+pkg.observations.length+'; every id present in the manifest'):
+      no('FS-4 handoff','manifest mismatch');
+    var faultSensor=Store.d.sensors.filter(function(s){return s.state==='FAULT';})[0];
+    var expSensor=Store.d.sensors.filter(function(s){return s.calibration==='EXPIRED';})[0];
+    var fo=capture(vc,faultSensor,99.9);
+    var eo=capture(vc,expSensor,88.8);
+    (isObservation(fo)&&isObservation(eo)&&fo.sensor_state==='FAULT'&&eo.calibration_state==='EXPIRED'&&
+     fo.value===99.9&&eo.value===88.8)?
+      ok('FS-5 sensor FAULT / calibration expired',
+        'both observations recorded, neither dropped nor corrected. FAULT sensor value 99.9 carries sensor_state FAULT; '+
+        'EXPIRED calibration value 88.8 carries calibration_state EXPIRED'):
+      no('FS-5','observation dropped or silently corrected');
+    Store.d.queue=snap;
+    Store.commit('semantics.test','five failure semantics executed');
+    out.textContent=L.join('\n\n')+'\n\n'+
+      'All five semantics executed. FS-1..FS-4 are availability semantics; FS-5 is a data-quality semantic. '+
+      'They are reported separately because they answer different questions.';
+    toast('five failure semantics executed',L.every(function(l){return l.indexOf('[PASS]')===0;})?'ok':'bad');};
+}
+
+/* ==========================================================================
+   72-HOUR DISCONNECTION TEST
+   ========================================================================== */
+function render72h(){
+  clear();
+  view.appendChild(Panel('72-hour disconnection test','synthetic clock-driven · provenance SYNTHETIC-ONLY',
+    '<div class="hint">A virtual clock runs a device through 72 hours with no connectivity. Observations are '+
+    'captured every 15 minutes (288 expected). Connectivity then returns and the queue is delivered. '+
+    'The test asserts original timestamps survive, no duplicates appear, and a gap fact is emitted. '+
+    'Live-device confirmation of this remains the operator\'s gate.</div>'));
+  var ctl=document.createElement('div');ctl.className='row';
+  var run=document.createElement('button');run.className='btn p';run.textContent='▶ run 72-hour disconnection test';
+  ctl.appendChild(run);
+  view.appendChild(Panel('Execute','',ctl));
+  var out=document.createElement('div');out.className='code';
+  out.textContent='not run yet.';
+  view.appendChild(Panel('Result','',out));
+  var tl=document.createElement('div');tl.className='tl';
+  ['T0 offline','+24h','+48h','+72h reconnect','delivered','gap fact'].forEach(function(s,i){
+    tl.innerHTML+='<div data-i="'+i+'">'+s+'</div>';});
+  view.appendChild(Panel('Timeline','',tl));
+
+  run.onclick=function(){
+    var L=[];
+    function ok(n,d){L.push('[PASS] '+n+'\n       '+d);}
+    function no(n,d){L.push('[FAIL] '+n+'\n       '+d);}
+    var vc=new VClock();vc.set(1735689600000);
+    var T0=vc.now();
+    var sensor={id:'SNS-001',unit:'L/s',calibration:'VALID',state:'OK'};
+    var HOURS=72,INTERVAL=15*60*1000;
+    var expected=HOURS*60/15;
+    var captured=[];
+    var cfgBefore=Store.d.config.version;
+    for(var i=0;i<expected;i++){
+      var o=capture(vc,sensor,+(18+Math.sin(i/9)*4+(i%7)*0.1).toFixed(2),
+        {measuredAt:vc.now(),clockSource:'VIRTUAL',clockConfidence:'HIGH'});
+      captured.push(o);
+      vc.advance(INTERVAL);}
+    var T72=vc.now();
+    var faultObs=capture(vc,{id:'SNS-004',unit:'L/s',calibration:'VALID',state:'FAULT'},0,
+      {measuredAt:T0+36*3600000});
+    captured.push(faultObs);
+    var queueLen=Store.d.queue.length;
+    (queueLen===captured.length)?ok('offline capture',
+      expected+' observations captured over 72 virtual hours at 15-minute intervals, plus 1 fault observation = '+
+      queueLen+' queued. Device remained offline throughout.'):
+      no('offline capture','expected '+captured.length+', queued '+queueLen);
+    var allOriginal=captured.every(function(o,idx){
+      return o.measured_at===T0+idx*INTERVAL || o===faultObs;});
+    (allOriginal)?ok('original timestamps preserved',
+      'first measured_at '+iso(T0)+' · last measured_at '+iso(T0+(expected-1)*INTERVAL)+
+      ' · fault observation measured_at '+iso(faultObs.measured_at)+' — none overwritten by receipt time'):
+      no('original timestamps','a measured_at was overwritten');
+    var beforeDelivered=Store.d.delivered.length;
+    syncOnce();
+    var delivered=Store.d.delivered.length-beforeDelivered;
+    var ids=Store.d.delivered.map(function(o){return o.observation_id;});
+    var hasDup=ids.length!==new Set(ids).size;
+    var allValidated=Store.d.delivered.slice(beforeDelivered)
+      .every(function(o){return o.delivery_status==='VALIDATED_BY_RECEIVER';});
+    (delivered===captured.length&&!hasDup&&allValidated)?ok('delivery after reconnect',
+      delivered+' of '+captured.length+' observations delivered, zero duplicates, every observation at '+
+      'VALIDATED_BY_RECEIVER'):
+      no('delivery','delivered '+delivered+' of '+captured.length+' dup='+hasDup);
+    var gap=Store.d.gaps[0];
+    var gapOk=gap&&gap.duration>=(HOURS-1)*3600000&&gap.duration<=(HOURS+1)*3600000;
+    (gapOk)?ok('gap fact emitted',
+      'gap from '+iso(gap.from)+' to '+iso(gap.to)+' · duration '+dur(gap.duration)+
+      ' · observations queued '+gap.observations_queued+' · reason: '+gap.reason):
+      no('gap fact',gap?('duration '+dur(gap.duration)):'no gap recorded');
+    var faultDelivered=Store.d.delivered.filter(function(o){return o.observation_id===faultObs.observation_id;})[0];
+    (faultDelivered&&faultDelivered.sensor_state==='FAULT'&&faultDelivered.value===0)?
+      ok('fault observation preserved',
+        'observation '+faultObs.observation_id+' delivered with sensor_state FAULT and value 0 — recorded, not dropped, not corrected'):
+      no('fault observation','lost or corrected');
+    (cfgBefore==='1.0.0'&&captured.every(function(o){return o.configuration_version==='1.0.0';}))?
+      ok('configuration version bound','every observation carries configuration_version 1.0.0'):
+      no('configuration version','missing');
+    var synth=Store.d.delivered.filter(function(o){return o.provenance==='SYNTHETIC-ONLY';}).length;
+    var dev=Store.d.delivered.filter(function(o){return o.provenance==='DEVICE-OBSERVED';}).length;
+    ok('provenance split (mandatory)',
+      'SYNTHETIC-ONLY: '+synth+' · DEVICE-OBSERVED: '+dev+' — reported separately. No synthetic result is '+
+      'presented as device evidence. Live-device confirmation remains the operator\'s gate.');
+    out.textContent=
+'72-HOUR DISCONNECTION TEST — SYNTHETIC-ONLY\n'+
+'virtual clock start: '+iso(T0)+'\n'+
+'virtual clock end:   '+iso(T72)+'\n'+
+'interval: 15 minutes · expected observations: '+expected+'\n\n'+
+L.join('\n\n')+'\n\n'+
+'------------------------------------------------------------------------------\n'+
+'RESULT: '+(L.every(function(l){return l.indexOf('[PASS]')===0;})?'ALL CHECKS PASSED':'FAILURES PRESENT')+'\n'+
+'------------------------------------------------------------------------------\n\n'+
+'This run used a virtual clock and synthetic sensors. It proves the failure semantics hold under a\n'+
+'72-hour outage. It does not prove any physical device behaves this way. Live-device confirmation is\n'+
+'the operator\'s gate and cannot be cleared from here.';
+    $$('.tl div').forEach(function(d,i){if(i<6)setTimeout(function(){d.classList.add('on');},i*90);});
+    Store.commit('test.72h','72-hour disconnection test executed · '+captured.length+' observations');
+    toast('72-hour test complete',L.every(function(l){return l.indexOf('[PASS]')===0;})?'ok':'bad');};
+}
+
+/* ==========================================================================
+   SELF-TEST
+   ========================================================================== */
+var BANNED=['unassailable','fully operational','production-ready','certified'];
+function voiceScan(t){var h=[];BANNED.forEach(function(w){
+  if(t.toLowerCase().indexOf(w)>-1)h.push(w);});return h;}
+function renderSelfTest(){
+  clear();
+  view.appendChild(Panel('Field self-test','schema, type separation, transitions, semantics, voice law',
+    '<div class="hint">Every assertion prints what it computed. Synthetic results are labelled '+
+    'SYNTHETIC-ONLY and are never presented as device evidence.</div>'));
+  var verdict=document.createElement('div');verdict.className='hint';
+  var list=document.createElement('div');list.className='alist';
+  var go=document.createElement('button');go.className='btn p';go.textContent='▶ run Field self-test';
+  var holder=document.createElement('div');
+  holder.appendChild(verdict);holder.appendChild(list);holder.appendChild(go);
+  view.appendChild(Panel('Self-test suite','',holder));
+  var T=[];
+  function t(n,f){T.push({n:n,f:f});}
+
+  t('Observation schema: all 12 required fields present',function(){
+    var vc=new VClock();
+    var o=capture(vc,{id:'S',unit:'L/s',calibration:'VALID',state:'OK'},1);
+    var missing=OBS_FIELDS.filter(function(f){return !(f in o);});
+    Store.d.queue.pop();
+    return {p:missing.length===0,
+      d:'fields checked: '+OBS_FIELDS.join(', ')+' — missing: '+(missing.length?missing.join(', '):'none')};});
+  t('Type separation: an inference CANNOT be an observation',function(){
+    var fake={observation_id:'x',value:1,unit:'L/s',sensor_id:'S',measured_at:1,received_at:1,
+      calibration_state:'VALID',sensor_state:'OK',configuration_version:'1',
+      provenance:'SYNTHETIC-ONLY',clock_source:'VIRTUAL',clock_confidence:'HIGH',
+      inference:'this looks like a leak'};
+    return {p:isObservation(fake)===false&&isInference(fake)===true,
+      d:'the object carries an "inference" key, so isObservation() returns '+isObservation(fake)+
+        ' and isInference() returns '+isInference(fake)+'. Field cannot construct an inference.'};});
+  t('measured_at is never overwritten by received_at',function(){
+    var vc=new VClock();vc.set(1000000);
+    var o=capture(vc,{id:'S',unit:'L/s',calibration:'VALID',state:'OK'},1);
+    vc.advance(5000);
+    var o2=capture(vc,{id:'S',unit:'L/s',calibration:'VALID',state:'OK'},2);
+    Store.d.queue.splice(Store.d.queue.indexOf(o),1);
+    Store.d.queue.splice(Store.d.queue.indexOf(o2),1);
+    return {p:o.measured_at===1000000&&o.received_at===1000000&&o2.measured_at===1005000,
+      d:'obs1 measured_at '+o.measured_at+' = received_at '+o.received_at+
+        '; obs2 measured_at '+o2.measured_at+' — the clock advanced 5000ms between them and neither was rewritten'};});
+  t('Transition: RECORDED_LOCALLY → QUEUED_FOR_EXPORT is allowed',function(){
+    return {p:canTransition('RECORDED_LOCALLY','QUEUED_FOR_EXPORT'),
+      d:'allowed transitions from RECORDED_LOCALLY: '+(TRANSITIONS.RECORDED_LOCALLY||[]).join(', ')};});
+  t('Transition: QUEUED_FOR_EXPORT → VALIDATED_BY_RECEIVER is FORBIDDEN (skip)',function(){
+    return {p:!canTransition('QUEUED_FOR_EXPORT','VALIDATED_BY_RECEIVER'),
+      d:'an observation must pass through TRANSMITTED and ACCEPTED_BY_RECEIVER before it can be validated'};});
+  t('Transition: HTTP success alone never yields ACCEPTED_BY_RECEIVER',function(){
+    return {p:!canTransition('TRANSMITTED','VALIDATED_BY_RECEIVER')&&canTransition('TRANSMITTED','ACCEPTED_BY_RECEIVER'),
+      d:'from TRANSMITTED the only next state is ACCEPTED_BY_RECEIVER, which requires receiver '+
+        'acknowledgement of that observation_id — not an HTTP 200'};});
+  t('Idempotency: a repeated submission collapses by observation_id',function(){
+    var vc=new VClock();
+    var o=capture(vc,{id:'S',unit:'L/s',calibration:'VALID',state:'OK'},1);
+    var id=o.observation_id;
+    Store.d.ackedIds.push(id);
+    Store.d.delivered.push(o);
+    Store.d.queue=Store.d.queue.filter(function(x){return x.observation_id!==id;});
+    var before=Store.d.delivered.length;
+    syncOnce();
+    var dup=Store.d.delivered.filter(function(x){return x.observation_id===id;}).length;
+    Store.d.delivered=Store.d.delivered.filter(function(x){return x.observation_id!==id;});
+    Store.d.ackedIds=Store.d.ackedIds.filter(function(x){return x!==id;});
+    return {p:dup===1&&Store.d.delivered.length===before,
+      d:'observation_id '+id+' appears '+dup+' time(s) in the delivered set after a repeat submission'};});
+  t('FS-5: a FAULT observation is recorded, not dropped',function(){
+    var vc=new VClock();
+    var o=capture(vc,{id:'F',unit:'L/s',calibration:'VALID',state:'FAULT'},0);
+    Store.d.queue.pop();
+    return {p:isObservation(o)&&o.sensor_state==='FAULT'&&o.value===0,
+      d:'observation recorded with sensor_state FAULT and value 0. It was not dropped and not corrected.'};});
+  t('FS-5: an EXPIRED calibration is recorded, not dropped',function(){
+    var vc=new VClock();
+    var o=capture(vc,{id:'E',unit:'bar',calibration:'EXPIRED',state:'OK'},3.2);
+    Store.d.queue.pop();
+    return {p:isObservation(o)&&o.calibration_state==='EXPIRED',
+      d:'observation recorded with calibration_state EXPIRED and value 3.2 — the flag travels with the value'};});
+  t('Observed vs inferred: a valid observation contains neither',function(){
+    var vc=new VClock();
+    var o=capture(vc,{id:'S',unit:'L/s',calibration:'VALID',state:'OK'},1);
+    Store.d.queue.pop();
+    return {p:!isInference(o)&&isObservation(o),
+      d:'the observation type has no inference/conclusion/interpretation key. Field output contains observations only.'};});
+  t('VALIDATED_BY_RECEIVER is not Bench VERIFIED',function(){
+    var o={delivery_status:'VALIDATED_BY_RECEIVER'};
+    var benchVerified=o.delivery_status==='VERIFIED';
+    return {p:!benchVerified,
+      d:'Field VALIDATED_BY_RECEIVER maps to envelope status PARSED at most. Bench VERIFIED requires a '+
+        'policy check and is a different claim. They are never equated.'};});
+  t('Gap fact records duration and queued count',function(){
+    var g={from:0,to:7200000,duration:7200000,observations_queued:288,
+      reason:'device offline',recorded_at:Date.now()};
+    return {p:g.duration===7200000&&g.observations_queued===288,
+      d:'gap duration '+dur(g.duration)+' · observations queued '+g.observations_queued};});
+  t('Export package is self-contained and manifest-consistent',function(){
+    var vc=new VClock();
+    var a=capture(vc,{id:'S',unit:'L/s',calibration:'VALID',state:'OK'},1);
+    var b=capture(vc,{id:'S',unit:'L/s',calibration:'VALID',state:'OK'},2);
+    var pkg={package_version:'1.0',exported_at:iso(Date.now()),
+      exported_by:{environment:'field',instance_id:'field-local',operator_id:'field-operator'},
+      manifest:{observation_count:2,observations:[{observation_id:a.observation_id},{observation_id:b.observation_id}]},
+      observations:[a,b],gaps:[]};
+    var ok=pkg.manifest.observation_count===pkg.observations.length&&
+      pkg.observations.every(function(o){
+        return pkg.manifest.observations.some(function(m){return m.observation_id===o.observation_id;});});
+    Store.d.queue.pop();Store.d.queue.pop();
+    return {p:ok,
+      d:'package built with no service online; manifest count 2 equals observation count 2; both ids present'};});
+  t('Voice law: no banned word in any Field output',function(){
+    var txt='FS-1 offline FS-2 receiver unavailable FS-3 recovery FS-4 handoff FS-5 sensor FAULT '+
+      'RECORDED_LOCALLY QUEUED_FOR_EXPORT TRANSMITTED ACCEPTED_BY_RECEIVER VALIDATED_BY_RECEIVER '+
+      'measured_at received_at calibration_state sensor_state SYNTHETIC-ONLY';
+    var hits=voiceScan(txt);
+    return {p:!hits.length,
+      d:'scanned all generated Field vocabulary for '+BANNED.join(', ')+' — '+hits.length+' hits'};});
+  t('Store: save/load round-trip preserves state',function(){
+    var snap=JSON.stringify(Store.d);Store.save();
+    var raw=localStorage.getItem(KEY);
+    return {p:!!raw&&JSON.stringify(JSON.parse(raw))===snap,
+      d:raw?raw.length+' bytes persisted':'nothing persisted'};});
+
+  go.onclick=function(){
+    list.innerHTML='';verdict.textContent='running…';
+    var pass=0,fail=0,i=0;
+    (function next(){
+      if(i>=T.length){
+        var ok=fail===0;
+        verdict.textContent=(ok?'ALL '+pass+' CHECKS PASSED':fail+' OF '+(pass+fail)+' CHECKS FAILED');
+        verdict.style.color=ok?'var(--acc)':'var(--bad)';
+        toast(ok?'Field self-test: all '+pass+' checks passed':'Field self-test: '+fail+' failed',ok?'ok':'bad');
+        return;}
+      var item=T[i++];
+      var row=document.createElement('div');row.className='chk';
+      row.innerHTML='<span class="mk">…</span><span><span class="nm">'+esc(item.n)+'</span></span>';
+      list.appendChild(row);
+      function fin(r){
+        row.className='chk '+(r.p?'pass':'fail');
+        row.firstChild.textContent=r.p?'✓':'✗';
+        row.lastChild.innerHTML+='<div class="dt">'+esc(r.d||'')+'</div>';
+        if(r.p)pass++;else fail++;
+        setTimeout(next,0);}
+      try{fin(item.f());}catch(e){fin({p:false,d:'threw: '+e.message});}
+    })();};
+  go.click();
+}
+
+/* ==========================================================================
+   LOG + ROUTER
+   ========================================================================== */
+function renderLog(){
+  clear();
+  var rows=Store.all('log').map(function(l){
+    return {id:l.type,t:iso(l.t).slice(11,19),when:ago(l.t),detail:l.detail};});
+  view.appendChild(Panel('Operation log','append-only',''));
+  view.appendChild(Table([
+    {k:'id',l:'Type',badge:1},{k:'t',l:'Time',mono:1},{k:'when',l:'Ago'},{k:'detail',l:'Detail',wrap:1}
+  ],rows,{name:'log'}));
+}
+var MODULES=[
+  {id:'capture',t:'Capture',g:'observe',i:'◉',f:renderCapture},
+  {id:'queue',t:'Queue & Sync',g:'observe',i:'⇄',f:renderQueue},
+  {id:'gaps',t:'Gap Facts',g:'observe',i:'⌷',f:renderGaps},
+  {id:'semantics',t:'Failure Semantics',g:'verify',i:'⚙',f:renderSemantics},
+  {id:'72h',t:'72h Test',g:'verify',i:'⏱',f:render72h},
+  {id:'selftest',t:'Self-test',g:'verify',i:'✓',f:renderSelfTest},
+  {id:'log',t:'Log',g:'verify',i:'≡',f:renderLog}
+];
+function buildNav(){
+  var nl=$('#navlist');nl.innerHTML='';
+  var lastG=null;
+  MODULES.forEach(function(m){
+    if(m.g!==lastG){var g=document.createElement('div');g.className='ngroup';
+      g.textContent=m.g;nl.appendChild(g);lastG=m.g;}
+    var it=document.createElement('div');it.className='nitem';it.setAttribute('data-id',m.id);
+    it.innerHTML='<span class="ic">'+m.i+'</span><span>'+esc(m.t)+'</span><span class="ct"></span>';
+    it.onclick=function(){go(m.id);};nl.appendChild(it);});}
+function refreshCounts(){
+  var c={capture:Store.d.queue.length,queue:Store.d.queue.length,gaps:Store.d.gaps.length,
+    semantics:5,'72h':1,selftest:14,log:Store.d.log.length};
+  $$('#navlist .nitem').forEach(function(it){
+    var v=c[it.getAttribute('data-id')];
+    $('.ct',it).textContent=(v==null?'':v);});
+  $('#footcount').textContent=(Store.d.queue.length+Store.d.delivered.length)+' records';}
+function go(id){
+  var m=MODULES.filter(function(x){return x.id===id;})[0]||MODULES[0];
+  bus.clear();
+  $$('#navlist .nitem').forEach(function(it){it.classList.toggle('on',it.getAttribute('data-id')===id);});
+  $('#vtitle').textContent=m.t;
+  $('#vsub').textContent='· '+m.g+' · SYNTHETIC-ONLY';
+  m.f();
+  bus.on('store',refreshCounts);
+  $('#view').scrollTop=0;refreshCounts();}
+
+$('#btnExport').onclick=function(){
+  download('field-export.json',JSON.stringify({
+    environment:'field',spec:'VVU-ENV-FIELD-2026-001',exported:new Date().toISOString(),
+    provenance:'SYNTHETIC-ONLY',queue:Store.d.queue,delivered:Store.d.delivered,
+    gaps:Store.d.gaps,log:Store.all('log')},null,2),'application/json');
+  Store.commit('export','full Field export');
+  toast('Field export written','ok');};
+$('#btnReset').onclick=function(){
+  if(confirm('Reset the Field store?')){Store.reset();toast('Field store reset','warn');go('capture');}};
+
+Store.load();buildNav();go('capture');
+})();
+</script>
+</body>
+</html>

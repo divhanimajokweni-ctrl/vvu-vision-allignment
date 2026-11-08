@@ -1,0 +1,124 @@
+# build-windows.yml — VVU Trust frozen binary + portable bundle (fail-closed)
+#
+# Plan reference: active/PLAN_NEW_REPO_AMENDMENT.md (APPROVED 2026-09-22)
+#
+# Corrections vs the coordinator draft (each forced by recon evidence):
+#   - Build is delegated to vvu-trust/build/windows/build.ps1 — the real
+#     orchestrator (toolchain, py_compile, PyInstaller, portable zip).
+#     This structurally fixes the draft's wrong paths: embed_runtime_hash.py
+#     and vvu.spec live under build/windows/, NOT vvu-trust/ root.
+#   - No setup-python pip cache: no requirements/lockfile exists to hash.
+#   - Dead `if [ $? -ne 0 ]` removed; every native call gets an explicit
+#     $LASTEXITCODE gate (fail-closed regardless of shell preference vars).
+#   - Source-zip upload OMITTED: vvu-trust-source-1.0.0.zip cannot exist in
+#     this tree; with if-no-files-found: error the draft guaranteed a red run
+#     (AC allows generate-or-omit; omit chosen — no fabricated artifacts).
+#   - Artifact paths corrected: PyInstaller here emits ONEDIR bundles
+#     (dist/vvu/vvu.exe, dist/vvu-cli/vvu-cli.exe — vvu.spec uses
+#     exclude_binaries=True + COLLECT), not a top-level dist/vvu.exe; the
+#     portable zip is dist/VVU-Trust-Portable-1.0.0.zip (not download/…-Windows.zip).
+#     Whole onedir dirs upload — a bare exe without _internal is undeliverable.
+#   - make_portable.sh EXCLUDED: its header says "Linux equivalent of
+#     build.ps1 step [4/5]" and it chmods/expects frozen ELF binaries; on
+#     Windows its bundle_cli path resolves to a directory. build.ps1's own
+#     PowerShell portable step (Compress-Archive) covers this flow.
+#   - GUI smoke omitted by design: vvu.spec builds vvu.exe windowed
+#     (console=False) — executing it in CI would hang. The console CLI
+#     (vvu-cli) is smoke-tested; verbs copied from the in-tree proven form
+#     in build/windows/make_portable.sh: bootstrap / run --cycles / verify.
+#   - Trigger: workflow_dispatch ONLY until a first green manual run (AC);
+#     push triggers require a later amendment.
+name: build-windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read # structurally cannot push, tag, or deploy
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  build-windows:
+    name: Windows frozen binary + portable (fail-closed)
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Gate 1: required project paths BEFORE build activity
+      - name: Validate required project paths
+        run: |
+          $required = @(
+            'vvu-trust/build/windows/build.ps1',
+            'vvu-trust/build/windows/vvu.spec',
+            'vvu-trust/build/windows/embed_runtime_hash.py',
+            'vvu-trust/app/vvu_app.py',
+            'vvu-trust/app/vvu_cli.py'
+          )
+          foreach ($p in $required) {
+            if (-not (Test-Path $p)) { throw "missing required path: $p" }
+          }
+          Write-Output 'all required project paths present'
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          # pip cache intentionally omitted: no lockfile exists to hash
+
+      # Gate 2: build.ps1 (embeds runtime hash, py_compiles sources,
+      # runs PyInstaller, assembles portable zip) — failure fails the workflow
+      - name: Build frozen binaries + portable bundle (build.ps1)
+        run: |
+          ./vvu-trust/build/windows/build.ps1 -SkipInstaller
+          if ($LASTEXITCODE -ne 0) { throw "build.ps1 failed (exit $LASTEXITCODE)" }
+
+      # Gate 3: frozen CLI smoke test — each call explicitly gated
+      # (GUI vvu.exe is windowed and deliberately never executed in CI)
+      - name: Smoke test frozen CLI (fail-closed)
+        run: |
+          $cli = 'vvu-trust/dist/vvu-cli/vvu-cli.exe'
+          if (-not (Test-Path $cli)) { throw "missing $cli" }
+          & $cli bootstrap
+          if ($LASTEXITCODE -ne 0) { throw "smoke: bootstrap failed (exit $LASTEXITCODE)" }
+          & $cli run --cycles 3 --interval 0.0
+          if ($LASTEXITCODE -ne 0) { throw "smoke: run failed (exit $LASTEXITCODE)" }
+          & $cli verify
+          if ($LASTEXITCODE -ne 0) { throw "smoke: verify failed (exit $LASTEXITCODE)" }
+          Write-Output 'smoke test: bootstrap / run / verify all exit 0'
+
+      # Gate 4: validate outputs BEFORE upload — existence + non-empty + hash
+      - name: Validate build outputs (fail-closed, before upload)
+        run: |
+          $outputs = @(
+            'vvu-trust/dist/vvu/vvu.exe',
+            'vvu-trust/dist/vvu-cli/vvu-cli.exe',
+            'vvu-trust/dist/VVU-Trust-Portable-1.0.0.zip'
+          )
+          $lines = @()
+          foreach ($o in $outputs) {
+            if (-not (Test-Path $o)) { throw "missing output: $o" }
+            $item = Get-Item $o
+            if ($item.Length -eq 0) { throw "empty output: $o" }
+            $hash = (Get-FileHash $o -Algorithm SHA256).Hash
+            $line = "$o  $($item.Length) bytes  sha256:$hash"
+            Write-Output $line
+            $lines += $line
+          }
+          '### VVU Trust Windows outputs' | Out-File -Append $env:GITHUB_STEP_SUMMARY
+          $lines | Out-File -Append $env:GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vvu-windows-frozen
+          path: |
+            vvu-trust/dist/vvu/
+            vvu-trust/dist/vvu-cli/
+            vvu-trust/dist/VVU-Trust-Portable-1.0.0.zip
+          if-no-files-found: error
+          retention-days: 14

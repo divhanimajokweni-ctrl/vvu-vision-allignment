@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./open-source",
+    "outDir": "./dist/open-source",
+    "paths": {
+      "@vvu/shared/*": ["./shared/*"],
+      "@vvu/air-kernel": ["./open-source/air-kernel/index.ts"],
+      "@vvu/epistemic-runtime": ["./open-source/epistemic-runtime/index.ts"],
+      "@vvu/commercial/*": ["./node_modules/@vvu/blocked-commercial/*"]
+    }
+  },
+  "include": ["open-source/**/*", "shared/**/*"],
+  "exclude": ["commercial/**/*", "node_modules", "dist", "src/**/*", "mini-services/**/*"]
+}

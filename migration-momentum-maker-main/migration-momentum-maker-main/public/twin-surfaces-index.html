@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VVU Estate · Digital Twin Surfaces Index</title>
+    <style>
+      :root {
+        --bg: #06080c;
+        --panel: rgba(8, 11, 16, 0.92);
+        --line: rgba(80, 90, 110, 0.22);
+        --ink: #d8e0e8;
+        --dim: #7f95a5;
+        --amber: #f2b84b;
+        --ember: #ff8a3d;
+        --red: #e5484d;
+        --teal: #2ea8a0;
+        --lime: #c8ff00;
+        --green: #7a8a6e;
+        --bio: #52d49a;
+        --blue: #58a6ff;
+        --purple: #a371f7;
+        --cyan: #3fb950;
+        --sat: #4285f4;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        min-height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          13px/1.55 "SF Mono",
+          Menlo,
+          Consolas,
+          monospace;
+        padding: 32px 16px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      header {
+        margin-bottom: 32px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      h1 {
+        font-size: 22px;
+        letter-spacing: 2px;
+        color: #fff;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      h1 small {
+        display: block;
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--dim);
+        letter-spacing: 1.5px;
+        margin-top: 4px;
+      }
+      .sub {
+        font-size: 11px;
+        color: var(--dim);
+        letter-spacing: 1px;
+      }
+      .sub b {
+        color: var(--lime);
+        font-weight: 400;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 18px;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+      }
+      .card:hover {
+        border-color: var(--amber);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      }
+      .card .badge {
+        display: inline-block;
+        font-size: 9px;
+        letter-spacing: 1.4px;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+      .card h2 {
+        font-size: 14px;
+        letter-spacing: 1.2px;
+        color: #fff;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .card p {
+        font-size: 11px;
+        color: var(--dim);
+        line-height: 1.5;
+        margin-bottom: 12px;
+      }
+      .card .meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+      .card .meta span {
+        font-size: 9px;
+        color: var(--dim);
+        letter-spacing: 0.6px;
+      }
+      .card .meta b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      .card .open {
+        display: inline-block;
+        font-size: 10px;
+        letter-spacing: 1.2px;
+        color: var(--amber);
+        font-weight: 700;
+        margin-top: 8px;
+      }
+      .card:hover .open {
+        color: var(--ember);
+      }
+      .tile-photoreal .badge {
+        background: rgba(66, 133, 244, 0.15);
+        color: var(--sat);
+        border: 1px solid rgba(66, 133, 244, 0.4);
+      }
+      .tile-openlayers .badge {
+        background: rgba(88, 166, 255, 0.15);
+        color: var(--blue);
+        border: 1px solid rgba(88, 166, 255, 0.4);
+      }
+      .tile-dark .badge {
+        background: rgba(163, 113, 247, 0.15);
+        color: var(--purple);
+        border: 1px solid rgba(163, 113, 247, 0.4);
+      }
+      .tile-3d .badge {
+        background: rgba(63, 185, 80, 0.15);
+        color: var(--cyan);
+        border: 1px solid rgba(63, 185, 80, 0.4);
+      }
+      .tile-engine .badge {
+        background: rgba(82, 212, 154, 0.15);
+        color: var(--bio);
+        border: 1px solid rgba(82, 212, 154, 0.4);
+      }
+      .tile-canvas .badge {
+        background: rgba(255, 90, 61, 0.15);
+        color: var(--ember);
+        border: 1px solid rgba(255, 90, 61, 0.4);
+      }
+      footer {
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        font-size: 10px;
+        color: var(--dim);
+        letter-spacing: 1px;
+        text-align: center;
+      }
+      footer b {
+        color: var(--lime);
+        font-weight: 400;
+      }
+      a.download {
+        display: inline-block;
+        font-size: 11px;
+        letter-spacing: 1.2px;
+        color: var(--lime);
+        font-weight: 700;
+        margin-top: 8px;
+        border: 1px solid rgba(200, 255, 0, 0.3);
+        padding: 6px 12px;
+        border-radius: 4px;
+        text-decoration: none;
+      }
+      a.download:hover {
+        background: rgba(200, 255, 0, 0.08);
+        border-color: var(--lime);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>
+          VVU ESTATE · DIGITAL TWIN SURFACES<small
+            >SIX SURFACES · FOUR TILE STYLES · ONE ENGINE · ONE CANVAS</small
+          >
+        </h1>
+        <div class="sub">
+          Each surface is byte-for-byte standalone — drop it in a browser and it renders. The
+          estate's <b>#/twin</b> tab frames each as a browser tab would.
+          <b>SEED DATA · NOT LIVE</b> — the live wiring (pipeline engine → real member devices) is
+          the named next artifact.
+        </div>
+        <div
+          style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center"
+        >
+          <a class="download" href="/downloads/vvu-twin-surfaces.zip">⤓ DOWNLOAD BUNDLE (ZIP)</a>
+          <span style="font-size: 10px; color: var(--dim)"
+            >API: <b style="color: var(--blue)">/api/vvu/twin-scenario?list=1</b></span
+          >
+        </div>
+      </header>
+      <div class="grid">
+        <a class="card tile-canvas" href="/api/vvu/twin-scenario?scenario=cape_town_wildfire">
+          <div class="badge">CANVAS 2D · WILDFIRE</div>
+          <h2>Municipal Twin — Cape Town Wildfire</h2>
+          <p>
+            Golden-hour sky · Table Mountain silhouette · active burn polygon · smoke plume · SE
+            wind vectors · evacuation zones · 214 pulsing mesh dots · municipal asset pins · 7 layer
+            toggles · WORM ticker. Zero deps, zero API calls, runs offline.
+          </p>
+          <div class="meta">
+            <span>STYLE <b>Canvas 2D</b></span
+            ><span>SIZE <b>21.7 KB</b></span
+            ><span>WORM <b>0872178c…</b></span>
+          </div>
+          <div class="open">OPEN STANDALONE →</div>
+        </a>
+        <a class="card tile-photoreal" href="/api/vvu/twin-scenario?scenario=google_photorealistic">
+          <div class="badge">PHOTOREAL · GOOGLE 3D TILES</div>
+          <h2>Digital Twin — Google Photorealistic Tiles</h2>
+          <p>
+            Satellite · 3D mesh · MapLibre GL · photo true-color. Pitch 60° · bearing 38°. 12 edge
+            nodes as photo-realistic markers. Procedural 3D building extrusions simulate the
+            photoreal mesh in the offline sandbox; production loads MapTiler satellite.
+          </p>
+          <div class="meta">
+            <span>STYLE <b>Google Photoreal</b></span
+            ><span>SIZE <b>11.0 KB</b></span
+            ><span>WORM <b>f8e3c624…</b></span>
+          </div>
+          <div class="open">OPEN STANDALONE →</div>
+        </a>
+        <a class="card tile-openlayers" href="/api/vvu/twin-scenario?scenario=openlayers_tiles">
+          <div class="badge">OPENLAYERS · OSM</div>
+          <h2>Digital Twin — OpenLayers Tiles</h2>
+          <p>
+            OpenLayers 9.2 · OSM standard raster · EPSG:3857. 12 edge-node markers with N01–N12
+            labels. Layer toggles for sectors, heatmap, patrol routes, mesh links. Boots in
+            production from tile.openstreetmap.org.
+          </p>
+          <div class="meta">
+            <span>STYLE <b>OpenLayers</b></span
+            ><span>SIZE <b>9.6 KB</b></span
+            ><span>WORM <b>7842729c…</b></span>
+          </div>
+          <div class="open">OPEN STANDALONE →</div>
+        </a>
+        <a class="card tile-dark" href="/api/vvu/twin-scenario?scenario=dark_tiles">
+          <div class="badge">DARK MATTER · CARTODB</div>
+          <h2>Digital Twin — Dark Tiles</h2>
+          <p>
+            CartoDB Dark Matter · Leaflet 1.9 · Gqeberha edge. Subdued basemap for night ops. 12
+            device circle markers, sector polygons, mesh link polylines. Boots in production from
+            basemaps.cartocdn.com.
+          </p>
+          <div class="meta">
+            <span>STYLE <b>Dark Matter</b></span
+            ><span>SIZE <b>9.7 KB</b></span
+            ><span>WORM <b>b9c9d555…</b></span>
+          </div>
+          <div class="open">OPEN STANDALONE →</div>
+        </a>
+        <a class="card tile-3d" href="/api/vvu/twin-scenario?scenario=openmaptiles_3d">
+          <div class="badge">3D MVT · OPENMAPTILES</div>
+          <h2>Digital Twin — OpenMapTiles 3D</h2>
+          <p>
+            MapLibre 4.7 · vector tiles · 3D building extrusions · terrain mesh. Pitch 60°, bearing
+            38°. 12 edge-node markers with popups. Boots in production from OpenFreeMap Liberty
+            style with 3D building layer.
+          </p>
+          <div class="meta">
+            <span>STYLE <b>OpenMapTiles 3D</b></span
+            ><span>SIZE <b>10.4 KB</b></span
+            ><span>WORM <b>c865c79e…</b></span>
+          </div>
+          <div class="open">OPEN STANDALONE →</div>
+        </a>
+        <a class="card tile-engine" href="/api/vvu/twin-scenario?scenario=geo_bioteknik">
+          <div class="badge">GEO-BIOTEKNIK · VVB-SI 2.7</div>
+          <h2>Geo-Bioteknik · Spatial Intelligence</h2>
+          <p>
+            The estate's own engine. VVB-SI 2.7 · genomic terrain · 214-node living mesh · 7
+            inference sources with spinning rays · consequence-map ripples · bio-vectors (SE drift)
+            · bio-heat. Pure canvas — no tiles, no CDN. The consequence-map inference engine.
+          </p>
+          <div class="meta">
+            <span>STYLE <b>Geo-Bioteknik SI</b></span
+            ><span>SIZE <b>13.9 KB</b></span
+            ><span>WORM <b>209d443b…</b></span>
+          </div>
+          <div class="open">OPEN STANDALONE →</div>
+        </a>
+      </div>
+      <footer>
+        VVU FOUNDATION · TRUST THROUGH TRANSPARENT CYCLES<br />
+        <b>SEED DATA · NOT LIVE</b> · LIVE WIRING IS THE NEXT ARTIFACT · ©2026
+      </footer>
+    </div>
+  </body>
+</html>

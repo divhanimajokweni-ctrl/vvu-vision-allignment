@@ -1,0 +1,69 @@
+# ==============================================================================
+# VVU EARTH TECH — License key regeneration (manual)
+# ------------------------------------------------------------------------------
+# Triggered manually (workflow_dispatch) with a `reason` input. Regenerates the
+# Ed25519 keypair + 4 sample licenses (GOVERNANCE / ENTERPRISE / PRO / OPEN_SOURCE)
+# into `keys/` (gitignored — never committed). Uploads `keys/sample-licenses.json`
+# as a 1-day workflow artifact so the founder can download it for distribution.
+#
+# ⚠️ Real distribution is via secure channel (1Password / founder-to-customer
+#    handoff), NEVER via git. This workflow only verifies the regen script runs
+#    clean and stages the artifact for download.
+# ==============================================================================
+name: License Regen
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why are we regenerating the license keys? (e.g. key rotation, customer offboarding, suspected leak)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  regen:
+    name: Regenerate Ed25519 keys + sample licenses
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies (frozen lockfile)
+        run: bun install --frozen-lockfile
+
+      - name: Print trigger context
+        run: |
+          echo "Reason: ${{ inputs.reason }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Run ID: ${{ github.run_id }}"
+
+      - name: Regenerate license keys + sample licenses
+        # Writes keys/vvu-private.pem, keys/vvu-public.pem, keys/sample-licenses.json.
+        # All paths under /keys/ are gitignored and never committed back to the repo.
+        run: bun run scripts/regenerate-license-keys.ts
+
+      - name: Verify keys exist (no commit)
+        run: |
+          test -f keys/vvu-private.pem && echo "✓ private key generated"
+          test -f keys/vvu-public.pem  && echo "✓ public key generated"
+          test -f keys/sample-licenses.json && echo "✓ sample-licenses.json generated"
+          echo ""
+          echo "⚠️  DO NOT commit /keys/ — it is gitignored on purpose."
+          echo "    Real distribution is via secure channel (1Password / founder-to-customer handoff)."
+
+      - name: Upload sample-licenses.json artifact (1 day retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-licenses-${{ github.run_id }}
+          path: keys/sample-licenses.json
+          retention-days: 1
+          if-no-files-found: error

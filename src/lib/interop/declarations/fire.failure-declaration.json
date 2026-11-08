@@ -1,0 +1,26 @@
+{
+  "environment": "fire",
+  "verification": "DECLARED from reading the uploaded single-file build; not yet executed by Fire against a running instance",
+  "offline_capability": {
+    "primary_function_offline": true,
+    "degraded_functions": [
+      "service cases needing :3004/:3005 are not run"
+    ],
+    "local_persistence": "localStorage key fire.vvu.v1 (~5 MB per origin, synchronous, unreachable from Workers); interop artefacts in IndexedDB vvu.<env>.interop"
+  },
+  "dependency_unavailability": {
+    "distinguishes_unavailable_from_negative": true,
+    "unavailable_status": "BLOCKED",
+    "behaviour": "Unreachable service -> case BLOCKED or SKIPPED-BY-ASSET-ABSENCE, never FAILED; run without authorisation is refused and recorded."
+  },
+  "recovery": {
+    "unfinished_work_preserved": true,
+    "interrupted_operations_recorded": true,
+    "resume_safety": "Runs, counterexamples and registries reload; an interrupted run has no finishedAt and is visible as such."
+  },
+  "portability": {
+    "export_path_exists": true,
+    "export_requires_other_environment": false,
+    "export_format": "VVU-SF-2026-001 §8 export package (via vvu-interop core buildPackage)"
+  }
+}

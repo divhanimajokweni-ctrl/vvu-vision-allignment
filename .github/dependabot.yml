@@ -1,0 +1,56 @@
+# ==============================================================================
+# VVU EARTH TECH — Dependabot config
+# ------------------------------------------------------------------------------
+# Two ecosystems monitored:
+#   1. npm           — weekly, scans / (root) for package.json + bun.lock updates.
+#   2. github-actions — weekly, scans / for pinned action versions in workflows.
+#
+# Both:
+#   - schedule: weekly on Monday (aligned with the security-audit cron).
+#   - open PRs in groups of up to 5 (less noise, easier Golden Rule review).
+#   - labelled `dependencies` + `golden-rule-review` so the founder can filter.
+#
+# Golden Rule reminder: every Dependabot PR MUST be reviewed against the Golden
+# Rule — never merge a new dep that can be built in a few lines of code.
+# ==============================================================================
+version: 2
+
+updates:
+  # npm ecosystem (root package.json + bun.lock)
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Johannesburg
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - golden-rule-review
+    commit-message:
+      prefix: "deps"
+      include: scope
+    # Group minor + patch updates together. Major updates stay separate so they
+    # get individual Golden Rule review.
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # github-actions ecosystem (pinned action versions in .github/workflows/*.yml)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Johannesburg
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - golden-rule-review
+    commit-message:
+      prefix: "ci"
+      include: scope

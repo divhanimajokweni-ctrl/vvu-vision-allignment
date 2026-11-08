@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VVU · STUDIO — How-To Guide</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0d12;
+        --panel: #12161d;
+        --panel2: #181d26;
+        --line: #232a36;
+        --ink: #e6e9ee;
+        --muted: #8b94a3;
+        --acc: #30a46c;
+        --acc2: #00ffcc;
+        --forge: #f59e0b;
+        --bench: #4ec9b0;
+        --fire: #f43f5e;
+        --field: #84cc16;
+        --press: #a855f7;
+        --warn: #ffb224;
+        --err: #e5484d;
+        --mono: "JetBrains Mono", monospace;
+        --sans: "Space Grotesk", sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      .topnav {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(10, 13, 18, 0.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 24px;
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .topnav .logo {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--acc);
+      }
+      .topnav a {
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 0.15s;
+      }
+      .topnav a:hover {
+        color: var(--acc2);
+      }
+      .topnav .spacer {
+        flex: 1;
+      }
+      .wrap {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px 120px;
+      }
+      header {
+        margin-bottom: 48px;
+      }
+      .kicker {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--acc);
+        margin-bottom: 12px;
+      }
+      h1 {
+        font-size: 38px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 12px;
+      }
+      h1 .accent {
+        color: var(--acc2);
+      }
+      .lead {
+        font-size: 16px;
+        color: var(--muted);
+        max-width: 640px;
+      }
+      .toc {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 56px;
+      }
+      .toc h2 {
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 16px;
+        font-weight: 600;
+      }
+      .toc-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 8px;
+      }
+      .toc-grid a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 13px;
+        font-family: var(--mono);
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: all 0.15s;
+        border: 1px solid transparent;
+      }
+      .toc-grid a:hover {
+        background: var(--panel2);
+        border-color: var(--line);
+        color: var(--acc2);
+      }
+      .toc-grid a .num {
+        color: var(--acc);
+        font-weight: 700;
+        min-width: 24px;
+      }
+      section {
+        margin-bottom: 56px;
+        scroll-margin-top: 80px;
+      }
+      h2 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      h2 .icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: var(--mono);
+        flex-shrink: 0;
+      }
+      h3 {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 24px 0 10px;
+        color: var(--ink);
+      }
+      p {
+        margin-bottom: 12px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      p strong,
+      li strong {
+        color: var(--ink);
+      }
+      .env-pill {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+      .pill-forge {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--forge);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+      .pill-bench {
+        background: rgba(78, 201, 176, 0.15);
+        color: var(--bench);
+        border: 1px solid rgba(78, 201, 176, 0.3);
+      }
+      .pill-fire {
+        background: rgba(244, 63, 94, 0.15);
+        color: var(--fire);
+        border: 1px solid rgba(244, 63, 94, 0.3);
+      }
+      .pill-field {
+        background: rgba(132, 204, 22, 0.15);
+        color: var(--field);
+        border: 1px solid rgba(132, 204, 22, 0.3);
+      }
+      .pill-press {
+        background: rgba(168, 85, 247, 0.15);
+        color: var(--press);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+      }
+      .steps {
+        list-style: none;
+        counter-reset: step;
+        margin: 16px 0;
+      }
+      .steps li {
+        counter-increment: step;
+        position: relative;
+        padding-left: 40px;
+        margin-bottom: 14px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .steps li::before {
+        content: counter(step);
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--acc);
+        color: #07140d;
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .callout {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--acc);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 20px 0;
+      }
+      .callout.warn {
+        border-left-color: var(--warn);
+      }
+      .callout.err {
+        border-left-color: var(--err);
+      }
+      .callout .label {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--acc);
+        margin-bottom: 6px;
+        font-weight: 700;
+      }
+      .callout.warn .label {
+        color: var(--warn);
+      }
+      .callout.err .label {
+        color: var(--err);
+      }
+      .callout p {
+        margin: 0;
+        color: var(--ink);
+        font-size: 13px;
+      }
+      code,
+      kbd {
+        font-family: var(--mono);
+        font-size: 0.88em;
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        padding: 1px 6px;
+        border-radius: 4px;
+        color: var(--acc2);
+      }
+      kbd {
+        color: var(--ink);
+      }
+      .keymap {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 10px;
+        margin: 16px 0;
+      }
+      .keymap .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .keymap .row kbd {
+        min-width: 56px;
+        text-align: center;
+      }
+      .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      a.btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--acc);
+        color: #07140d;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        transition: all 0.15s;
+      }
+      a.btn:hover {
+        background: #3bb87c;
+        box-shadow: 0 0 16px rgba(48, 164, 108, 0.3);
+      }
+      a.btn.outline {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+      a.btn.outline:hover {
+        border-color: var(--acc);
+        color: var(--acc2);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+        font-size: 13px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      th {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      td {
+        color: var(--muted);
+      }
+      td strong {
+        color: var(--ink);
+      }
+      footer {
+        margin-top: 80px;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      @media (max-width: 640px) {
+        h1 {
+          font-size: 28px;
+        }
+        .wrap {
+          padding: 24px 16px 80px;
+        }
+        .topnav {
+          padding: 10px 16px;
+          gap: 10px;
+          font-size: 11px;
+        }
+        .topnav a:not(.logo) {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="topnav">
+      <span class="logo">VVU · STUDIO</span>
+      <a href="/docs/">Docs Index</a>
+      <a href="/docs/vvu-faq.html">FAQ</a>
+      <a href="/docs/vvu-inference-deliverables.html">Deliverables</a>
+      <a href="/#/dashboard">Control Plane</a>
+      <span class="spacer"></span>
+      <a href="/vvu_black_hole_protocol.html">Play Game</a>
+    </nav>
+    <div class="wrap">
+      <header>
+        <div class="kicker">How-To Guide · v1.0</div>
+        <h1>How to use <span class="accent">VVU · STUDIO</span></h1>
+        <p class="lead">
+          A founder-owned industrial asset-protection platform with 5 environments, an epistemic
+          doctrine, end-to-end e-commerce, and a 5-model AI inference gateway. This guide walks you
+          through every surface, every shortcut, and every workflow — start to finish.
+        </p>
+        <div class="cta-row">
+          <a class="btn" href="/#/">Open the Control Plane</a>
+          <a class="btn outline" href="/docs/vvu-faq.html">Read the FAQ</a>
+          <a class="btn outline" href="/docs/vvu-inference-deliverables.html"
+            >Deliverables &amp; Proof</a
+          >
+        </div>
+      </header>
+      <div class="toc">
+        <h2>Table of Contents</h2>
+        <div class="toc-grid">
+          <a href="#start"><span class="num">01</span> Getting Started</a>
+          <a href="#navigate"><span class="num">02</span> Navigation &amp; Shortcuts</a>
+          <a href="#onboarding"><span class="num">03</span> Onboarding Wizard</a>
+          <a href="#forge"><span class="num">04</span> Forge Environment</a>
+          <a href="#bench"><span class="num">05</span> Bench Environment</a>
+          <a href="#fire"><span class="num">06</span> Fire Environment</a>
+          <a href="#field"><span class="num">07</span> Field Environment</a>
+          <a href="#press"><span class="num">08</span> Press Environment</a>
+          <a href="#commerce"><span class="num">09</span> E-Commerce &amp; Store</a>
+          <a href="#pools"><span class="num">10</span> Ubuntu Pools</a>
+          <a href="#subscribe"><span class="num">11</span> Subscriptions</a>
+          <a href="#inference"><span class="num">12</span> Inference Gateway</a>
+          <a href="#doctrine"><span class="num">13</span> Epistemic Doctrine</a>
+          <a href="#admin"><span class="num">14</span> Admin Panel</a>
+          <a href="#safegrid"><span class="num">15</span> SafeGrid Edge Mesh</a>
+          <a href="#game"><span class="num">16</span> Edge of Oblivion (Game)</a>
+          <a href="#deploy"><span class="num">17</span> Deployment &amp; Git</a>
+          <a href="#troubleshoot"><span class="num">18</span> Troubleshooting</a>
+        </div>
+      </div>
+
+      <section id="start">
+        <h2>
+          <span class="icon" style="background: rgba(48, 164, 108, 0.15); color: var(--acc)"
+            >01</span
+          >
+          Getting Started
+        </h2>
+        <p>
+          VVU · STUDIO runs entirely in your browser. There is nothing to install. The platform is a
+          single-page app served from the root URL <code>/</code>.
+        </p>
+        <h3>How to open the platform</h3>
+        <ol class="steps">
+          <li>
+            <strong>Open the root URL</strong> in the Preview Panel (or your live deploy). The
+            Control Plane dashboard loads at <code>/#/dashboard</code>.
+          </li>
+          <li>
+            <strong>The first thing you see</strong> is the dashboard: a hero header with KPIs, the
+            5 Environments row, Deal of the Day, the doctrine panel, live telemetry, and the bridge
+            status.
+          </li>
+          <li>
+            <strong>If you're a new user</strong>, the Onboarding Wizard launches automatically (see
+            section 03).
+          </li>
+        </ol>
+        <div class="callout">
+          <div class="label">Tip</div>
+          <p>
+            The platform uses hash-based routing. Every surface has a URL like
+            <code>/#/forge</code> or <code>/#/inference</code>. You can bookmark or share any
+            surface directly.
+          </p>
+        </div>
+        <div class="cta-row"><a class="btn" href="/#/">Open the Control Plane now</a></div>
+      </section>
+
+      <section id="navigate">
+        <h2>
+          <span class="icon" style="background: rgba(0, 255, 204, 0.15); color: var(--acc2)"
+            >02</span
+          >
+          Navigation &amp; Shortcuts
+        </h2>
+        <p>
+          The platform is designed for keyboard-first navigation. Three tools get you anywhere in
+          under 2 seconds.
+        </p>
+        <h3>Command Palette — <kbd>Ctrl</kbd> + <kbd>K</kbd></h3>
+        <p>
+          Press <kbd>Ctrl</kbd>+<kbd>K</kbd> anywhere to open the command palette. Type to
+          fuzzy-search 55+ surfaces. Arrow keys to navigate, Enter to open. This is the fastest way
+          to jump between environments.
+        </p>
+        <h3>Global Search — <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd></h3>
+        <p>
+          Searches the actual database — products, pools, papers, devices, licenses. Returns
+          clickable results grouped by type.
+        </p>
+        <h3>Keyboard map (Ctrl + number)</h3>
+        <div class="keymap">
+          <div class="row"><kbd>Ctrl+1</kbd> IVE · Spatial Intelligence</div>
+          <div class="row"><kbd>Ctrl+2</kbd> Bridge · Evidence Chain</div>
+          <div class="row"><kbd>Ctrl+3</kbd> Terminal</div>
+          <div class="row"><kbd>Ctrl+4</kbd> Mission Control</div>
+          <div class="row"><kbd>Ctrl+5</kbd> Municipal Twin</div>
+          <div class="row"><kbd>Ctrl+6</kbd> Watchdog · Rail Health</div>
+          <div class="row"><kbd>Ctrl+7</kbd> Receipts</div>
+          <div class="row"><kbd>Ctrl+8</kbd> Ubuntu Pools</div>
+          <div class="row"><kbd>Ctrl+9</kbd> Bridges · Field Pairing</div>
+          <div class="row"><kbd>Ctrl+0</kbd> Settings</div>
+        </div>
+        <h3>Other shortcuts</h3>
+        <div class="keymap">
+          <div class="row"><kbd>F8</kbd> Notifications panel</div>
+          <div class="row"><kbd>Esc</kbd> Close any modal</div>
+          <div class="row"><kbd>Ctrl+K</kbd> Command palette</div>
+          <div class="row"><kbd>Ctrl+Shift+F</kbd> Global DB search</div>
+        </div>
+      </section>
+
+      <section id="onboarding">
+        <h2>
+          <span class="icon" style="background: rgba(168, 85, 247, 0.15); color: var(--press)"
+            >03</span
+          >
+          Onboarding Wizard
+        </h2>
+        <p>
+          The 4-step wizard launches on first visit. It walks you from identity to a proven,
+          device-bound, integrated state.
+        </p>
+        <ol class="steps">
+          <li>
+            <strong>Identity</strong> — Enter your founder handle. This becomes your canonical
+            identity in the epistemic runtime.
+          </li>
+          <li>
+            <strong>Device Bind</strong> — A real QR code is generated (scannable by any
+            authenticator app). The TOTP URI binds your device to the platform. Scan it with Google
+            Authenticator, Authy, or similar.
+          </li>
+          <li>
+            <strong>Integrations</strong> — Toggle which environments you want active (Forge, Bench,
+            Fire, Field, Press). You can change these later.
+          </li>
+          <li>
+            <strong>Proven</strong> — The wizard mints your first proof receipt and marks you as
+            onboarded. The full control plane unlocks.
+          </li>
+        </ol>
+        <div class="callout warn">
+          <div class="label">Important</div>
+          <p>
+            The QR code is <strong>real</strong> — generated with the <code>qrcode</code> library
+            using a valid TOTP URI. You can scan it with your phone and it will produce real 6-digit
+            codes.
+          </p>
+        </div>
+        <p>To re-run the wizard later: <kbd>Ctrl</kbd>+<kbd>K</kbd> → type "onboarding" → Enter.</p>
+      </section>
+
+      <section id="forge">
+        <h2>
+          <span class="icon" style="background: rgba(245, 158, 11, 0.15); color: var(--forge)"
+            >04</span
+          >
+          Forge Environment <span class="env-pill pill-forge">FORGE</span>
+        </h2>
+        <p>
+          A NotebookLM-style study environment. Upload sources, take notes, and build knowledge
+          graphs that feed the epistemic runtime.
+        </p>
+        <h3>How to use Forge</h3>
+        <ol class="steps">
+          <li>
+            <strong>Open Forge</strong> — <kbd>Ctrl</kbd>+<kbd>K</kbd> → "forge", or click the FORGE
+            card on the dashboard.
+          </li>
+          <li>
+            <strong>Create a notebook</strong> — Click "New Notebook". Give it a title and topic.
+          </li>
+          <li>
+            <strong>Add sources</strong> — Paste URLs, upload documents, or add text snippets. Each
+            source becomes a citable node.
+          </li>
+          <li>
+            <strong>Take notes</strong> — Notes auto-link to sources. The system tracks which
+            sources back each claim.
+          </li>
+          <li>
+            <strong>Export to Bench</strong> — Send structured findings to the Bench asset registry
+            as evidence rows.
+          </li>
+        </ol>
+        <div class="callout">
+          <div class="label">Epistemic tie-in</div>
+          <p>
+            Every note in Forge can be tagged with a tier: <strong>RAW</strong>,
+            <strong>COMPUTED</strong>, <strong>VERIFIED</strong>, or <strong>PROVEN</strong>. Only
+            PROVEN notes can anchor a Fire (financial) action.
+          </p>
+        </div>
+      </section>
+
+      <section id="bench">
+        <h2>
+          <span class="icon" style="background: rgba(78, 201, 176, 0.15); color: var(--bench)"
+            >05</span
+          >
+          Bench Environment <span class="env-pill pill-bench">BENCH</span>
+        </h2>
+        <p>
+          An Excel/Sheets-style asset registry. Every row is a receipted asset with a node-locked
+          license. This is where hardware meets the doctrine.
+        </p>
+        <h3>How to use Bench</h3>
+        <ol class="steps">
+          <li><strong>Open Bench</strong> — <kbd>Ctrl</kbd>+<kbd>K</kbd> → "bench".</li>
+          <li>
+            <strong>The grid</strong> shows every asset row: name, class, license key, hardware
+            hash, status.
+          </li>
+          <li>
+            <strong>Click any row</strong> to open the asset detail: full license audit trail,
+            hardware fingerprint, and event log.
+          </li>
+          <li>
+            <strong>Licensing</strong> — Navigate to <code>/#/licensing</code> to see the
+            node-locked license engine. Licenses are bound by a weighted score: Motherboard (45) +
+            CPU (30) + GUID (15) + Disk (10) = 100, threshold 85.
+          </li>
+        </ol>
+        <div class="callout">
+          <div class="label">Weighted licensing</div>
+          <p>
+            If a component changes (e.g. RAM upgrade), the license stays valid because the score
+            still clears 85. If the motherboard changes, the score drops below threshold and the
+            license must be re-issued.
+          </p>
+        </div>
+      </section>
+
+      <section id="fire">
+        <h2>
+          <span class="icon" style="background: rgba(244, 63, 94, 0.15); color: var(--fire)"
+            >06</span
+          >
+          Fire Environment <span class="env-pill pill-fire">FIRE</span>
+        </h2>
+        <p>
+          A Binance-style collective savings engine. Ubuntu Pools + ProofBridge. ZAR ledger only.
+          This is where money moves — and it is constitutionally gated.
+        </p>
+        <h3>How to use Fire</h3>
+        <ol class="steps">
+          <li>
+            <strong>Open Fire</strong> — <kbd>Ctrl</kbd>+<kbd>K</kbd> → "fire", or
+            <kbd>Ctrl</kbd>+<kbd>8</kbd> for Ubuntu Pools.
+          </li>
+          <li>
+            <strong>Browse pools</strong> — Commercial (R533k), Campus (R5k), Creator (R8k–R50k).
+            Each pool has a goal, contributors, and a ProofBridge escrow.
+          </li>
+          <li>
+            <strong>Contribute</strong> — Open a pool, click "Contribute", enter amount (ZAR).
+            ProofBridge holds the funds in escrow until the pool's goal is met.
+          </li>
+          <li>
+            <strong>Receipt</strong> — Every contribution mints a SHA-256 receipt. This is your
+            proof of participation.
+          </li>
+        </ol>
+        <div class="callout err">
+          <div class="label">Constitutional rule (Article I §1.3)</div>
+          <p>
+            Fire <strong>never</strong> emits PROVEN on its own. A pool can only disburse if the
+            Epistemic Runtime has already minted a PROVEN proof for the underlying claim.
+            <code>vote=PASS + proof=FAIL + authorization=EXECUTE → REJECTED</code> — enforced at
+            machine level.
+          </p>
+        </div>
+      </section>
+
+      <section id="field">
+        <h2>
+          <span class="icon" style="background: rgba(132, 204, 22, 0.15); color: var(--field)"
+            >07</span
+          >
+          Field Environment <span class="env-pill pill-field">FIELD</span>
+        </h2>
+        <p>
+          Infrastructure and asset monitoring. Edge devices stream receipted telemetry. Dual-tier
+          storage: IndexedDB pond → S3+IPFS ocean.
+        </p>
+        <h3>How to use Field</h3>
+        <ol class="steps">
+          <li><strong>Open Field</strong> — <kbd>Ctrl</kbd>+<kbd>K</kbd> → "field".</li>
+          <li>
+            <strong>Device list</strong> — See all paired edge devices: rail-pins, cameras, strain
+            gauges. Each shows battery, signal, last telemetry timestamp.
+          </li>
+          <li>
+            <strong>Live telemetry</strong> — Click a device to see its real-time data stream
+            (vibration, temperature, presence).
+          </li>
+          <li>
+            <strong>EIS receipts</strong> — Every telemetry packet is an Evidence Inspection
+            Statement receipt. Tamper-evident, replay-resistant.
+          </li>
+          <li>
+            <strong>Pair a new device</strong> — Go to <code>/#/bridges</code>. The device presents
+            its public key + a nonce signed by the gateway. The vault validates before admitting.
+          </li>
+        </ol>
+      </section>
+
+      <section id="press">
+        <h2>
+          <span class="icon" style="background: rgba(168, 85, 247, 0.15); color: var(--press)"
+            >08</span
+          >
+          Press Environment <span class="env-pill pill-press">PRESS</span>
+        </h2>
+        <p>
+          An IEEE + YouTube hybrid publishing library. Peer-grade papers alongside explainer videos.
+        </p>
+        <h3>How to use Press</h3>
+        <ol class="steps">
+          <li><strong>Open Press</strong> — <kbd>Ctrl</kbd>+<kbd>K</kbd> → "press".</li>
+          <li>
+            <strong>Three tabs</strong> — Papers (DOI-tagged), Videos (receipted uploads), Record
+            (capture new).
+          </li>
+          <li>
+            <strong>Read a paper</strong> — Click any paper card. The full text opens with DOI,
+            abstract, methodology, and evidence hashes.
+          </li>
+          <li>
+            <strong>Watch a video</strong> — Click any video card. Each video carries a receipted
+            upload timestamp.
+          </li>
+          <li>
+            <strong>Publish</strong> — Use the Record tab to capture a new video chunk (5-second
+            .webm segments) or upload a paper draft.
+          </li>
+        </ol>
+      </section>
+
+      <section id="commerce">
+        <h2>
+          <span class="icon" style="background: rgba(48, 164, 108, 0.15); color: var(--acc)"
+            >09</span
+          >
+          E-Commerce &amp; Store
+        </h2>
+        <p>
+          A full storefront: browse products, compare, bundle, cart, checkout via ProofBridge, order
+          history, wishlist.
+        </p>
+        <h3>How to buy</h3>
+        <ol class="steps">
+          <li><strong>Open the Store</strong> — <kbd>Ctrl</kbd>+<kbd>K</kbd> → "store".</li>
+          <li>
+            <strong>Browse</strong> — Featured products, categories, deals. Click any product for
+            full detail (gallery, variants, reviews, Q&amp;A).
+          </li>
+          <li>
+            <strong>Add to cart</strong> — Click "Add to Cart". The cart badge in the title bar
+            updates.
+          </li>
+          <li>
+            <strong>Compare</strong> — Click "Compare" on any product to add it to the comparison
+            tray. View side-by-side at <code>/#/compare</code>.
+          </li>
+          <li>
+            <strong>Checkout</strong> — Go to <code>/#/cart</code> → "Checkout". ProofBridge
+            processes the ZAR payment. You get a SHA-256 receipt.
+          </li>
+          <li>
+            <strong>Order history</strong> — <code>/#/orders</code> shows every past order with its
+            receipt hash.
+          </li>
+        </ol>
+        <h3>Bundles</h3>
+        <p>
+          Curated multi-product bundles at <code>/#/bundles</code>. Click a bundle to see its
+          contents and total savings.
+        </p>
+        <h3>Wishlist</h3>
+        <p>
+          Save products for later at <code>/#/wishlist</code>. Click the heart icon on any product
+          card.
+        </p>
+      </section>
+
+      <section id="pools">
+        <h2>
+          <span class="icon" style="background: rgba(244, 63, 94, 0.15); color: var(--fire)"
+            >10</span
+          >
+          Ubuntu Pools
+        </h2>
+        <p>
+          Collective savings pools with the Ubuntu Score reputation system. 5 weighted components, 5
+          authority levels.
+        </p>
+        <h3>Ubuntu Score breakdown</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Weight</th>
+              <th>What it measures</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Reciprocity</strong></td>
+              <td>25%</td>
+              <td>Have you contributed back to pools you benefited from?</td>
+            </tr>
+            <tr>
+              <td><strong>Consistency</strong></td>
+              <td>20%</td>
+              <td>Regularity of contributions over time.</td>
+            </tr>
+            <tr>
+              <td><strong>Endorsements</strong></td>
+              <td>20%</td>
+              <td>How many other users vouch for you.</td>
+            </tr>
+            <tr>
+              <td><strong>Governance</strong></td>
+              <td>20%</td>
+              <td>Participation in pool decisions and votes.</td>
+            </tr>
+            <tr>
+              <td><strong>Resource Sharing</strong></td>
+              <td>15%</td>
+              <td>Assets/knowledge you've made available.</td>
+            </tr>
+          </tbody>
+        </table>
+        <h3>Authority levels</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Level</th>
+              <th>Score</th>
+              <th>Powers</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Novice</strong></td>
+              <td>0–20</td>
+              <td>Join pools, contribute</td>
+            </tr>
+            <tr>
+              <td><strong>Contributor</strong></td>
+              <td>21–40</td>
+              <td>Endorse others</td>
+            </tr>
+            <tr>
+              <td><strong>Custodian</strong></td>
+              <td>41–60</td>
+              <td>Propose new pools</td>
+            </tr>
+            <tr>
+              <td><strong>Steward</strong></td>
+              <td>61–80</td>
+              <td>Vote on governance</td>
+            </tr>
+            <tr>
+              <td><strong>Archivist</strong></td>
+              <td>81–100</td>
+              <td>Override + audit</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="subscribe">
+        <h2>
+          <span class="icon" style="background: rgba(255, 178, 36, 0.15); color: var(--warn)"
+            >11</span
+          >
+          Subscriptions
+        </h2>
+        <p>
+          Three tiers, ZAR only, ProofBridge checkout. Subscriptions unlock platform features and
+          pool access.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Price</th>
+              <th>Includes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Supporter</strong></td>
+              <td>R49/mo</td>
+              <td>Basic pool access, storefront, Forge</td>
+            </tr>
+            <tr>
+              <td><strong>Super Fan</strong></td>
+              <td>R99/mo</td>
+              <td>All Supporter + Bench licensing + Field monitoring</td>
+            </tr>
+            <tr>
+              <td><strong>VIP</strong></td>
+              <td>R249/mo</td>
+              <td>All Super Fan + Press publishing + Inference Gateway + admin tools</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          To subscribe: <kbd>Ctrl</kbd>+<kbd>K</kbd> → "subscribe" → choose tier → ProofBridge
+          checkout.
+        </p>
+      </section>
+
+      <section id="inference">
+        <h2>
+          <span class="icon" style="background: rgba(0, 144, 255, 0.15); color: #0090ff">12</span>
+          Inference Gateway
+        </h2>
+        <p>
+          The VVU Inference Gateway binds 5 scientific Foundation Models to the WORM Ledger. Open it
+          at <code>/#/inference</code>.
+        </p>
+        <h3>The 5 models</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Class</th>
+              <th>Job</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>DTC</strong></td>
+              <td>Visual</td>
+              <td>3D mesh retrieval, ±0.005mm, fail-closed</td>
+            </tr>
+            <tr>
+              <td><strong>Prithvi-EO-2.0</strong></td>
+              <td>Macro</td>
+              <td>NASA/IBM 600M — flood/fire/crop</td>
+            </tr>
+            <tr>
+              <td><strong>MSFMamba</strong></td>
+              <td>Tactical</td>
+              <td>HSI+LiDAR+SAR fusion at 60 FPS edge</td>
+            </tr>
+            <tr>
+              <td><strong>IRIDE NIMBUS DInSAR</strong></td>
+              <td>Structural</td>
+              <td>mm-level deformation, dual-gate with IoT</td>
+            </tr>
+            <tr>
+              <td><strong>Vision FM Survey</strong></td>
+              <td>Registry</td>
+              <td>Tech radar / benchmark catalogue</td>
+            </tr>
+          </tbody>
+        </table>
+        <h3>How to use the Model Registry</h3>
+        <ol class="steps">
+          <li>
+            <strong>Open the gateway</strong> — <kbd>Ctrl</kbd>+<kbd>K</kbd> → "inference", or go to
+            <code>/#/inference</code>.
+          </li>
+          <li>
+            <strong>Enable a model</strong> — Click the toggle on any model card. The card lights
+            up.
+          </li>
+          <li>
+            <strong>Adjust thresholds</strong> — Each enabled model shows a threshold editor (e.g.
+            flood_risk 0.85, intrusion_confidence 0.95, displacement 1.5mm).
+          </li>
+          <li>
+            <strong>Run inference</strong> — Click "Run Inference". The Python gateway simulates a
+            result, SHA-256 hashes it, and writes it to the WORM log.
+          </li>
+          <li>
+            <strong>Read the WORM log</strong> — The log feed shows every inference: status (PROVEN
+            / INCONCLUSIVE / BLOCKED), severity, confidence %, model class, hash, timestamp.
+          </li>
+        </ol>
+        <div class="callout">
+          <div class="label">Epistemic humility</div>
+          <p>
+            If satellite (DInSAR) says 2.6mm displacement but the IoT gauge says 0.1mm, the system
+            emits <strong>INCONCLUSIVE + MANUAL_VERIFICATION_REQUIRED</strong>. It never guesses.
+          </p>
+        </div>
+        <div class="cta-row">
+          <a class="btn" href="/#/inference">Open the Inference Gateway</a>
+          <a class="btn outline" href="/docs/VVU-INFERENCE-GATEWAY-ARCHITECTURE.md"
+            >Architecture doc</a
+          >
+        </div>
+      </section>
+
+      <section id="doctrine">
+        <h2>
+          <span class="icon" style="background: rgba(229, 72, 77, 0.15); color: var(--err)"
+            >13</span
+          >
+          Epistemic Doctrine
+        </h2>
+        <p>
+          The doctrine is the heart of VVU · STUDIO. It defines how claims become proofs, and how
+          proofs authorize actions.
+        </p>
+        <h3>The tier ladder</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Meaning</th>
+              <th>Who can emit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>RAW</strong></td>
+              <td>Unverified input</td>
+              <td>Any sensor or user</td>
+            </tr>
+            <tr>
+              <td><strong>COMPUTED</strong></td>
+              <td>Derived from RAW via a known function</td>
+              <td>The runtime</td>
+            </tr>
+            <tr>
+              <td><strong>VERIFIED</strong></td>
+              <td>Checked against a second source</td>
+              <td>The runtime + a corroborating oracle</td>
+            </tr>
+            <tr>
+              <td><strong>PROVEN</strong></td>
+              <td>Cryptographically anchored, replayable, epoch-tagged</td>
+              <td>The Epistemic Runtime only — never Fire, never a model</td>
+            </tr>
+          </tbody>
+        </table>
+        <h3>The 7 runtime primitives</h3>
+        <p>
+          <strong
+            >Identity → Specification → Compiler → Evidence → Evaluation → Proof →
+            Projection</strong
+          >
+        </p>
+        <p>
+          The Projection is a pure fold: <code>Projection_E = fold(Genesis, ProofLog, Epoch)</code>.
+          No side effects. Historical proofs remain permanently interpretable because every epoch is
+          versioned.
+        </p>
+        <h3>Two-Gate Execution</h3>
+        <p>Every action must pass TWO gates:</p>
+        <ol class="steps">
+          <li><strong>Epistemic gate</strong> — Is the claim verified to the required tier?</li>
+          <li>
+            <strong>Constitutional gate</strong> — Is the action authorized by the current RuleSet?
+          </li>
+        </ol>
+        <p>Both must pass. If either fails, the action is REJECTED.</p>
+        <h3>Try it live</h3>
+        <p>
+          <kbd>Ctrl</kbd>+<kbd>K</kbd> → "epistemic" to open the runtime playground. You can submit
+          claims, watch them evaluate, mint proofs, and replay epochs.
+        </p>
+      </section>
+
+      <section id="admin">
+        <h2>
+          <span class="icon" style="background: rgba(139, 148, 163, 0.15); color: var(--muted)"
+            >14</span
+          >
+          Admin Panel
+        </h2>
+        <p>Dashboard customization without code changes. Open at <code>/#/admin</code>.</p>
+        <h3>Three tabs</h3>
+        <ol class="steps">
+          <li>
+            <strong>Widgets</strong> — Toggle dashboard widgets on/off, drag to reorder, edit
+            labels. Changes save instantly.
+          </li>
+          <li>
+            <strong>Content</strong> — Edit the hero text, deal of the day, featured products,
+            banner messages.
+          </li>
+          <li>
+            <strong>Staff</strong> — Add staff accounts with role-based permissions (Viewer, Editor,
+            Manager, Founder).
+          </li>
+        </ol>
+        <div class="callout err">
+          <div class="label">Constitution-protected</div>
+          <p>
+            The admin panel <strong>cannot</strong> modify: the epistemic doctrine, the Fire
+            ceiling, the tier ladder, or the Oracle Boundary. These are hardcoded constitution.
+            Staff can change how the dashboard <em>looks</em>, not how the platform <em>thinks</em>.
+          </p>
+        </div>
+      </section>
+
+      <section id="safegrid">
+        <h2>
+          <span class="icon" style="background: rgba(132, 204, 22, 0.15); color: var(--field)"
+            >15</span
+          >
+          SafeGrid Edge Mesh
+        </h2>
+        <p>
+          A SaaS command center for physical security: sites, cameras, alerts, edge nodes with
+          AI-powered detection and GitOps deployment tracking.
+        </p>
+        <h3>How to use SafeGrid</h3>
+        <ol class="steps">
+          <li><strong>Open SafeGrid</strong> — <kbd>Ctrl</kbd>+<kbd>K</kbd> → "safegrid".</li>
+          <li>
+            <strong>Sites</strong> — See all monitored sites with camera counts and alert status.
+          </li>
+          <li>
+            <strong>Cameras</strong> — Each camera shows live status, last frame, and AI alert
+            count.
+          </li>
+          <li>
+            <strong>Alerts</strong> — Real-time alert feed: intrusion, loitering, perimeter breach.
+            Each alert is receipted.
+          </li>
+          <li>
+            <strong>Edge nodes</strong> — Deployment tracking via GitOps. See which model version
+            runs on each node.
+          </li>
+        </ol>
+      </section>
+
+      <section id="game">
+        <h2>
+          <span class="icon" style="background: rgba(0, 255, 204, 0.15); color: var(--acc2)"
+            >16</span
+          >
+          Edge of Oblivion (Game)
+        </h2>
+        <p>
+          A deep-space survival RPG with the Edge of Tomorrow mechanic. Real black-hole physics,
+          swarm AI, crew recruitment, and upgrade persistence across timelines.
+        </p>
+        <h3>How to play</h3>
+        <ol class="steps">
+          <li>
+            <strong>Open the game</strong> — Go to <code>/vvu_black_hole_protocol.html</code> (or
+            click below).
+          </li>
+          <li><strong>Click "INITIALIZE SEQUENCE"</strong> to start.</li>
+          <li>
+            <strong>Move</strong> — <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to thrust.
+            Your ship has momentum — manage it.
+          </li>
+          <li><strong>Aim &amp; fire</strong> — Move mouse to aim, click to fire.</li>
+          <li>
+            <strong>Avoid the black hole</strong> — It exerts real gravity (<code>F = G·M/r²</code
+            >). Cross the event horizon and you're spaghettified.
+          </li>
+          <li>
+            <strong>Kill enemies</strong> — Yellow drones swarm and explode on contact (5 scrap
+            each). Red pirates shoot from range (15 scrap each).
+          </li>
+          <li>
+            <strong>Recruit crew</strong> — White flashes indicate a survivor rescue. Crew fills
+            your manifest (max 3).
+          </li>
+          <li>
+            <strong>Die</strong> — You wake up at Station Omega, keeping your scrap and upgrades.
+          </li>
+          <li>
+            <strong>Buy upgrades</strong> — Reinforced Hull (50), Ion Thrusters (50), Twin-Link
+            Cannons (100).
+          </li>
+          <li>
+            <strong>Reboot timeline</strong> — Each death increments the timeline. Your upgrades
+            persist. Try again, smarter.
+          </li>
+        </ol>
+        <div class="callout">
+          <div class="label">Physics note</div>
+          <p>
+            The black hole mass is 100,000 and sits at <code>(0, 0, -2000)</code>. Gravity only
+            activates within 2000 units. The event horizon is at 150 units — get closer than that
+            and you die instantly.
+          </p>
+        </div>
+        <div class="cta-row">
+          <a class="btn" href="/vvu_black_hole_protocol.html" target="_blank"
+            >Play Edge of Oblivion</a
+          >
+        </div>
+      </section>
+
+      <section id="deploy">
+        <h2>
+          <span class="icon" style="background: rgba(48, 164, 108, 0.15); color: var(--acc)"
+            >17</span
+          >
+          Deployment &amp; Git
+        </h2>
+        <p>
+          The platform deploys to Vercel under the <strong>vvu-org</strong> team. Source lives on
+          GitHub.
+        </p>
+        <h3>Live URLs</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>What</th>
+              <th>URL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>GitHub repo</strong></td>
+              <td>
+                <a
+                  href="https://github.com/divhanimajokweni-ctrl/vvu-control"
+                  style="color: var(--acc2)"
+                  >github.com/divhanimajokweni-ctrl/vvu-control</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Production (Vercel)</strong></td>
+              <td>
+                <a href="https://my-project-vvu-org.vercel.app" style="color: var(--acc2)"
+                  >my-project-vvu-org.vercel.app</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Alt alias</strong></td>
+              <td>
+                <a href="https://my-project-three-alpha-26.vercel.app" style="color: var(--acc2)"
+                  >my-project-three-alpha-26.vercel.app</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Custom domain (pending DNS)</strong></td>
+              <td>vvu-control.space-z.ai</td>
+            </tr>
+          </tbody>
+        </table>
+        <h3>How to deploy a change</h3>
+        <ol class="steps">
+          <li>
+            <strong>Commit locally</strong> —
+            <code>git add -A &amp;&amp; git commit -m "feat: ..."</code>
+          </li>
+          <li><strong>Push to GitHub</strong> — <code>git push origin main</code></li>
+          <li>
+            <strong>Vercel auto-builds</strong> — The GitHub integration triggers a production build
+            automatically.
+          </li>
+          <li>
+            <strong>If the build is BLOCKED</strong> (hobby plan concurrency limit) — trigger
+            manually via the Vercel Git Push API with <code>forceNew=1</code>.
+          </li>
+          <li>
+            <strong>Verify</strong> — Check the deployment is READY, then visit the production URL.
+          </li>
+        </ol>
+        <div class="callout warn">
+          <div class="label">Known limitation</div>
+          <p>
+            Vercel serverless uses ephemeral <code>/tmp/vvu.db</code>. Each cold instance re-creates
+            the schema and re-seeds the 5 inference models. Writes (toggle, run inference) don't
+            persist across instances. For persistent data, swap the Prisma datasource to Vercel
+            Postgres.
+          </p>
+        </div>
+      </section>
+
+      <section id="troubleshoot">
+        <h2>
+          <span class="icon" style="background: rgba(229, 72, 77, 0.15); color: var(--err)"
+            >18</span
+          >
+          Troubleshooting
+        </h2>
+        <h3>The page loads but APIs return 500</h3>
+        <p>
+          This is a cold-start race: the ephemeral SQLite schema is still being created.
+          <strong>Refresh the page.</strong> The second request hits a warm instance with the schema
+          ready.
+        </p>
+        <h3>The Inference Gateway shows "0 MODELS"</h3>
+        <p>
+          Same cold-start issue. The 5 models auto-seed on the first
+          <code>GET /api/inference</code> request. Refresh once — they'll appear.
+        </p>
+        <h3>A route shows a blank screen</h3>
+        <p>
+          Check the URL hash. It must be <code>/#/inference</code> (with the slash), not
+          <code>/#inference</code>. The command palette always builds the correct hash.
+        </p>
+        <h3>The QR code won't scan</h3>
+        <p>
+          It's a real TOTP URI generated by the <code>qrcode</code> library. Make sure your
+          authenticator app supports <code>otpauth://</code> URIs (Google Authenticator, Authy,
+          1Password all do).
+        </p>
+        <h3>Git push fails with "Bad credentials"</h3>
+        <p>
+          Your GitHub PAT expired or was revoked (GitHub auto-revokes leaked tokens). Generate a new
+          one at <code>github.com/settings/tokens</code> with <code>repo</code> scope.
+        </p>
+        <h3>Vercel deploy shows "Blocked"</h3>
+        <p>
+          The hobby plan allows 1 concurrent build. Delete blocked deployments via the Vercel API,
+          then trigger a new build with <code>forceNew=1</code>.
+        </p>
+      </section>
+
+      <footer>
+        <span>VVU · STUDIO · Founder-Owned Industrial Asset Protection</span>
+        <span>How-To Guide v1.0 · press any link to verify</span>
+      </footer>
+    </div>
+  </body>
+</html>

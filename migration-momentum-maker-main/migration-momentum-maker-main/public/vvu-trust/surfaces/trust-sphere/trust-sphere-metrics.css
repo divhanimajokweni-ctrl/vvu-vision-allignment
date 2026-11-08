@@ -1,0 +1,212 @@
+/* trust-sphere-metrics.css — Task 47 · the metrics panel styles.
+ *
+ * SIZES ARE THE SPEC (non-negotiable):
+ *   panel title   9pt uppercase monospace, dim
+ *   big number    22pt, text colour, medium weight
+ *   sub-row       10pt monospace, dim
+ *   source line   9pt monospace, dim, bottom of card, ALWAYS PRESENT
+ *   sparkline     24px tall, full card width
+ *   card padding  12px · card gap 8px
+ *
+ * The column slot itself (320px right / horizontal band <800px) is owned by
+ * trust-sphere.html — this file owns everything INSIDE #metrics-panel.
+ * Sphere colours are owned by the sphere; the metrics never recolour them.
+ */
+
+#metrics-panel {
+  --m-gap: 8px;
+  --m-pad: 12px;
+  --m-ink: #c9d4bd;
+  --m-dim: #7a8a6e;
+  --m-faint: #4a5744;
+  --m-amber: #e0a030;
+  --m-red: #e5484d;
+  --m-lime: #c8ff00;
+  --m-mono: "Geist Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  font-family: var(--m-mono);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--m-gap);
+}
+
+/* desktop: stacked cards fill the column; mobile band: horizontal cards */
+#metrics-panel .m-card {
+  flex: none;
+  background: rgba(10, 14, 9, 0.82);
+  border: 1px solid rgba(107, 138, 64, 0.28);
+  border-radius: 2px;
+  padding: var(--m-pad);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+@media (max-width: 799px) {
+  #metrics-panel {
+    padding: 0;
+  }
+  #metrics-panel .m-card {
+    width: 264px;
+  }
+}
+
+/* ── title ── */
+.m-card .m-title {
+  font-size: 9pt;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--m-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.m-card .m-title .m-badge {
+  margin-left: auto;
+  font-size: 7.5pt;
+  letter-spacing: 0.14em;
+  padding: 2px 5px;
+  border: 1px solid currentColor;
+  border-radius: 1px;
+  white-space: nowrap;
+}
+.m-badge.stale {
+  color: var(--m-amber);
+}
+.m-badge.offline {
+  color: var(--m-red);
+  font-weight: 700;
+}
+.m-badge.insufficient {
+  color: var(--m-dim);
+}
+.m-badge.mismatch {
+  color: var(--m-red);
+  font-weight: 700;
+}
+
+/* ── big number ── */
+.m-card .m-big {
+  font-size: 22pt;
+  line-height: 1.05;
+  font-weight: 500;
+  color: var(--m-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m-card .m-big.missing {
+  color: var(--m-faint);
+}
+.m-card .m-big.bad {
+  color: var(--m-red);
+}
+.m-card .m-big.warn {
+  color: var(--m-amber);
+}
+
+/* ── sub-row / sub-line ── */
+.m-card .m-sub {
+  font-size: 10pt;
+  line-height: 1.5;
+  color: var(--m-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m-card .m-sub b {
+  color: var(--m-ink);
+  font-weight: 500;
+}
+.m-card .m-sub .sep {
+  color: var(--m-faint);
+  padding: 0 2px;
+}
+
+/* three small numbers side by side (trusted nodes) */
+.m-card .m-triple {
+  display: flex;
+  gap: 0;
+  border: 1px solid rgba(107, 138, 64, 0.25);
+}
+.m-card .m-triple .m-cell {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 4px;
+  text-align: center;
+}
+.m-card .m-triple .m-cell + .m-cell {
+  border-left: 1px solid rgba(107, 138, 64, 0.25);
+}
+.m-card .m-triple .m-cell .n {
+  font-size: 10pt;
+  line-height: 1.2;
+  color: var(--m-ink);
+  font-weight: 500;
+}
+.m-card .m-triple .m-cell .l {
+  font-size: 7.5pt;
+  letter-spacing: 0.1em;
+  color: var(--m-dim);
+  text-transform: uppercase;
+}
+
+/* ── sparkline (24px tall, full width) ── */
+.m-card .m-spark {
+  height: 24px;
+  width: 100%;
+  display: block;
+}
+
+/* ── source line — 9pt, bottom, ALWAYS present ── */
+.m-card .m-source {
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(107, 138, 64, 0.22);
+  font-size: 9pt;
+  line-height: 1.45;
+  color: var(--m-dim);
+  word-break: break-word;
+}
+.m-card .m-source .k {
+  color: var(--m-faint);
+}
+
+/* rail strip (health card) — tiny per-rail pills, honest up/down */
+.m-card .m-rails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.m-card .m-rails .m-rail {
+  font-size: 7.5pt;
+  letter-spacing: 0.06em;
+  padding: 2px 5px;
+  border: 1px solid rgba(107, 138, 64, 0.3);
+  color: var(--m-dim);
+  white-space: nowrap;
+}
+.m-card .m-rails .m-rail.up {
+  color: #8fb35a;
+  border-color: rgba(143, 179, 90, 0.45);
+}
+.m-card .m-rails .m-rail.down {
+  color: var(--m-red);
+  border-color: rgba(229, 72, 77, 0.5);
+}
+
+/* weights disclosure line on the health card */
+.m-card .m-weights {
+  font-size: 7.5pt;
+  letter-spacing: 0.05em;
+  color: var(--m-faint);
+  line-height: 1.5;
+}
+
+/* empty-state note (never a spinner — a card either has a number or —) */
+.m-card .m-note {
+  font-size: 8pt;
+  line-height: 1.55;
+  color: var(--m-faint);
+}

@@ -1,0 +1,18 @@
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: *
+Allow: /
+# ProofBridge mesh-demo rail (:3007 via gateway) — private demo state,
+# noindex per TEMPLATE_QR_BRIDGE §9 discipline (join/state/verify/qr are
+# onboarding + diagnostics endpoints, and /qr.svg URLs must not be indexed).
+Disallow: /mesh-demo

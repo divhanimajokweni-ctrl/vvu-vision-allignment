@@ -1,0 +1,228 @@
+/* src/components/wildfire/pools.css — WINTER POOLS shared foundation.
+   File 2 of the 8-file Wildfire Emergency View contract.
+   Shared base used by every Winter Pools surface: font scale, colour
+   tokens, grid primitives, and the three theme variables (co-op /
+   municipal / emergency). All sizes in px (operator readability at 03:00
+   beats rem elegance); evidence-rail text is HARD-CAPPED at 9pt — never
+   larger, never past the first screen. */
+
+.pools-root {
+  /* colour tokens — deliberately no indigo/blue anywhere */
+  --pools-bg: #08090c;
+  --pools-panel: rgba(13, 16, 22, 0.92);
+  --pools-panel-solid: #0d1016;
+  --pools-line: rgba(138, 153, 168, 0.22);
+  --pools-line-strong: rgba(138, 153, 168, 0.45);
+  --pools-ink: #d8e0e8;
+  --pools-dim: #8a99a8;
+  --pools-faint: #5c6a78;
+  --pools-amber: #f2b84b;
+  --pools-ember: #ff8a3d;
+  --pools-red: #e5484d;
+  --pools-teal: #2ea8a0;
+  --pools-lime: #c8ff00;
+  --pools-green: #7a8a6e;
+
+  /* the three Winter Pools themes */
+  --pools-theme-coop: #8dc26a;   /* co-op members          */
+  --pools-theme-muni: #2ea8a0;   /* municipal collaborators */
+  --pools-theme-emer: #ff8a3d;   /* emergency operations    */
+
+  /* font scale (operator console — readable in smoke-light) */
+  --pools-fn-9: 9px;   /* evidence rail cap */
+  --pools-fn-10: 10px;
+  --pools-fn-11: 11px;
+  --pools-fn-13: 13px;
+  --pools-fn-16: 16px;
+
+  font-family: "SF Mono", Menlo, Consolas, "Courier New", monospace;
+  font-size: var(--pools-fn-10);
+  line-height: 1.5;
+  color: var(--pools-ink);
+  background: var(--pools-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── grid primitives ─────────────────────────────────────────────────── */
+
+.pools-grid {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+}
+
+.pools-grid.ops {
+  grid-template-columns: 236px minmax(0, 1fr) 268px;
+  /* map track is at least 260px — the map can never spill over the FSM
+     bar; on short viewports the grid scrolls instead of overlapping */
+  grid-template-rows: minmax(260px, 1fr) auto;
+  grid-template-areas:
+    "left  map   right"
+    "left  fsm   right";
+  padding: 8px;
+  overflow-y: auto;
+}
+
+@media (max-width: 980px) {
+  .pools-grid.ops {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "map"
+      "fsm"
+      "left"
+      "right";
+    grid-template-rows: none;
+    overflow-y: auto;
+  }
+}
+
+.pools-area-left  { grid-area: left;  min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.pools-area-map   { grid-area: map;   min-height: 260px; }
+.pools-area-fsm   { grid-area: fsm; }
+.pools-area-right { grid-area: right; min-height: 0; }
+
+/* ── panel primitive ─────────────────────────────────────────────────── */
+
+.pools-panel {
+  background: var(--pools-panel);
+  border: 1px solid var(--pools-line);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.pools-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--pools-line);
+  font-size: var(--pools-fn-9);
+  letter-spacing: 1.6px;
+  color: var(--pools-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.pools-panel-head .pools-head-badge {
+  margin-left: auto;
+  font-size: var(--pools-fn-9);
+  letter-spacing: 1px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--pools-line);
+}
+
+.pools-panel-body {
+  padding: 8px 10px;
+  min-height: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* thin honest scrollbars */
+.pools-panel-body::-webkit-scrollbar,
+.pools-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.pools-panel-body::-webkit-scrollbar-thumb,
+.pools-scroll::-webkit-scrollbar-thumb { background: #2a3442; border-radius: 3px; }
+.pools-panel-body::-webkit-scrollbar-track,
+.pools-scroll::-webkit-scrollbar-track { background: transparent; }
+
+/* ── label primitives ────────────────────────────────────────────────── */
+
+.pools-honesty {
+  font-size: var(--pools-fn-9);
+  letter-spacing: 1.2px;
+  color: var(--pools-amber);
+  border: 1px solid rgba(242, 184, 75, 0.4);
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.pools-honesty[data-tone="dim"] {
+  color: var(--pools-dim);
+  border-color: var(--pools-line);
+}
+
+.pools-honesty[data-tone="good"] {
+  color: var(--pools-lime);
+  border-color: rgba(200, 255, 0, 0.35);
+}
+
+.pools-honesty[data-tone="bad"] {
+  color: var(--pools-red);
+  border-color: rgba(229, 72, 77, 0.45);
+}
+
+.pools-honesty[data-tone="teal"] {
+  color: var(--pools-teal);
+  border-color: rgba(46, 168, 160, 0.4);
+}
+
+/* ── button primitive (44px touch target on primary actions) ─────────── */
+
+.pools-btn {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 5px;
+  border: 1px solid var(--pools-line-strong);
+  background: rgba(20, 26, 36, 0.9);
+  color: var(--pools-ink);
+  font-family: inherit;
+  font-size: var(--pools-fn-10);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  user-select: none;
+}
+
+.pools-btn:hover:not(:disabled) { border-color: var(--pools-dim); background: rgba(30, 38, 52, 0.95); }
+.pools-btn:active:not(:disabled) { transform: scale(0.98); }
+.pools-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pools-btn:focus-visible { outline: 2px solid rgba(242, 184, 75, 0.55); outline-offset: 1px; }
+
+.pools-btn[data-variant="ember"] { border-color: rgba(255, 138, 61, 0.5); color: var(--pools-ember); }
+.pools-btn[data-variant="ember"]:hover:not(:disabled) { border-color: var(--pools-ember); background: rgba(255, 138, 61, 0.1); }
+.pools-btn[data-variant="teal"] { border-color: rgba(46, 168, 160, 0.5); color: var(--pools-teal); }
+.pools-btn[data-variant="teal"]:hover:not(:disabled) { border-color: var(--pools-teal); background: rgba(46, 168, 160, 0.1); }
+.pools-btn[data-variant="red"] { border-color: rgba(229, 72, 77, 0.5); color: var(--pools-red); }
+.pools-btn[data-variant="red"]:hover:not(:disabled) { border-color: var(--pools-red); background: rgba(229, 72, 77, 0.1); }
+.pools-btn[data-variant="go"] {
+  min-height: 44px;
+  border-color: var(--pools-ember);
+  background: rgba(255, 138, 61, 0.14);
+  color: var(--pools-ember);
+  font-weight: 700;
+}
+.pools-btn[data-variant="go"]:hover:not(:disabled) { background: rgba(255, 138, 61, 0.24); }
+
+/* ── input primitives ────────────────────────────────────────────────── */
+
+.pools-input,
+.pools-select {
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 5px;
+  border: 1px solid var(--pools-line-strong);
+  background: rgba(8, 11, 16, 0.9);
+  color: var(--pools-ink);
+  font-family: inherit;
+  font-size: var(--pools-fn-10);
+  letter-spacing: 0.5px;
+  min-width: 0;
+}
+
+.pools-input::placeholder { color: var(--pools-faint); }
+.pools-input:focus-visible,
+.pools-select:focus-visible { outline: 2px solid rgba(242, 184, 75, 0.55); outline-offset: 1px; }
+
+/* ── 9pt evidence discipline helper ──────────────────────────────────── */
+/* Anything wearing .pools-9pt may never exceed 9px regardless of theme   */
+
+.pools-9pt,
+.pools-9pt * { font-size: var(--pools-fn-9) !important; }

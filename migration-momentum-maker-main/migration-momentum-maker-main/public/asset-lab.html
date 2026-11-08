@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>EDGE OF OBLIVION // Asset Lab</title>
+    <style>
+      :root {
+        --bg: #050709;
+        --line: #25312e;
+        --cyan: #00ffcc;
+        --red: #ff4466;
+        --amber: #ffaa22;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--bg);
+        color: #e9f4f1;
+        font-family: var(--mono);
+      }
+      #scene {
+        position: absolute;
+        inset: 0;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #top {
+        position: absolute;
+        z-index: 4;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 24px;
+        background: linear-gradient(#050709f2, transparent);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .brand {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        color: var(--cyan);
+        white-space: nowrap;
+      }
+      .tabs {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: #0b1114d9;
+        color: #8a9b98;
+        padding: 9px 12px;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        transition: all 0.2s;
+      }
+      button:hover,
+      button.active {
+        border-color: var(--cyan);
+        color: #00110d;
+        background: var(--cyan);
+        box-shadow: 0 0 14px #00ffcc33;
+      }
+      button.enemy.active {
+        border-color: var(--red);
+        background: var(--red);
+        box-shadow: 0 0 14px #ff446633;
+      }
+      button.boss.active {
+        border-color: var(--amber);
+        background: var(--amber);
+        box-shadow: 0 0 14px #ffaa2233;
+      }
+      #panel {
+        position: absolute;
+        z-index: 4;
+        left: 16px;
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        width: min(340px, calc(100vw - 32px));
+        padding: 15px;
+        background: #080d10d9;
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--cyan);
+        backdrop-filter: blur(8px);
+        border-radius: 4px;
+      }
+      #panel.enemy {
+        border-left-color: var(--red);
+      }
+      #panel.boss {
+        border-left-color: var(--amber);
+      }
+      #title {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        margin-bottom: 4px;
+      }
+      #subtitle {
+        font-size: 9px;
+        color: var(--cyan);
+        letter-spacing: 0.12em;
+        margin-bottom: 13px;
+      }
+      #panel.enemy #subtitle {
+        color: var(--red);
+      }
+      #panel.boss #subtitle {
+        color: var(--amber);
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: #7e918d;
+        margin-top: 5px;
+      }
+      .row b {
+        color: #eaf5f1;
+        font-weight: 600;
+        text-align: right;
+        margin-left: 12px;
+      }
+      #hint {
+        position: absolute;
+        z-index: 4;
+        right: 16px;
+        bottom: 18px;
+        color: #60716e;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        text-align: right;
+        line-height: 1.8;
+      }
+      #scan {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        background: repeating-linear-gradient(to bottom, transparent 0, transparent 3px, #0003 4px);
+        opacity: 0.18;
+      }
+      @media (max-width: 650px) {
+        #top {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 10px;
+        }
+        .tabs {
+          justify-content: flex-start;
+          gap: 5px;
+        }
+        button {
+          padding: 8px 9px;
+          font-size: 9px;
+        }
+        .brand {
+          font-size: 10px;
+        }
+        #panel {
+          bottom: 12px;
+          left: 12px;
+          padding: 12px;
+          width: calc(100vw - 24px);
+        }
+        #hint {
+          display: none;
+        }
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="scene"></div>
+    <header id="top">
+      <div class="brand">VVU // EDGE OF OBLIVION — ASSET LAB</div>
+      <nav class="tabs">
+        <button class="active" data-id="hauler">Scrap Hauler</button>
+        <button class="enemy" data-id="scout">Scout Drone</button>
+        <button class="enemy" data-id="combat">Combat Drone</button>
+        <button class="boss" data-id="warden">Shepherd 01</button>
+        <button data-id="phantom">Phantom</button>
+        <button data-id="tool">Multi-Tool</button>
+        <button data-id="killcode">Mystery Attack</button>
+      </nav>
+    </header>
+    <section id="panel">
+      <div id="title">SCRAP HAULER</div>
+      <div id="subtitle">CIVILIAN SALVAGE // STARTING VESSEL</div>
+      <div class="row"><span>CLASS</span><b id="class"></b></div>
+      <div class="row"><span>STATUS</span><b id="status"></b></div>
+      <div class="row"><span>VISUAL</span><b id="visual"></b></div>
+    </section>
+    <div id="hint">
+      DRAG TO ORBIT · PINCH / WHEEL TO ZOOM<br />PBR · IBL · SHADOWS · BLOOM · THREE.JS
+    </div>
+    <div id="scan"></div>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+      import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+      import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+      import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+      import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+      import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+      /* ---------- Renderer, scene, environment ---------- */
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(innerWidth, innerHeight);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      document.getElementById("scene").appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x050709);
+      scene.fog = new THREE.FogExp2(0x050709, 0.018);
+      scene.environment = new THREE.PMREMGenerator(renderer).fromScene(
+        new RoomEnvironment(),
+        0.04,
+      ).texture;
+      scene.environmentIntensity = 0.55;
+
+      const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 200);
+      camera.position.set(7, 5, 12);
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.5;
+      controls.minDistance = 3;
+      controls.maxDistance = 30;
+
+      const composer = new EffectComposer(renderer);
+      composer.addPass(new RenderPass(scene, camera));
+      const bloom = new UnrealBloomPass(
+        new THREE.Vector2(innerWidth, innerHeight),
+        0.85,
+        0.45,
+        0.8,
+      );
+      composer.addPass(bloom);
+      composer.addPass(new OutputPass());
+
+      /* ---------- Lighting ---------- */
+      const key = new THREE.DirectionalLight(0xffffff, 2.0);
+      key.position.set(6, 11, 7);
+      key.castShadow = true;
+      key.shadow.mapSize.set(2048, 2048);
+      Object.assign(key.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, far: 40 });
+      key.shadow.bias = -0.0004;
+      key.shadow.radius = 4;
+      scene.add(key);
+      const rim = new THREE.PointLight(0x00ffcc, 40, 25);
+      rim.position.set(-7, 5, 5);
+      scene.add(rim);
+      const hot = new THREE.PointLight(0xff4466, 30, 22);
+      hot.position.set(6, 3, -5);
+      scene.add(hot);
+      const amb = new THREE.PointLight(0xffaa22, 35, 26);
+      amb.position.set(0, 7, -7);
+      scene.add(amb);
+
+      /* ---------- Ground: shadow catcher + grid ---------- */
+      const ground = new THREE.Mesh(
+        new THREE.CircleGeometry(30, 64),
+        new THREE.MeshStandardMaterial({ color: 0x0a0f11, roughness: 0.6, metalness: 0.5 }),
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -2.2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+      const grid = new THREE.GridHelper(40, 40, 0x25312e, 0x101719);
+      grid.position.y = -2.19;
+      scene.add(grid);
+
+      /* ---------- Procedural grime map for surface breakup ---------- */
+      function grimeTexture() {
+        const c = document.createElement("canvas");
+        c.width = c.height = 256;
+        const x = c.getContext("2d"),
+          d = x.createImageData(256, 256);
+        for (let i = 0; i < d.data.length; i += 4) {
+          const v = 150 + (Math.random() - 0.5) * 90;
+          d.data[i] = d.data[i + 1] = d.data[i + 2] = v;
+          d.data[i + 3] = 255;
+        }
+        x.putImageData(d, 0, 0);
+        const t = new THREE.CanvasTexture(c);
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(2, 2);
+        return t;
+      }
+      const grime = grimeTexture();
+      const M = (color, o = {}) =>
+        new THREE.MeshPhysicalMaterial({
+          color,
+          metalness: 0.6,
+          roughness: 0.5,
+          roughnessMap: grime,
+          ...o,
+        });
+      const hull = M(0x454b4a, { metalness: 0.75, roughness: 0.62 });
+      const dark = M(0x14191b, {
+        metalness: 0.85,
+        roughness: 0.36,
+        clearcoat: 0.4,
+        clearcoatRoughness: 0.3,
+      });
+      const steel = M(0x7b8581, { metalness: 0.85, roughness: 0.38 });
+      const camo = M(0x4d5b3c, { metalness: 0.05, roughness: 0.85 });
+      const glow = (c, i = 3) =>
+        new THREE.MeshStandardMaterial({
+          color: c,
+          emissive: c,
+          emissiveIntensity: i,
+          roughness: 0.2,
+        });
+      const cyanG = glow(0x00ffcc, 2.6);
+      const redG = glow(0xff1630, 2.8);
+      const amberG = glow(0xffaa22, 2.4);
+      const shield = new THREE.MeshStandardMaterial({
+        color: 0xffaa22,
+        emissive: 0xffaa22,
+        emissiveIntensity: 1.6,
+        transparent: true,
+        opacity: 0.7,
+        roughness: 0.2,
+      });
+
+      /* ---------- Geometry helpers ---------- */
+      function B(par, m, s, p, rot = [0, 0, 0], r = 0.1) {
+        const o = new THREE.Mesh(
+          new RoundedBoxGeometry(s[0], s[1], s[2], 3, Math.min(r, Math.min(...s) / 2.01)),
+          m,
+        );
+        o.position.set(...p);
+        o.rotation.set(...rot);
+        o.castShadow = o.receiveShadow = true;
+        par.add(o);
+        return o;
+      }
+      function C(par, m, rt, rb, h, p, rot = [0, 0, 0], n = 20) {
+        const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, n), m);
+        o.position.set(...p);
+        o.rotation.set(...rot);
+        o.castShadow = true;
+        par.add(o);
+        return o;
+      }
+      function S(par, m, r, p, n = 16) {
+        const o = new THREE.Mesh(new THREE.SphereGeometry(r, n, Math.round(n * 0.7)), m);
+        o.position.set(...p);
+        o.castShadow = true;
+        par.add(o);
+        return o;
+      }
+      function T(par, m, rad, tube, p, rot = [0, 0, 0]) {
+        const o = new THREE.Mesh(new THREE.TorusGeometry(rad, tube, 10, 48), m);
+        o.position.set(...p);
+        o.rotation.set(...rot);
+        par.add(o);
+        return o;
+      }
+
+      /* ---------- Units ---------- */
+      const base = {
+        hauler: -1.5,
+        scout: 0.6,
+        combat: 0.2,
+        warden: 1.9,
+        phantom: -0.3,
+        tool: 0,
+        killcode: 0,
+      };
+      const grp = {};
+      Object.keys(base).forEach((id) => {
+        grp[id] = new THREE.Group();
+        grp[id].position.y = base[id];
+        grp[id].visible = false;
+        scene.add(grp[id]);
+      });
+
+      // Scrap Hauler: welded cargo body, cockpit, twin engine pods, salvage cannon.
+      {
+        const h = grp.hauler;
+        B(h, hull, [3.2, 1.05, 4.7], [0, 0, 0], [0, 0, 0], 0.18);
+        B(h, steel, [2.3, 0.55, 2.1], [0, 0.7, -0.1], [0, 0, 0], 0.15);
+        B(h, dark, [1.35, 0.7, 1.2], [0, 1.05, 1.55], [0, 0, 0], 0.2);
+        B(h, M(0x172b2b, { metalness: 0.5, roughness: 0.2 }), [1.05, 0.48, 0.08], [0, 1.15, 2.17]);
+        B(h, steel, [1.2, 0.35, 1.5], [-2.25, -0.05, -0.4], [0, 0, -0.12]);
+        B(h, steel, [1.1, 0.35, 1.65], [2.15, 0.1, -0.55], [0, 0, 0.18]);
+        for (const x of [-1.25, 1.25]) {
+          C(h, dark, 0.48, 0.65, 1.35, [x, -0.05, -2.15], [Math.PI / 2, 0, 0], 24);
+          C(h, accent(), 0.26, 0.3, 0.12, [x, -0.05, -2.85], [Math.PI / 2, 0, 0], 20);
+          S(h, cyanG, 0.18, [x, -0.05, -2.94], 12);
+          B(h, steel, [0.45, 0.35, 1.6], [x * 1.5, 0.55, -0.6], [0, 0, x * 0.08]);
+        }
+        B(h, dark, [0.42, 0.42, 1.9], [0, 0.15, 2.75]);
+        C(h, steel, 0.16, 0.2, 1.35, [0, 0.15, 3.65], [Math.PI / 2, 0, 0], 16);
+        S(h, amberG, 0.14, [0, 0.15, 4.32], 12);
+        for (let i = 0; i < 5; i++)
+          B(h, steel, [0.28, 0.08, 0.5], [-1.2 + i * 0.6, 0.58, 1.8], [0, (i - 2) * 0.04, 0], 0.03);
+      }
+      function accent() {
+        return M(0x00a98b, { metalness: 0.5, roughness: 0.3 });
+      }
+
+      // Scout Drone: jellyfish dome, sensor eye, eight tapered tendrils, shield shell.
+      const tendrils = new THREE.Group();
+      {
+        const s = grp.scout;
+        s.add(tendrils);
+        const dome = new THREE.Mesh(
+          new THREE.SphereGeometry(1.25, 32, 20, 0, Math.PI * 2, 0, Math.PI / 2),
+          dark,
+        );
+        dome.position.y = 1.1;
+        dome.castShadow = true;
+        s.add(dome);
+        S(s, redG, 0.36, [0, 1.15, 0.82], 16);
+        const shell = new THREE.Mesh(
+          new THREE.IcosahedronGeometry(2, 2),
+          new THREE.MeshBasicMaterial({
+            color: 0xffaa22,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.14,
+          }),
+        );
+        shell.position.y = 1;
+        s.add(shell);
+        grp.scout.userData.shell = shell;
+        for (let i = 0; i < 8; i++) {
+          const a = (i * Math.PI) / 4,
+            pts = [];
+          for (let k = 0; k <= 10; k++) {
+            const t = k / 10;
+            pts.push(
+              new THREE.Vector3(
+                Math.cos(a) * (0.85 + t * 0.35) + Math.sin(t * 6 + a) * 0.12 * Math.cos(a + 1.57),
+                -0.45 - t * 2.3,
+                Math.sin(a) * (0.85 + t * 0.35) + Math.sin(t * 6 + a) * 0.12 * Math.sin(a + 1.57),
+              ),
+            );
+          }
+          const curve = new THREE.CatmullRomCurve3(pts);
+          const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.045, 8, false), dark);
+          mesh.castShadow = true;
+          tendrils.add(mesh);
+          S(tendrils, redG, 0.07, pts[pts.length - 1].toArray(), 8);
+        }
+      }
+
+      // Combat Drone: angular wedge body, swept wings, twin cannons, engine glow.
+      const combatParts = {};
+      {
+        const c = grp.combat;
+        C(c, dark, 0, 0.95, 3.6, [0, 0.1, 0], [Math.PI / 2, Math.PI / 4, 0], 4);
+        combatParts.wings = B(c, steel, [4.8, 0.12, 1.35], [0, -0.15, -0.35], [0, 0, 0], 0.05);
+        B(c, dark, [1.2, 0.25, 1.6], [0, 0.2, -0.7], [0, 0, 0], 0.1);
+        for (const x of [-1.6, 1.6]) {
+          C(c, steel, 0.13, 0.13, 1.8, [x, -0.28, 1.35], [Math.PI / 2, 0, 0], 14);
+          C(c, redG, 0.18, 0.2, 0.35, [x, -0.28, -1.9], [Math.PI / 2, 0, 0], 14);
+          S(c, redG, 0.12, [x, -0.28, -2.12], 10);
+        }
+        S(c, redG, 0.18, [0, 0.35, 1.05], 12);
+      }
+
+      // Shepherd 01 — The Warden: armored torso, hex shield emitters, articulated limbs, antennae.
+      {
+        const w = grp.warden;
+        B(w, dark, [4.3, 3.2, 2.8], [0, 1.3, 0], [0, 0, 0], 0.35);
+        B(w, steel, [3.5, 0.6, 2.9], [0, 2.9, 0], [0, 0, 0], 0.25);
+        B(w, amberG, [1.3, 1.3, 0.18], [0, 1.4, 1.5], [0, 0, 0], 0.1);
+        for (const x of [-1, 1]) {
+          B(w, hull, [1.5, 3.2, 1.6], [x * 3, 1.2, 0], [0, 0, x * 0.12], 0.3);
+          B(w, steel, [1.8, 0.7, 1.5], [x * 3, 2.6, 0], [0, 0, 0], 0.25);
+          B(w, dark, [1.9, 3.5, 2], [x * 1.2, -1.1, 0], [0, 0, 0], 0.3);
+          C(w, shield, 1.15, 1.15, 0.14, [x * 4.9, 1.6, 0], [0, 0, Math.PI / 2], 6);
+          S(w, amberG, 0.2, [x * 5.2, 1.6, 0.1], 12);
+          B(w, dark, [1.1, 0.45, 1.5], [x * 1.25, -3.85, 0.2], [0, 0, 0], 0.15);
+        }
+        for (let i = 0; i < 3; i++) {
+          C(w, steel, 0.12, 0.2, 2.4, [-1.2 + i * 1.2, 4.2, -0.8], [0, 0, (i - 1) * 0.12], 8);
+          S(w, amberG, 0.11, [-1.2 + i * 1.2, 5.4, -0.8], 10);
+        }
+      }
+
+      // Recon Operator — PHANTOM: camo kit, cracked cyan HUD visor, pack, antenna, sidearm.
+      {
+        const p = grp.phantom;
+        B(p, dark, [0.46, 1.5, 0.5], [-0.28, -0.85, 0], [0, 0, 0], 0.12);
+        B(p, dark, [0.46, 1.5, 0.5], [0.28, -0.85, 0], [0, 0, 0], 0.12);
+        B(p, dark, [0.5, 0.42, 0.22], [-0.28, -0.95, 0.26], [0, 0, 0], 0.1);
+        B(p, dark, [0.5, 0.42, 0.22], [0.28, -0.95, 0.26], [0, 0, 0], 0.1);
+        B(p, dark, [0.5, 0.3, 0.7], [-0.28, -1.8, 0.1], [0, 0, 0], 0.1);
+        B(p, dark, [0.5, 0.3, 0.7], [0.28, -1.8, 0.1], [0, 0, 0], 0.1);
+        B(p, camo, [0.9, 0.35, 0.5], [0, -0.2, 0], [0, 0, 0], 0.15);
+        B(p, camo, [0.95, 1.1, 0.55], [0, 0.5, 0], [0, 0, 0], 0.22);
+        B(p, dark, [0.98, 0.8, 0.3], [0, 0.5, 0.17], [0, 0, 0], 0.15);
+        B(p, dark, [0.3, 0.3, 0.12], [-0.22, 0.7, 0.36], [0, 0, 0], 0.05);
+        B(p, dark, [0.3, 0.3, 0.12], [0.22, 0.25, 0.36], [0, 0, 0], 0.05);
+        for (const x of [-1, 1]) {
+          B(p, camo, [0.3, 1.0, 0.32], [x * 0.7, 0.45, 0], [0, 0, x * 0.08], 0.12);
+          S(p, dark, 0.13, [x * 0.72, -0.1, 0], 10);
+        }
+        B(p, camo, [0.7, 0.9, 0.35], [0, 0.55, -0.42], [0, 0, 0], 0.18);
+        B(p, dark, [0.6, 0.62, 0.62], [0, 1.45, 0], [0, 0, 0], 0.22); // helmet shell
+        B(p, dark, [0.64, 0.2, 0.66], [0, 1.68, 0], [0, 0, 0], 0.1);
+        B(p, cyanG, [0.5, 0.12, 0.05], [0, 1.45, 0.33], [0, 0, 0], 0.03); // HUD visor glow
+        C(p, steel, 0.02, 0.02, 1.0, [0.35, 1.8, -0.3], [0, 0, 0], 6);
+        S(p, cyanG, 0.05, [0.35, 2.3, -0.3], 8);
+        B(p, steel, [0.1, 0.18, 0.3], [0.42, -0.15, 0.35], [0, 0, 0], 0.03); // sidearm
+      }
+
+      // Multi-tool: industrial handle, emitter ring, access prongs, cyan beam.
+      {
+        const t = grp.tool;
+        B(t, dark, [1.2, 0.55, 2.4], [0, 0, 0], [0, 0, 0], 0.12);
+        B(t, steel, [0.8, 0.35, 1.1], [0, -0.42, -0.35], [0, 0, 0], 0.08);
+        C(t, steel, 0.48, 0.48, 0.65, [0, 0, 1.25], [Math.PI / 2, 0, 0], 24);
+        T(t, cyanG, 0.55, 0.08, [0, 0, 1.62]);
+        for (let i = 0; i < 3; i++) {
+          B(t, steel, [0.16, 0.16, 0.85], [-0.38 + i * 0.38, 0.35, 1.7], [0, 0, 0], 0.04);
+          S(t, cyanG, 0.08, [-0.38 + i * 0.38, 0.35, 2.12], 8);
+        }
+        C(
+          t,
+          new THREE.MeshBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.3 }),
+          0.04,
+          0.12,
+          3,
+          [0, 0, 3.2],
+          [Math.PI / 2, 0, 0],
+          8,
+        );
+      }
+
+      // Mystery Attack — Cartographer singularity: void core, inverted rings, shell lattice.
+      const killRings = [];
+      {
+        const q = grp.killcode;
+        S(q, new THREE.MeshBasicMaterial({ color: 0x020305 }), 1.05, [0, 0, 0], 32);
+        for (let i = 0; i < 4; i++) {
+          const r = T(
+            q,
+            i % 2 ? cyanG : amberG,
+            1.45 + i * 0.35,
+            0.035,
+            [0, 0, 0],
+            [Math.PI / 2 + i * 0.18, 0, i * 0.45],
+          );
+          killRings.push(r);
+        }
+        const lattice = new THREE.Mesh(
+          new THREE.IcosahedronGeometry(2.4, 2),
+          new THREE.MeshBasicMaterial({
+            color: 0x00ffcc,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.12,
+          }),
+        );
+        q.add(lattice);
+        q.userData.lattice = lattice;
+        for (let i = 0; i < 18; i++) {
+          const a = (i * Math.PI * 2) / 18,
+            r = 2.3;
+          S(
+            q,
+            i % 2 ? cyanG : amberG,
+            0.055,
+            [Math.cos(a) * r, Math.sin(a) * r, Math.sin(a * 2) * 0.35],
+            8,
+          );
+        }
+      }
+
+      /* ---------- Panel data & selection ---------- */
+      const info = {
+        hauler: [
+          "SCRAP HAULER",
+          "CIVILIAN SALVAGE // STARTING VESSEL",
+          "Industrial utility",
+          "REPAIRED / OPERATIONAL",
+          "Welded hull · exposed engines",
+        ],
+        scout: [
+          "SCOUT DRONE",
+          "JELLYFISH CLASS // SWARM RECON",
+          "Autonomous recon",
+          "HOSTILE",
+          "Sensor eye · eight tendrils",
+        ],
+        combat: [
+          "COMBAT DRONE",
+          "SWARM ASSAULT // STRIKE UNIT",
+          "Armored interceptor",
+          "HOSTILE",
+          "Angular hull · twin cannons",
+        ],
+        warden: [
+          "SHEPHERD 01",
+          "THE WARDEN // HEAVY DEFENDER",
+          "Containment guardian",
+          "BOSS / SHIELDED",
+          "Four emitters · exposed core",
+        ],
+        phantom: [
+          "PHANTOM",
+          "RECON OPERATOR // CALLSIGN PHANTOM",
+          "Infiltration",
+          "OPERATIONAL (DAMAGED)",
+          "Cracked cyan visor · stealth vest",
+        ],
+        tool: [
+          "MULTI-TOOL",
+          "VVU UTILITY // CARTOGRAPHER BYPASS",
+          "Disruption device",
+          "ASSET UNREGISTERED",
+          "Emitter ring · access prongs",
+        ],
+        killcode: [
+          "? MYSTERY ATTACK",
+          "CARTOGRAPHER // SINGULARITY INVERSION",
+          "Earned battlefield ability",
+          "LOCKED / UNKNOWN",
+          "Gravitational rings · inversion core",
+        ],
+      };
+      const cams = {
+        hauler: [
+          [7, 4, 12],
+          [0, -1.3, 0],
+        ],
+        scout: [
+          [6, 3, 8],
+          [0, 0.6, 0],
+        ],
+        combat: [
+          [6, 2.5, 7],
+          [0, 0.2, 0],
+        ],
+        warden: [
+          [11, 6, 16],
+          [0, 2.5, 0],
+        ],
+        phantom: [
+          [5, 2.2, 6],
+          [0, 0.2, 0],
+        ],
+        tool: [
+          [4, 2.5, 6],
+          [0, 0, 1],
+        ],
+        killcode: [
+          [6, 3, 8],
+          [0, 0, 0],
+        ],
+      };
+      const goalPos = new THREE.Vector3(),
+        goalTgt = new THREE.Vector3();
+      const panel = document.getElementById("panel");
+      function select(id, btn) {
+        Object.keys(grp).forEach((k) => (grp[k].visible = k === id));
+        document
+          .querySelectorAll("button[data-id]")
+          .forEach((b) => b.classList.toggle("active", b === btn));
+        const d = info[id];
+        document.getElementById("title").textContent = d[0];
+        document.getElementById("subtitle").textContent = d[1];
+        document.getElementById("class").textContent = d[2];
+        document.getElementById("status").textContent = d[3];
+        document.getElementById("visual").textContent = d[4];
+        panel.className =
+          id === "scout" || id === "combat"
+            ? "enemy"
+            : id === "warden" || id === "killcode"
+              ? "boss"
+              : "";
+        const [p, t] = cams[id];
+        goalPos.set(...p);
+        goalTgt.set(...t);
+      }
+      document
+        .querySelectorAll("button[data-id]")
+        .forEach((b) => b.addEventListener("click", () => select(b.dataset.id, b)));
+      select("hauler", document.querySelector('button[data-id="hauler"]'));
+
+      /* ---------- Animation loop ---------- */
+      const clock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+        const t = clock.getElapsedTime();
+
+        grp.hauler.position.y = base.hauler + Math.sin(t * 0.8) * 0.05;
+        grp.scout.rotation.y = t * 0.45;
+        grp.scout.position.y = base.scout + Math.sin(t * 2) * 0.16;
+        tendrils.children.forEach((m, i) => {
+          m.rotation.x = Math.sin(t * 3 + i) * 0.06;
+        });
+        grp.scout.userData.shell.rotation.y = -t * 0.2;
+
+        grp.combat.rotation.z = Math.sin(t * 1.6) * 0.08;
+        grp.combat.position.y = base.combat + Math.cos(t * 2.3) * 0.12;
+
+        grp.warden.position.y = base.warden + Math.sin(t) * 0.08;
+        grp.phantom.rotation.y = Math.sin(t * 0.4) * 0.25;
+
+        grp.tool.rotation.y = Math.sin(t * 0.5) * 0.4;
+        cyanG.emissiveIntensity = 2.6 + Math.sin(t * 6) * 0.6;
+
+        grp.killcode.rotation.y = t * 0.3;
+        grp.killcode.rotation.z = Math.sin(t * 0.6) * 0.1;
+        killRings.forEach((r, i) => {
+          r.rotation.x += 0.003 * (i % 2 ? 1 : -1);
+        });
+        grp.killcode.userData.lattice.rotation.y = -t * 0.15;
+
+        controls.target.lerp(goalTgt, 0.06);
+        if (camera.position.distanceTo(goalPos) > 0.05) camera.position.lerp(goalPos, 0.05);
+        controls.update();
+        composer.render();
+      }
+      animate();
+
+      addEventListener("resize", () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        composer.setSize(innerWidth, innerHeight);
+      });
+    </script>
+  </body>
+</html>

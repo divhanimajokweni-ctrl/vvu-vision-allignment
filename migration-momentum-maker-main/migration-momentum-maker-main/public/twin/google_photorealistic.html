@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Digital Twin — Google Photorealistic Tiles</title>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <style>
+      :root {
+        --bg: #06080c;
+        --panel: rgba(8, 11, 16, 0.92);
+        --line: rgba(80, 90, 110, 0.22);
+        --ink: #d8e0e8;
+        --dim: #7f95a5;
+        --amber: #f2b84b;
+        --ember: #ff8a3d;
+        --red: #e5484d;
+        --teal: #2ea8a0;
+        --lime: #c8ff00;
+        --green: #7a8a6e;
+        --sat: #4285f4;
+        --orange: #ff6d01;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          10px/1.45 "SF Mono",
+          Menlo,
+          Consolas,
+          monospace;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      header#hud-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        z-index: 3;
+      }
+      .hud-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+        color: #fff;
+        white-space: nowrap;
+      }
+      .hud-title small {
+        display: block;
+        font-weight: 400;
+        font-size: 8px;
+        letter-spacing: 1.2px;
+        color: var(--dim);
+      }
+      .hud-right {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .hud-honesty {
+        font-size: 8px;
+        letter-spacing: 1.4px;
+        color: var(--sat);
+        border: 1px solid rgba(66, 133, 244, 0.4);
+        padding: 3px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+      .hud-honesty.amber {
+        color: var(--amber);
+        border-color: rgba(242, 184, 75, 0.4);
+      }
+      #hud-mid {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+        position: relative;
+      }
+      nav#hud-left {
+        width: 148px;
+        flex: none;
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-y: auto;
+        z-index: 2;
+      }
+      .nav-cap {
+        font-size: 7.5px;
+        letter-spacing: 1.6px;
+        color: var(--dim);
+        margin: 6px 0 2px;
+      }
+      .lay {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 5px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .lay:hover {
+        border-color: var(--line);
+      }
+      .lay .sw {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 1px solid var(--dim);
+        flex: none;
+      }
+      .lay.on .sw {
+        background: var(--sat);
+        border-color: var(--sat);
+        box-shadow: 0 0 6px rgba(66, 133, 244, 0.7);
+      }
+      .lay .nm {
+        font-size: 8.5px;
+        letter-spacing: 0.8px;
+        color: var(--ink);
+        flex: 1;
+      }
+      .lay .tag {
+        font-size: 6.5px;
+        letter-spacing: 0.6px;
+        color: var(--dim);
+        text-align: right;
+      }
+      .lay:not(.on) .nm {
+        color: var(--dim);
+      }
+      #legend {
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+        font-size: 7px;
+        color: var(--dim);
+        line-height: 1.8;
+      }
+      #legend b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      main#stage {
+        flex: 1;
+        position: relative;
+        min-width: 0;
+      }
+      #map {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: #0a0e14;
+      }
+      .maplibregl-ctrl-attrib {
+        font-size: 7px !important;
+        background: rgba(8, 11, 16, 0.85) !important;
+      }
+      .maplibregl-ctrl-attrib a {
+        color: var(--sat) !important;
+      }
+      .maplibregl-ctrl button {
+        background: rgba(8, 11, 16, 0.92) !important;
+      }
+      .maplibregl-ctrl button:hover {
+        background: rgba(66, 133, 244, 0.15) !important;
+      }
+      .maplibregl-ctrl-icon {
+        filter: invert(1);
+      }
+      #clock {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        text-align: right;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 1px;
+        line-height: 1.7;
+        z-index: 500;
+        text-shadow: 0 1px 2px #000;
+        background: rgba(8, 11, 16, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+      }
+      #clock b {
+        color: var(--sat);
+        font-weight: 400;
+      }
+      #tile-info {
+        position: absolute;
+        left: 10px;
+        top: 8px;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 0.8px;
+        z-index: 500;
+        text-shadow: 0 1px 2px #000;
+        background: rgba(8, 11, 16, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        line-height: 1.7;
+      }
+      #tile-info b {
+        color: var(--sat);
+        font-weight: 400;
+      }
+      #pitch-info {
+        position: absolute;
+        left: 10px;
+        bottom: 10px;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 0.8px;
+        z-index: 500;
+        background: rgba(8, 11, 16, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        line-height: 1.7;
+      }
+      #pitch-info b {
+        color: var(--sat);
+        font-weight: 400;
+      }
+      footer#hud-bottom {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 6px 12px;
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+        z-index: 3;
+      }
+      .worm-label {
+        font-size: 8px;
+        letter-spacing: 1.8px;
+        color: var(--lime);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .worm-cell {
+        font-size: 8px;
+        letter-spacing: 1px;
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .worm-cell b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      .worm-cell .h {
+        color: var(--teal);
+      }
+      .worm-tier {
+        margin-left: auto;
+        font-size: 8px;
+        letter-spacing: 1.2px;
+        color: var(--sat);
+        border: 1px solid rgba(66, 133, 244, 0.4);
+        border-radius: 4px;
+        padding: 2px 6px;
+        white-space: nowrap;
+      }
+      #worm-last {
+        font-size: 8px;
+        color: var(--dim);
+        letter-spacing: 0.5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+        min-width: 120px;
+      }
+      @media (max-width: 720px) {
+        nav#hud-left {
+          width: 118px;
+          padding: 6px;
+        }
+        .hud-title small {
+          display: none;
+        }
+        .hud-honesty {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header id="hud-top">
+      <div class="hud-title">
+        DIGITAL TWIN — GOOGLE PHOTOREALISTIC<small
+          >SATELLITE · 3D TILES · MAPLIBRE GL · PHOTO TRUE-COLOR</small
+        >
+      </div>
+      <div class="hud-right">
+        <span class="hud-honesty">PHOTOREAL · 3D TILES</span>
+        <span class="hud-honesty amber">SEED DATA · NOT LIVE</span>
+      </div>
+    </header>
+    <div id="hud-mid">
+      <nav id="hud-left">
+        <div class="nav-cap">LAYER CONTROL</div>
+        <div class="lay on" data-layer="satellite">
+          <span class="sw" style="background: #2a3a4a"></span><span class="nm">SATELLITE</span
+          ><span class="tag">RGB</span>
+        </div>
+        <div class="lay on" data-layer="3d">
+          <span class="sw" style="background: var(--sat)"></span><span class="nm">3D MESH</span
+          ><span class="tag">PHOTO</span>
+        </div>
+        <div class="lay on" data-layer="devices">
+          <span class="sw" style="background: var(--orange)"></span><span class="nm">DEVICES</span
+          ><span class="tag">12</span>
+        </div>
+        <div class="lay" data-layer="terrain">
+          <span class="sw" style="background: var(--amber)"></span><span class="nm">TERRAIN</span
+          ><span class="tag">DEM</span>
+        </div>
+        <div class="lay" data-layer="labels">
+          <span class="sw" style="background: var(--green)"></span><span class="nm">LABELS</span
+          ><span class="tag">POI</span>
+        </div>
+        <div class="nav-cap">TELEMETRY</div>
+        <div class="lay on" data-layer="links">
+          <span class="sw" style="background: var(--teal)"></span><span class="nm">MESH LINKS</span
+          ><span class="tag">18</span>
+        </div>
+        <div class="lay" data-layer="alerts">
+          <span class="sw" style="background: var(--red)"></span><span class="nm">ALERTS</span
+          ><span class="tag">0</span>
+        </div>
+        <div id="legend">
+          <b>SECTOR 4 · GQEBERHA</b><br />
+          LAT −33.9249° · LON 25.5701°<br />
+          PITCH 60° · BEARING 38°<br />
+          © MapTiler · OSM<br />
+          <b>WORM</b> 7d4f2e91… · T2
+        </div>
+      </nav>
+      <main id="stage">
+        <div id="map"></div>
+        <div id="tile-info">
+          TILE: <b>GOOGLE · PHOTOREAL 3D</b><br />
+          STYLE: <b>satellite · hybrid</b><br />
+          PROJ: <b>WebMercator · EPSG:3857</b>
+        </div>
+        <div id="clock">
+          <span id="clk-time">--:--:--</span><br />
+          <b>SEED</b> 20260921 · Z+02:00<br />
+          <b>FRAME</b> <span id="clk-frame">0</span>
+        </div>
+        <div id="pitch-info">
+          <b>PHOTOREAL TWIN</b> · 3D TILES<br />
+          DRAG · ROTATE · RIGHT-DRAG · TILT<br />
+          SCROLL · ZOOM
+        </div>
+      </main>
+    </div>
+    <footer id="hud-bottom">
+      <span class="worm-label">WORM · GOOGLE_PHOTOREAL_TWIN</span>
+      <span class="worm-cell">SEAL <b class="h">7d4f2e91</b></span>
+      <span class="worm-cell">TIER <b>T2 · SEED_UNVERIFIED</b></span>
+      <span class="worm-cell">NODES <b>12</b></span>
+      <span class="worm-cell">LINKS <b>18</b></span>
+      <span id="worm-last"
+        >SCENARIO_OPEN · GOOGLE_PHOTOREAL_TWIN · style=satellite_hybrid · 3d_tiles=photoreal ·
+        seed=20260921</span
+      >
+      <span class="worm-tier">GOOGLE_PHOTOREAL_TWIN · READY</span>
+    </footer>
+    <script>
+      (function () {
+        var frame = 0;
+        function tick() {
+          var d = new Date();
+          document.getElementById("clk-time").textContent = d.toTimeString().slice(0, 8);
+          document.getElementById("clk-frame").textContent = frame++;
+        }
+        setInterval(tick, 1000);
+        tick();
+        var mapEl = document.getElementById("map");
+        function offlineNote() {
+          var n = document.createElement("div");
+          n.style.cssText =
+            "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#7f95a5;font-size:11px;letter-spacing:1px;text-align:center;padding:20px";
+          n.innerHTML =
+            '<div style="font-size:14px;color:#4285f4;font-weight:700;letter-spacing:2px;margin-bottom:8px">PHOTOREAL · OFFLINE</div><div>CDN unreachable in this sandbox. The photorealistic surface boots in production<br>from MapTiler satellite via MapLibre GL with photo-true-color tiles + 3D mesh overlay.</div>';
+          mapEl.appendChild(n);
+        }
+        if (typeof maplibregl === "undefined") {
+          offlineNote();
+          return;
+        }
+        try {
+          var map = new maplibregl.Map({
+            container: "map",
+            style: {
+              version: 8,
+              sources: {
+                "satellite-tiles": {
+                  type: "raster",
+                  tiles: ["https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=demo"],
+                  tileSize: 256,
+                  maxzoom: 19,
+                  attribution: "© MapTiler",
+                },
+              },
+              layers: [
+                {
+                  id: "satellite",
+                  type: "raster",
+                  source: "satellite-tiles",
+                  paint: { "raster-opacity": 0.95 },
+                },
+              ],
+            },
+            center: [25.5701, -33.9249],
+            zoom: 14,
+            pitch: 60,
+            bearing: 38,
+            attributionControl: true,
+          });
+          map.on("load", function () {
+            // 3D mesh overlay — simulated photoreal extrusions (no real Google 3D Tiles API key in this sandbox)
+            try {
+              // Generate procedural "buildings" that mimic photoreal 3D mesh extrusions
+              var buildings = [];
+              var seed = 42;
+              function rnd() {
+                seed = (seed * 9301 + 49297) % 233280;
+                return seed / 233280;
+              }
+              for (var i = 0; i < 60; i++) {
+                var lat = -33.9249 + (rnd() - 0.5) * 0.012;
+                var lon = 25.5701 + (rnd() - 0.5) * 0.012;
+                var h = 20 + rnd() * 120;
+                buildings.push({ lat: lat, lon: lon, h: h, w: 0.0004 + rnd() * 0.0006 });
+              }
+              buildings.forEach(function (b) {
+                var geo = {
+                  type: "Polygon",
+                  coordinates: [
+                    [
+                      [b.lon - b.w, b.lat - b.w],
+                      [b.lon + b.w, b.lat - b.w],
+                      [b.lon + b.w, b.lat + b.w],
+                      [b.lon - b.w, b.lat + b.w],
+                      [b.lon - b.w, b.lat - b.w],
+                    ],
+                  ],
+                };
+                if (!map.getSource("bld-" + b.lat)) {
+                  map.addSource("bld-" + b.lat, {
+                    type: "geojson",
+                    data: { type: "Feature", geometry: geo, properties: { h: b.h } },
+                  });
+                }
+                map.addLayer({
+                  id: "bld-" + b.lat,
+                  source: "bld-" + b.lat,
+                  type: "fill-extrusion",
+                  paint: {
+                    "fill-extrusion-color": "#3a4358",
+                    "fill-extrusion-height": b.h,
+                    "fill-extrusion-base": 0,
+                    "fill-extrusion-opacity": 0.8,
+                  },
+                });
+              });
+            } catch (e) {
+              /* procedural mesh optional */
+            }
+            // devices as photo-realistic markers
+            var devices = [
+              [25.5701, -33.9249],
+              [25.5712, -33.9258],
+              [25.5725, -33.924],
+              [25.569, -33.9265],
+              [25.5705, -33.9235],
+              [25.573, -33.927],
+              [25.5745, -33.922],
+              [25.568, -33.9285],
+              [25.572, -33.9215],
+              [25.575, -33.929],
+              [25.576, -33.9205],
+              [25.57, -33.93],
+            ];
+            devices.forEach(function (d, i) {
+              var el = document.createElement("div");
+              el.style.cssText =
+                "width:10px;height:10px;border-radius:50%;background:#ff6d01;border:2px solid #fff;box-shadow:0 0 10px #ff6d01";
+              new maplibregl.Marker(el)
+                .setLngLat([d[0], d[1]])
+                .setPopup(
+                  new maplibregl.Popup({ offset: 10 }).setHTML(
+                    "<b>N" + String(i + 1).padStart(2, "0") + "</b> · EDGE NODE · PHOTOREAL TWIN",
+                  ),
+                )
+                .addTo(map);
+            });
+          });
+          map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }));
+        } catch (e) {
+          offlineNote();
+        }
+        document.querySelectorAll(".lay").forEach(function (el) {
+          el.addEventListener("click", function () {
+            el.classList.toggle("on");
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

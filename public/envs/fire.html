@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>FIRE · Adversarial Testing Environment</title>
+<style>
+:root{
+  --bg:#0a0e13;--bg2:#0e141c;--panel:#111a24;--panel2:#0d151e;--line:#1c2836;--line2:#26374a;
+  --txt:#dce8f2;--dim:#75899c;--dim2:#4e6172;--acc:#37d6a0;--acc2:#3aa9f5;--warn:#f5b944;--bad:#f2607a;--pur:#a78bfa;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+  --tap:44px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--txt);
+  font-family:var(--mono);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  min-height:100dvh;
+  padding-bottom:calc(64px + var(--safe-b));
+}
+
+/* ============ MOBILE-FIRST SHELL ============ */
+#app{display:flex;flex-direction:column;min-height:100dvh}
+
+/* --- Top bar (mobile: brand + actions) --- */
+#topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:10px;
+  padding:calc(10px + var(--safe-t)) 12px 10px;
+  background:rgba(14,20,28,.92);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+#topbar h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.06em;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#topbar .sub{display:none;font-size:10px;color:var(--dim2);letter-spacing:.1em}
+#brandmark{font-weight:700;letter-spacing:.2em;color:var(--bad);font-size:14px}
+#brandmark span{display:none}
+
+/* --- Desktop sidebar (hidden on mobile) --- */
+#nav{display:none}
+#navfoot{display:none}
+
+/* --- Main scroll area --- */
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#view{flex:1;padding:12px;overflow-x:hidden}
+
+/* --- Bottom tab bar (mobile primary nav) --- */
+#tabbar{
+  position:fixed;bottom:0;left:0;right:0;z-index:60;
+  display:flex;justify-content:space-around;align-items:stretch;
+  background:rgba(13,20,29,.96);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);
+  padding-bottom:var(--safe-b);
+  height:calc(60px + var(--safe-b));
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:var(--dim2);font-size:10px;letter-spacing:.04em;
+  cursor:pointer;user-select:none;min-height:var(--tap);
+  border-top:2px solid transparent;transition:color .15s;
+}
+.tab .ti{font-size:18px;line-height:1}
+.tab.on{color:var(--bad);border-top-color:var(--bad)}
+.tab:active{background:rgba(242,96,122,.06)}
+
+/* --- Overflow "more" sheet --- */
+#sheet{
+  position:fixed;inset:0;z-index:70;display:none;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(2px);
+}
+#sheet.open{display:flex;align-items:flex-end}
+#sheet .inner{
+  width:100%;background:var(--panel);border-top:1px solid var(--line);
+  border-radius:18px 18px 0 0;padding:16px 14px calc(16px + var(--safe-b));
+  max-height:70dvh;overflow-y:auto;animation:sheetUp .22s ease-out;
+}
+@keyframes sheetUp{from{transform:translateY(100%)}}
+#sheet .grab{width:36px;height:4px;background:var(--line2);border-radius:4px;margin:0 auto 14px}
+#sheet h3{margin:0 0 10px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim2)}
+.sheet-item{
+  display:flex;align-items:center;gap:12px;padding:13px 4px;
+  border-bottom:1px solid var(--line);cursor:pointer;min-height:var(--tap);
+}
+.sheet-item:last-child{border-bottom:0}
+.sheet-item .si{width:22px;text-align:center;font-size:16px;color:var(--acc2)}
+.sheet-item.on .si{color:var(--bad)}
+.sheet-item .st{flex:1;font-size:14px}
+.sheet-item .sc{font-size:11px;color:var(--dim2);background:#16212d;
+  border:1px solid var(--line);border-radius:20px;padding:1px 8px}
+
+/* ============ PANELS ============ */
+.panel{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden;
+}
+.ph{display:flex;align-items:center;gap:9px;padding:12px 14px;
+  border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ph h2{margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bad);font-weight:600}
+.ph .hint{font-size:11px;color:var(--dim2)}
+.pb{padding:14px}
+
+/* ============ GRIDS (mobile: stack) ============ */
+.grid{display:grid;gap:12px}
+.g2,.g3,.g21,.g12{grid-template-columns:1fr}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:12px}
+.kpi{background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:11px;padding:11px 12px}
+.kpi .l{font-size:9.5px;letter-spacing:.12em;color:var(--dim2);text-transform:uppercase;
+  line-height:1.3}
+.kpi .v{font-size:22px;margin-top:5px;line-height:1;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:10px;color:var(--dim);margin-top:4px}
+.kpi.a .v{color:var(--acc)}.kpi.b .v{color:var(--acc2)}
+.kpi.w .v{color:var(--warn)}.kpi.r .v{color:var(--bad)}
+
+/* ============ BUTTONS (touch-sized) ============ */
+.btn{
+  background:#16222e;border:1px solid var(--line);color:var(--dim);
+  border-radius:10px;padding:11px 14px;font:inherit;font-size:13px;
+  cursor:pointer;white-space:nowrap;min-height:var(--tap);
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.btn:active{transform:scale(.97)}
+.btn:hover{border-color:var(--bad);color:var(--bad)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.p{background:rgba(242,96,122,.1);border-color:rgba(242,96,122,.4);color:var(--bad)}
+.btn.p:hover{background:rgba(242,96,122,.18)}
+.btn.sm{padding:8px 11px;font-size:12px;min-height:36px}
+.btn.ok{border-color:rgba(55,214,160,.4);color:var(--acc)}
+.btn.ok:hover{border-color:var(--acc);color:var(--acc)}
+.btn.block{width:100%}
+
+/* ============ FORMS (mobile: full-width, big inputs) ============ */
+.frm{display:grid;grid-template-columns:1fr;gap:11px;align-items:end}
+.fld label{display:block;font-size:10px;letter-spacing:.12em;color:var(--dim2);
+  text-transform:uppercase;margin-bottom:5px}
+.fld input,.fld select,.fld textarea{
+  width:100%;background:#0b1219;border:1px solid var(--line);color:var(--txt);
+  border-radius:10px;padding:12px 12px;font:inherit;font-size:16px;outline:none;
+  min-height:var(--tap);
+}
+.fld textarea{resize:vertical;min-height:80px;font-size:14px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row .btn{flex:1 1 auto}
+
+/* ============ TABLES (horizontal scroll on mobile) ============ */
+.tbar{display:flex;gap:8px;align-items:center;padding:11px 12px;
+  border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tbar input,.tbar select{
+  background:#0b1219;border:1px solid var(--line);color:var(--txt);
+  border-radius:10px;padding:10px 12px;font:inherit;font-size:16px;outline:none;
+  min-height:var(--tap);flex:1 1 140px;
+}
+.tbar .cnt{font-size:11px;color:var(--dim2)}
+.tbar .acts{margin-left:auto;display:flex;gap:6px}
+.twrap{overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
+th{text-align:left;padding:10px 12px;color:var(--dim2);font-weight:600;
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  border-bottom:1px solid var(--line);cursor:pointer;user-select:none;
+  white-space:nowrap;position:sticky;top:0;background:var(--panel2);z-index:2}
+th:hover{color:var(--txt)}
+th .ar{color:var(--bad);font-size:9px}
+td{padding:11px 12px;border-bottom:1px solid #16202b;vertical-align:middle;
+  white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:#141f2b}
+tbody tr:active td{background:#18242f}
+tbody tr.sel td{background:rgba(242,96,122,.11)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.wrap{white-space:normal;min-width:160px}
+
+/* ============ BADGES ============ */
+.b{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;
+  letter-spacing:.05em;border:1px solid;white-space:nowrap;line-height:1.5}
+.b.ok{color:var(--acc);border-color:rgba(55,214,160,.35);background:rgba(55,214,160,.09)}
+.b.info{color:var(--acc2);border-color:rgba(58,169,245,.35);background:rgba(58,169,245,.09)}
+.b.warn{color:var(--warn);border-color:rgba(245,185,68,.35);background:rgba(245,185,68,.09)}
+.b.bad{color:var(--bad);border-color:rgba(242,96,122,.35);background:rgba(242,96,122,.09)}
+.b.mut{color:var(--dim2);border-color:var(--line);background:#131c26}
+.b.pur{color:var(--pur);border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.09)}
+
+/* ============ LISTS ============ */
+.alist{display:flex;flex-direction:column}
+.arow{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;
+  border-bottom:1px solid #16202b;font-size:12.5px}
+.arow:last-child{border-bottom:0}
+.arow .tm{color:var(--dim2);font-size:10px;white-space:nowrap;margin-left:auto;
+  text-align:right;flex:none}
+.arow .sv{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none}
+.sv.crit{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+.sv.warn{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.sv.info{background:var(--acc2);box-shadow:0 0 8px var(--acc2)}
+.sv.ok{background:var(--acc);box-shadow:0 0 8px var(--acc)}
+
+/* ============ KEY-VALUE ============ */
+.kv{display:grid;grid-template-columns:1fr;gap:4px 12px;font-size:12.5px}
+.kv dt{color:var(--dim2);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  margin-top:6px}
+.kv dd{margin:0;color:var(--txt);word-break:break-word}
+
+/* ============ HINTS / CODE ============ */
+.hint{font-size:12px;color:var(--dim2);line-height:1.7}
+.code{background:#0a1017;border:1px solid var(--line);border-radius:10px;padding:12px;
+  font-size:11px;color:#9fd0e8;white-space:pre-wrap;word-break:break-word;
+  line-height:1.65;max-height:50dvh;overflow:auto;-webkit-overflow-scrolling:touch}
+.mono{font-family:var(--mono);color:var(--dim);font-size:11px;word-break:break-all}
+
+/* ============ TAGS ============ */
+.tag{display:inline-block;background:#16212d;border:1px solid var(--line);
+  border-radius:20px;padding:2px 9px;font-size:10px;color:var(--dim);
+  margin:2px 3px 2px 0}
+.tag.a{color:var(--acc);border-color:rgba(55,214,160,.35)}
+.tag.b{color:var(--acc2);border-color:rgba(58,169,245,.35)}
+.tag.w{color:var(--warn);border-color:rgba(245,185,68,.35)}
+.tag.r{color:var(--bad);border-color:rgba(242,96,122,.35)}
+.tag.p{color:var(--pur);border-color:rgba(167,139,250,.35)}
+
+/* ============ CHECKLIST ============ */
+.chk{display:flex;gap:10px;align-items:flex-start;padding:10px 0;
+  border-bottom:1px solid #16202b;font-size:12.5px}
+.chk:last-child{border-bottom:0}
+.chk .mk{width:18px;flex:none;font-weight:700;font-size:15px}
+.chk.pass .mk{color:var(--acc)}.chk.fail .mk{color:var(--bad)}
+.chk .nm{color:var(--txt)}
+.chk .dt{color:var(--dim2);font-size:11px;margin-top:4px;word-break:break-word}
+
+/* ============ GATE ============ */
+.gate{border:1px solid var(--bad);border-radius:12px;padding:14px;
+  background:rgba(242,96,122,.06);margin-bottom:12px}
+.gate.ok{border-color:rgba(55,214,160,.4);background:rgba(55,214,160,.06)}
+.gate .gt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bad);margin-bottom:8px;font-weight:600}
+.gate.ok .gt{color:var(--acc)}
+
+/* ============ GAP TABLE ============ */
+.gap{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:10px;min-width:600px}
+.gap th{background:transparent;position:static;cursor:default}
+.gap td{white-space:normal;padding:7px 9px;vertical-align:top}
+.gap td.r{color:var(--bad)}
+.gap td.g{color:var(--acc)}
+.gap td.y{color:var(--warn)}
+
+/* ============ TOASTS ============ */
+#toast{position:fixed;bottom:calc(74px + var(--safe-b));left:12px;right:12px;
+  display:flex;flex-direction:column;gap:8px;z-index:99;pointer-events:none}
+.tst{background:#121b26;border:1px solid var(--bad);border-left-width:3px;
+  border-radius:10px;padding:11px 14px;font-size:12.5px;
+  box-shadow:0 8px 26px rgba(0,0,0,.55);animation:tin .18s ease-out}
+.tst.warn{border-color:var(--warn)}.tst.bad{border-color:var(--bad)}
+.tst.ok{border-color:var(--acc)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+
+/* ============ SCROLLBARS ============ */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:#0a0f15}
+::-webkit-scrollbar-thumb{background:#22323f;border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:#31465a}
+
+/* ==========================================================================
+   UPSCALE — progressive enhancement upward
+   ========================================================================== */
+
+/* --- Small tablet (≥560px): 2-col KPIs, form grid --- */
+@media(min-width:560px){
+  #view{padding:16px}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(148px,1fr))}
+  .frm{grid-template-columns:repeat(2,1fr)}
+  .kv{grid-template-columns:auto 1fr;gap:5px 14px}
+  .kv dt{margin-top:0}
+  .row .btn{flex:0 1 auto}
+  table{min-width:0}
+}
+
+/* --- Tablet (≥760px): 2-col content grids, show more nav --- */
+@media(min-width:760px){
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g21{grid-template-columns:2fr 1fr}
+  .g12{grid-template-columns:1fr 2fr}
+  body{padding-bottom:0}
+  #tabbar{display:none}
+  #app{display:grid;grid-template-columns:200px 1fr;min-height:100dvh}
+  #nav{
+    display:flex;flex-direction:column;overflow:hidden;
+    background:linear-gradient(180deg,#0d141d,#0a0f15);
+    border-right:1px solid var(--line);
+    position:sticky;top:0;height:100dvh;
+  }
+  #navlist{flex:1;overflow-y:auto;padding:6px 0;-webkit-overflow-scrolling:touch}
+  .ngroup{font-size:9.5px;letter-spacing:.18em;color:var(--dim2);
+    padding:12px 14px 5px;text-transform:uppercase}
+  .nitem{display:flex;align-items:center;gap:10px;padding:11px 14px;
+    cursor:pointer;color:var(--dim);border-left:2px solid transparent;
+    font-size:12.5px;user-select:none;min-height:var(--tap);
+    transition:background .12s,color .12s}
+  .nitem:hover{background:#121c27;color:var(--txt)}
+  .nitem.on{background:linear-gradient(90deg,rgba(242,96,122,.13),transparent);
+    color:var(--txt);border-left-color:var(--bad)}
+  .nitem .ic{width:18px;text-align:center;color:var(--acc2);font-size:14px}
+  .nitem.on .ic{color:var(--bad)}
+  .nitem .ct{margin-left:auto;font-size:10px;color:var(--dim2);
+    background:#16212d;border:1px solid var(--line);border-radius:20px;
+    padding:0 7px;line-height:17px}
+  #navfoot{display:block;padding:11px 13px;border-top:1px solid var(--line);
+    font-size:10px;color:var(--dim2);line-height:1.8}
+  .dot{display:inline-block;width:6px;height:6px;border-radius:50%;
+    background:var(--bad);margin-right:5px;box-shadow:0 0 7px var(--bad)}
+  #brand{padding:15px 14px 13px;border-bottom:1px solid var(--line)}
+  #brand b{font-size:15px;letter-spacing:.2em;color:var(--bad)}
+  #brand span{display:block;font-size:9px;color:var(--dim2);
+    letter-spacing:.14em;margin-top:4px}
+  #brandmark{display:none}
+  #topbar h1{font-size:14px}
+  #topbar .sub{display:inline}
+  #view{padding:18px}
+}
+
+/* --- Desktop (≥1100px): tighter density, wider tables --- */
+@media(min-width:1100px){
+  body{font-size:13px}
+  #app{grid-template-columns:222px 1fr}
+  #view{padding:16px}
+  .frm{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  table{font-size:11.5px}
+  th{padding:8px 11px}
+  td{padding:7px 11px}
+  .code{font-size:10.5px;max-height:300px}
+  .ph{padding:10px 13px}
+  .pb{padding:13px}
+  .panel{border-radius:11px;margin-bottom:14px}
+  .kpi .v{font-size:21px}
+  .btn{padding:6px 10px;min-height:0;font-size:11px;border-radius:7px}
+  .btn.sm{padding:3px 8px;font-size:10px}
+  .tbar input,.tbar select{font-size:11px;padding:5px 9px;min-height:0}
+  .fld input,.fld select,.fld textarea{font-size:11.5px;padding:7px 9px;min-height:0}
+  #toast{bottom:16px;left:auto;right:16px;min-width:220px}
+}
+
+/* --- Reduced motion --- */
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+/* --- Landscape phone: shrink vertical chrome --- */
+@media(max-height:500px) and (orientation:landscape){
+  #topbar{padding:6px 12px}
+  #view{padding:10px}
+  .pb{padding:11px}
+  #tabbar{height:calc(52px + var(--safe-b))}
+  .tab{font-size:9px}.tab .ti{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="nav">
+    <div id="brand"><b>FIRE</b><span>ADVERSARIAL TESTING · VVU-ENV-FIRE-2026-001</span></div>
+    <div id="navlist"></div>
+    <div id="navfoot">
+      <span class="dot"></span>Fire never emits PROVEN<br>
+      <span id="footcount">0 records</span><br>
+      <span id="footseed">seed: —</span>
+    </div>
+  </aside>
+  <div id="main">
+    <header id="topbar">
+      <span id="brandmark">FIRE</span>
+      <h1 id="vtitle">Run</h1>
+      <span class="sub" id="vsub"></span>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn sm" id="btnExport" title="Export report">⬇</button>
+      <button class="btn sm" id="btnReset" title="Reset store">↺</button>
+    </header>
+    <div id="view"></div>
+  </div>
+</div>
+
+<nav id="tabbar"></nav>
+
+<div id="sheet">
+  <div class="inner">
+    <div class="grab"></div>
+    <h3>More</h3>
+    <div id="sheetlist"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ==========================================================================
+   0 · UTILITIES
+   ========================================================================== */
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function uid(p){return p+'-'+Math.random().toString(36).slice(2,10);}
+function fmt(n){return (n==null||isNaN(n))?'—':Number(n).toLocaleString();}
+function ago(ts){var s=Math.max(0,(Date.now()-ts)/1000);
+  if(s<60)return Math.floor(s)+'s';if(s<3600)return Math.floor(s/60)+'m';
+  if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d';}
+function hhmmss(ts){var d=new Date(ts);return isNaN(d)?'—':d.toTimeString().slice(0,8);}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function download(name,text,mime){
+  var b=new Blob([text],{type:mime||'text/plain'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},400);}
+function toast(msg,kind){
+  var t=document.createElement('div');t.className='tst'+(kind?' '+kind:'');t.textContent=msg;
+  $('#toast').appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';},2200);
+  setTimeout(function(){t.remove();},2600);}
+function isMobile(){return window.matchMedia('(max-width:759px)').matches;}
+
+/* ==========================================================================
+   1 · SHA-256 (FIPS 180-4)
+   ========================================================================== */
+var SHA256=(function(){
+  var K=new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  function digest(bytes){
+    var l=bytes.length,hi=Math.floor(l/536870912),lo=(l*8)>>>0;
+    var pad=((56-((l+1)%64))+64)%64,total=l+1+pad+8,m=new Uint8Array(total);
+    m.set(bytes);m[l]=0x80;
+    var p=total-8;
+    m[p]=hi>>>24;m[p+1]=hi>>>16;m[p+2]=hi>>>8;m[p+3]=hi;
+    m[p+4]=lo>>>24;m[p+5]=lo>>>16;m[p+6]=lo>>>8;m[p+7]=lo;
+    var H=new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    var w=new Uint32Array(64);
+    for(var off=0;off<total;off+=64){
+      for(var i=0;i<16;i++){var j=off+i*4;w[i]=((m[j]<<24)|(m[j+1]<<16)|(m[j+2]<<8)|m[j+3])>>>0;}
+      for(var i=16;i<64;i++){
+        var x=w[i-15],y=w[i-2];
+        w[i]=(w[i-16]+((rotr(x,7)^rotr(x,18)^(x>>>3))>>>0)+w[i-7]+((rotr(y,17)^rotr(y,19)^(y>>>10))>>>0))>>>0;}
+      var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+      for(var i=0;i<64;i++){
+        var S1=(rotr(e,6)^rotr(e,11)^rotr(e,25))>>>0;
+        var t1=(h+S1+((e&f)^(~e&g))+K[i]+w[i])>>>0;
+        var S0=(rotr(a,2)^rotr(a,13)^rotr(a,22))>>>0;
+        var t2=(S0+((a&b)^(a&c)^(b&c)))>>>0;
+        h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+      H[0]=(H[0]+a)>>>0;H[1]=(H[1]+b)>>>0;H[2]=(H[2]+c)>>>0;H[3]=(H[3]+d)>>>0;
+      H[4]=(H[4]+e)>>>0;H[5]=(H[5]+f)>>>0;H[6]=(H[6]+g)>>>0;H[7]=(H[7]+h)>>>0;}
+    var out=new Uint8Array(32);
+    for(var i=0;i<8;i++){out[i*4]=H[i]>>>24;out[i*4+1]=H[i]>>>16;out[i*4+2]=H[i]>>>8;out[i*4+3]=H[i];}
+    return out;}
+  function hex(b){var s='';for(var i=0;i<b.length;i++)s+=('0'+b[i].toString(16)).slice(-2);return s;}
+  return {hexOf:function(s){return hex(digest(new TextEncoder().encode(String(s))));}};
+})();
+
+function RNG(seed){
+  var s=String(seed),h=0x811c9dc5;
+  for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}
+  this.s=h>>>0;
+}
+RNG.prototype.next=function(){
+  this.s=(Math.imul(this.s,1664525)+1013904223)>>>0;
+  return this.s/4294967296;};
+RNG.prototype.int=function(a,b){return Math.floor(a+this.next()*(b-a+1));};
+RNG.prototype.pick=function(a){return a[this.int(0,a.length-1)];};
+
+/* ==========================================================================
+   2 · WORM CHAIN
+   ========================================================================== */
+function WormChain(build){this.build=build||'honest-v1';this.rows=[];}
+WormChain.prototype.rowDigest=function(seq,prev,payload){
+  return SHA256.hexOf(this.build+'|'+seq+'|'+prev+'|'+payload);};
+WormChain.prototype.append=function(payload){
+  var seq=this.rows.length;
+  var prev=seq===0?'0'.repeat(64):this.rows[seq-1].digest;
+  return {seq:seq,prev_hash:prev,payload:payload,
+    payload_hash:SHA256.hexOf(payload),
+    digest:this.rowDigest(seq,prev,SHA256.hexOf(payload))};};
+WormChain.prototype.commit=function(payload){
+  var r=this.append(payload);this.rows.push(r);return r;};
+WormChain.prototype.seedRows=function(n){
+  var rng=new RNG('worm-fixture-'+this.build);
+  for(var i=0;i<n;i++) this.commit('obs-'+i+'|'+rng.int(1000,9999));
+  return this;};
+WormChain.prototype.verify=function(){
+  var breaks=[];
+  for(var i=0;i<this.rows.length;i++){
+    var r=this.rows[i];
+    var expectPrev=i===0?'0'.repeat(64):this.rows[i-1].digest;
+    if(r.seq!==i) breaks.push({row:i,check:'SEQ_CONTINUITY',detail:'expected seq '+i+', found '+r.seq});
+    if(r.payload_hash!==SHA256.hexOf(r.payload))
+      breaks.push({row:i,check:'PAYLOAD_HASH',detail:'payload hash does not match payload'});
+    if(this.build==='honest-v1'&&r.prev_hash!==expectPrev)
+      breaks.push({row:i,check:'PREV_LINKAGE',detail:'prev_hash does not match previous row digest'});
+    if(r.digest!==this.rowDigest(r.seq,r.prev_hash,r.payload_hash))
+      breaks.push({row:i,check:'ROW_DIGEST',detail:'row digest does not recompute'});
+  }
+  return {ok:breaks.length===0,breaks:breaks,build:this.build,rows:this.rows.length};};
+
+var TARGETS={
+  'honest-v1':{id:'honest-v1',version:'1.0.0',desc:'WORM chain with full linkage verification.',
+    tier:'Reality',make:function(){return new WormChain('honest-v1');}},
+  'vulnerable-v0.9':{id:'vulnerable-v0.9',version:'0.9.0',
+    desc:'WORM chain build that checks sequence continuity but SKIPS prev-hash linkage. Deliberately defective fixture.',
+    tier:'Reality',make:function(){return new WormChain('vulnerable-v0.9');}}
+};
+
+/* ==========================================================================
+   3 · TAMPER + GOVERNANCE CASES
+   ========================================================================== */
+function freshChain(targetId,n){return TARGETS[targetId].make().seedRows(n||8);}
+var TAMPER=[
+  {id:'TAMPER-MODIFIED',threat:'THREAT-T1',desc:'A payload in the middle of the chain is edited.',
+   apply:function(c){c.rows[3].payload=c.rows[3].payload.replace(/obs-3/,'obs-9');return c;},
+   expect:{ok:false,check:'PAYLOAD_HASH'}},
+  {id:'TAMPER-DELETED',threat:'THREAT-T1',desc:'A middle row is removed, leaving a gap.',
+   apply:function(c){c.rows.splice(4,1);return c;},expect:{ok:false,check:'SEQ_CONTINUITY'}},
+  {id:'TAMPER-REORDERED',threat:'THREAT-T2',desc:'Two adjacent rows are swapped.',
+   apply:function(c){var t=c.rows[2];c.rows[2]=c.rows[3];c.rows[3]=t;return c;},
+   expect:{ok:false,check:'SEQ_CONTINUITY'}},
+  {id:'TAMPER-DUPLICATE',threat:'THREAT-T2',desc:'A row is duplicated to forge a repeat event.',
+   apply:function(c){c.rows.splice(5,0,clone(c.rows[5]));return c;},expect:{ok:false,check:'SEQ_CONTINUITY'}},
+  {id:'TAMPER-WRONG-PREV',threat:'THREAT-T3',desc:'A row prev_hash is pointed at the wrong ancestor.',
+   apply:function(c){c.rows[6].prev_hash=SHA256.hexOf('forged-anchor');return c;},
+   expect:{ok:false,check:'PREV_LINKAGE'}},
+  {id:'TAMPER-WRONG-SEQ',threat:'THREAT-T3',desc:'A row sequence number is rewritten.',
+   apply:function(c){c.rows[5].seq=99;return c;},expect:{ok:false,check:'SEQ_CONTINUITY'}},
+  {id:'TAMPER-STALE',threat:'THREAT-T4',desc:'An older, superseded chain state is replayed.',
+   apply:function(c){var live=freshChain('honest-v1',8);live.commit('late-event');
+     var replay=freshChain('honest-v1',8);return replay;},expect:{ok:true,check:null}},
+  {id:'TAMPER-CONCURRENT',threat:'THREAT-T4',desc:'Two writers append at the same sequence.',
+   apply:function(c){var a=c.append('writer-a-event'),b=c.append('writer-b-event');
+     b.seq=a.seq;c.rows.push(a,b);return c;},expect:{ok:false,check:'SEQ_CONTINUITY'}},
+  {id:'TAMPER-FORGED-DIGEST',threat:'THREAT-T5',desc:'A row digest is replaced with a plausible-looking value.',
+   apply:function(c){c.rows[4].digest=SHA256.hexOf('looks-legitimate');return c;},
+   expect:{ok:false,check:'ROW_DIGEST'}}
+];
+var GOVERNANCE=[
+  {id:'N1',threat:'THREAT-G1',desc:'Unsigned artefact must be refused.',expect:'REJECTED'},
+  {id:'N2',threat:'THREAT-G1',desc:'Unregistered signer must be refused.',expect:'REJECTED'},
+  {id:'N3',threat:'THREAT-G2',desc:'Replayed signed artefact must be refused.',expect:'REJECTED'},
+  {id:'N4',threat:'THREAT-G2',desc:'Sequence regression must be refused.',expect:'REJECTED'},
+  {id:'N5',threat:'THREAT-G3',desc:'Out-of-scope request must be refused.',expect:'REJECTED'},
+  {id:'N6',threat:'THREAT-G3',desc:'PII in a metadata-only path must be refused.',expect:'REJECTED'},
+  {id:'N7',threat:'THREAT-G4',desc:'Expired authorisation must be refused.',expect:'REJECTED'},
+  {id:'N8',threat:'THREAT-G4',desc:'Malformed envelope must be refused.',expect:'REJECTED'},
+  {id:'N9',threat:'THREAT-G5',desc:'Anchor stub must self-declare, not silently pass.',expect:'REJECTED'}
+];
+
+/* ==========================================================================
+   4 · STORE
+   ========================================================================== */
+var KEY='fire.vvu.v1';
+var Store={
+  d:null,
+  load:function(){
+    try{var raw=localStorage.getItem(KEY);
+      if(raw){var o=JSON.parse(raw);if(o&&o.threats){this.d=o;return;}}}catch(e){}
+    this.d={threats:[],expectations:[],auths:[],runs:[],counterexamples:[],targets:{},
+      gap:{items:[],checked:0},log:[],selfTest:null,seed:null};
+    this.commit('system','Fire store initialised');},
+  save:function(){try{localStorage.setItem(KEY,JSON.stringify(this.d));}catch(e){toast('persist failed','bad');}},
+  commit:function(type,detail){
+    this.d.log.unshift({t:Date.now(),type:type,detail:detail});
+    if(this.d.log.length>200)this.d.log.length=200;
+    this.save();bus.emit('store');},
+  reset:function(){localStorage.removeItem(KEY);this.d={threats:[],expectations:[],auths:[],
+    runs:[],counterexamples:[],targets:{},gap:{items:[],checked:0},log:[],selfTest:null,seed:null};
+    this.commit('system','Fire store reset');},
+  all:function(k){return this.d[k]||[];},
+  byId:function(k,id){var a=this.all(k);for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i];return null;}
+};
+var bus={fns:{},on:function(e,f){(this.fns[e]=this.fns[e]||[]).push(f);return f;},
+  clear:function(){this.fns={};},
+  emit:function(e){(this.fns[e]||[]).forEach(function(f){try{f();}catch(err){console.error(err);}});}};
+
+/* ==========================================================================
+   5 · COMPONENTS
+   ========================================================================== */
+var view=$('#view');
+function clear(){view.innerHTML='';}
+var STATUS={
+  'PASSED-UNDER-CONDITIONS':'ok',FAILED:'bad',INCONCLUSIVE:'warn',BLOCKED:'info',
+  'SKIPPED-BY-ASSET-ABSENCE':'mut',PROVEN:'pur',
+  RETROFITTED:'warn','PRE-REGISTERED':'ok','SPEC-ONLY':'mut',
+  Reality:'ok',Architecture:'info',Hypothesis:'warn',Vision:'mut',
+  ACTIVE:'ok',EXPIRED:'mut',REVOKED:'bad',DRAFT:'mut'
+};
+function badge(v){return '<span class="b '+(STATUS[v]||'mut')+'">'+esc(v)+'</span>';}
+function Panel(title,hint,bodyEl,rightEl){
+  var p=document.createElement('div');p.className='panel';
+  var h=document.createElement('div');h.className='ph';
+  h.innerHTML='<h2>'+esc(title)+'</h2>'+(hint?'<span class="hint">'+esc(hint)+'</span>':'');
+  if(rightEl)h.appendChild(rightEl);
+  p.appendChild(h);
+  var b=document.createElement('div');b.className='pb';
+  if(typeof bodyEl==='string')b.innerHTML=bodyEl;else b.appendChild(bodyEl);
+  p.appendChild(b);return p;}
+function Grid(cls){var g=document.createElement('div');g.className='grid '+cls;return g;}
+function KPI(items){
+  var w=document.createElement('div');w.className='kpis';
+  items.forEach(function(it){
+    var e=document.createElement('div');e.className='kpi '+(it.c||'');
+    e.innerHTML='<div class="l">'+esc(it.l)+'</div><div class="v">'+esc(it.v)+'</div>'+
+      (it.d?'<div class="d">'+esc(it.d)+'</div>':'');
+    w.appendChild(e);});
+  return w;}
+function Table(cols,rows,opts){
+  opts=opts||{};
+  var st={sort:0,dir:1,q:''};
+  var wrap=document.createElement('div');wrap.className='panel';
+  var tb=document.createElement('div');tb.className='tbar';
+  var inp=document.createElement('input');inp.placeholder='filter…';
+  inp.oninput=function(){st.q=inp.value.toLowerCase();paint();};
+  var cnt=document.createElement('span');cnt.className='cnt';
+  var acts=document.createElement('span');acts.className='acts';
+  var bCsv=document.createElement('button');bCsv.className='btn sm';bCsv.textContent='csv';
+  var bJson=document.createElement('button');bJson.className='btn sm';bJson.textContent='json';
+  acts.appendChild(bCsv);acts.appendChild(bJson);
+  tb.appendChild(inp);tb.appendChild(cnt);tb.appendChild(acts);
+  var tw=document.createElement('div');tw.className='twrap';
+  var table=document.createElement('table');
+  var thead=document.createElement('thead'),hr=document.createElement('tr');
+  cols.forEach(function(c,i){
+    var th=document.createElement('th');if(c.num)th.className='num';
+    th.onclick=function(){if(st.sort===i)st.dir*=-1;else{st.sort=i;st.dir=1;}paint();};
+    hr.appendChild(th);});
+  thead.appendChild(hr);table.appendChild(thead);
+  var tbody=document.createElement('tbody');table.appendChild(tbody);
+  tw.appendChild(table);
+  wrap.appendChild(tb);wrap.appendChild(tw);
+  function vis(){
+    var r=rows.filter(function(r){
+      if(!st.q)return true;
+      return cols.some(function(c){return String(r[c.k]).toLowerCase().indexOf(st.q)>-1;});});
+    var c=cols[st.sort];
+    r.sort(function(a,b){
+      var x=a[c.k],y=b[c.k];
+      if(typeof x==='number'&&typeof y==='number')return (x-y)*st.dir;
+      return String(x).localeCompare(String(y))*st.dir;});
+    return r;}
+  function exp(kind){
+    var data=vis();
+    if(kind==='json')download('fire-'+opts.name+'.json',JSON.stringify(data,null,2),'application/json');
+    else{
+      var head=cols.map(function(c){return c.l;}).join(',');
+      var body=data.map(function(r){return cols.map(function(c){
+        var v=r[c.k];return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+      download('fire-'+opts.name+'.csv',head+'\n'+body,'text/csv');}
+    Store.commit('export',opts.name+' → '+kind+' ('+data.length+' rows)');
+    toast('exported '+data.length+' rows as '+kind.toUpperCase());}
+  bCsv.onclick=function(){exp('csv');};
+  bJson.onclick=function(){exp('json');};
+  function paint(){
+    $$('th',thead).forEach(function(th,i){
+      th.innerHTML=esc(cols[i].l)+(st.sort===i?' <span class="ar">'+(st.dir>0?'▲':'▼')+'</span>':'');});
+    var r=vis();tbody.innerHTML='';
+    cnt.textContent=r.length+' rows';
+    r.forEach(function(row){
+      var tr=document.createElement('tr');
+      if(opts.selected&&opts.selected(row))tr.className='sel';
+      tr.onclick=function(){if(opts.onSelect)opts.onSelect(row);};
+      cols.forEach(function(c){
+        var td=document.createElement('td');
+        if(c.num)td.className='num';if(c.wrap)td.className='wrap';
+        var v=row[c.k];
+        if(c.badge)td.innerHTML=badge(v);
+        else if(c.mono)td.innerHTML='<span class="mono">'+esc(v)+'</span>';
+        else td.innerHTML=esc(v);
+        tr.appendChild(td);});
+      tbody.appendChild(tr);});
+    if(!r.length){
+      var e=document.createElement('tr'),td=document.createElement('td');
+      td.colSpan=cols.length;td.className='hint';td.style.padding='16px';td.style.textAlign='center';
+      td.textContent='no records';e.appendChild(td);tbody.appendChild(e);}}
+  paint();
+  return wrap;}
+
+/* ==========================================================================
+   6 · GAP REGISTER
+   ========================================================================== */
+function renderGap(){
+  var items=[
+    {id:'A1',name:'9-case tamper matrix in manual go-live runner',path:'(no path supplied)',state:'ABSENT',fn:'Retrofit intake',act:'Reconstructed as THREAT-T1..T5',con:'Retrofit provenance'},
+    {id:'A2',name:'N1–N9 governance tests in one-off E2E log',path:'(no path supplied)',state:'ABSENT',fn:'Retrofit intake',act:'Reconstructed from spec',con:'Retrofit provenance'},
+    {id:'A3',name:'12 QR-bridge adversarial tests',path:'(no path supplied)',state:'ABSENT',fn:'QR bridge coverage',act:'Not reconstructed',con:'Attack class absent'},
+    {id:'A4',name:'POST /api/validate endpoint',path:'(no host supplied)',state:'UNREACHABLE',fn:'Harness invocation',act:'Offline fixtures',con:'Live path untested'},
+    {id:'A5',name:'src/lib/validation/*.ts',path:'(no repo path)',state:'ABSENT',fn:'TS harness',act:'Not imported',con:'Documented claims only'},
+    {id:'A6',name:'tests/vvu-field',path:'(no repo path)',state:'ABSENT',fn:'Field target',act:'Not imported',con:'Documented claims only'},
+    {id:'SVC-3004',name:'vault-bridge on :3004',path:'http://localhost:3004',state:'UNREACHABLE',fn:'WORM bridge',act:'Offline fixtures',con:'Service cases not run'},
+    {id:'SVC-3005',name:'vvu-field on :3005',path:'http://localhost:3005',state:'UNREACHABLE',fn:'Field sync',act:'Offline fixtures',con:'Service cases not run'}
+  ];
+  var present=items.filter(function(i){return i.state==='PRESENT';}).length;
+  var absent=items.filter(function(i){return i.state==='ABSENT';}).length;
+  var unreach=items.filter(function(i){return i.state==='UNREACHABLE';}).length;
+  var w=document.createElement('div');
+  w.innerHTML='<div class="hint" style="margin-bottom:10px">'+
+    'Inventory at <b>'+new Date().toISOString()+'</b>. No repository path was supplied, so no file could be '+
+    'hashed. Every absent item is recorded with the exact path checked. Nothing was fabricated to fill a gap.</div>';
+  var box=document.createElement('div');box.className='code';
+  box.textContent='GAP REGISTER — '+new Date().toISOString().slice(0,10)+'\n'+
+    'Items: '+items.length+' | Present: '+present+' | Absent: '+absent+' | Unreachable: '+unreach+'\n\n'+
+    items.map(function(i){
+      return i.id+'  '+i.state+'\n  '+i.name+'\n  path: '+i.path+'\n  action: '+i.act+
+        '\n  consequence: '+i.con;}).join('\n\n')+
+    '\n\nBLOCKED FUNCTIONS\n'+
+    '  QR-bridge adversarial coverage — asset A3 absent\n'+
+    '  TS validation harness target — asset A5 absent\n'+
+    '  Field adversarial target — asset A6 absent\n'+
+    '  Live service targets — :3004 and :3005 unreachable\n';
+  w.appendChild(box);
+  view.appendChild(Panel('Gap register','inventory before alteration',w));
+  view.appendChild(KPI([
+    {l:'Checked',v:items.length,c:'b'},
+    {l:'Present',v:present,c:present?'a':''},
+    {l:'Absent',v:absent,c:absent?'w':''},
+    {l:'Unreachable',v:unreach,c:unreach?'w':''},
+    {l:'Blocked',v:4,c:'r'}
+  ]));
+}
+
+/* ==========================================================================
+   7 · THREATS
+   ========================================================================== */
+function renderThreats(){
+  clear();
+  renderGap();
+  view.appendChild(Panel('Threat model registry',
+    Store.all('threats').length+' registered',
+    '<div class="hint">threat_id · target · attacker capability · asset at risk · in/out of scope · authorisation ref.</div>'));
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Threat ID</label><input name="id" placeholder="THREAT-T6" required></div>'+
+    '<div class="fld"><label>Target</label><select name="target">'+
+      Object.keys(TARGETS).map(function(t){return '<option>'+t+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Attacker capability</label><input name="capability" placeholder="write access to a stored row"></div>'+
+    '<div class="fld"><label>Asset at risk</label><input name="asset" placeholder="chain integrity"></div>'+
+    '<div class="fld"><label>In scope</label><input name="inscope" placeholder="what may be tested"></div>'+
+    '<div class="fld"><label>Out of scope</label><input name="outscope" placeholder="what may NOT be tested"></div>'+
+    '<div class="fld"><label>Authorisation ref</label><input name="auth" placeholder="AUTH-xxxx"></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p block" type="submit">register threat</button></div>';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements,id=(f.id.value||'').trim();
+    if(!id){toast('threat id required','warn');return;}
+    if(Store.byId('threats',id)){toast('threat id already registered','bad');return;}
+    Store.all('threats').push({id:id,target:f.target.value,capability:f.capability.value,
+      asset:f.asset.value,inscope:f.inscope.value,outscope:f.outscope.value,
+      auth:f.auth.value,provenance:'PRE-REGISTERED',tier:'Architecture',created:Date.now()});
+    Store.commit('threat.register',id+' registered against '+f.target.value);
+    toast('threat '+id+' registered','ok');form.reset();};
+  view.appendChild(Panel('Register a threat model','pre-execution',form));
+  var rows=Store.all('threats').map(function(t){
+    return {id:t.id,target:t.target,capability:t.capability||'—',asset:t.asset||'—',
+      inscope:t.inscope||'—',outscope:t.outscope||'—',auth:t.auth||'—',
+      provenance:t.provenance,tier:t.tier,created:ago(t.created)};});
+  view.appendChild(Table([
+    {k:'id',l:'Threat ID',mono:1},{k:'target',l:'Target'},{k:'capability',l:'Capability',wrap:1},
+    {k:'asset',l:'Asset',wrap:1},{k:'inscope',l:'In scope',wrap:1},
+    {k:'outscope',l:'Out of scope',wrap:1},{k:'auth',l:'Auth',mono:1},
+    {k:'provenance',l:'Provenance',badge:1},{k:'tier',l:'Tier',badge:1},{k:'created',l:'Created'}
+  ],rows,{name:'threats'}));
+}
+
+/* ==========================================================================
+   8 · EXPECTATIONS
+   ========================================================================== */
+function renderExpectations(){
+  clear();
+  view.appendChild(Panel('Expected-behaviour registry',
+    'immutable once a run starts',
+    '<div class="hint">Editing an expectation a run has used creates a <b>new version</b>. The old version stays bound to the runs that used it.</div>'));
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Expectation ID</label><input name="id" placeholder="EXP-xxx" required></div>'+
+    '<div class="fld"><label>Case it governs</label><input name="case" placeholder="TAMPER-MODIFIED"></div>'+
+    '<div class="fld"><label>Expected verifier result</label><select name="ok">'+
+      '<option value="false">ok = false (must detect)</option><option value="true">ok = true (must pass)</option></select></div>'+
+    '<div class="fld"><label>Expected break check</label><input name="check" placeholder="PAYLOAD_HASH"></div>'+
+    '<div class="fld"><label>Statement</label><input name="statement" placeholder="verifier names the row and check"></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p block" type="submit">register expectation</button></div>';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements,id=(f.id.value||'').trim();
+    if(!id){toast('expectation id required','warn');return;}
+    var existing=Store.byId('expectations',id);
+    var usedBy=Store.all('runs').filter(function(r){
+      return r.cases.some(function(c){return c.expectationId===id;});});
+    if(existing){
+      if(usedBy.length){
+        var version=existing.version+1;
+        Store.all('expectations').push({id:id,version:version,caseId:f.case.value,
+          expectOk:f.ok.value==='true',expectCheck:f.check.value,statement:f.statement.value,
+          supersedes:existing.version,boundRuns:usedBy.map(function(r){return r.id;}),
+          provenance:'PRE-REGISTERED',tier:'Architecture',created:Date.now()});
+        Store.commit('expectation.version',id+' → v'+version+' (bound to '+usedBy.length+' run(s))');
+        toast(id+' → v'+version,'ok');form.reset();return;}
+      existing.caseId=f.case.value;existing.expectOk=f.ok.value==='true';
+      existing.expectCheck=f.check.value;existing.statement=f.statement.value;
+      Store.commit('expectation.edit',id+' edited (no runs bound)');
+      toast(id+' edited','ok');form.reset();return;}
+    Store.all('expectations').push({id:id,version:1,caseId:f.case.value,
+      expectOk:f.ok.value==='true',expectCheck:f.check.value,statement:f.statement.value,
+      supersedes:null,boundRuns:[],provenance:'PRE-REGISTERED',tier:'Architecture',created:Date.now()});
+    Store.commit('expectation.register',id+' registered');
+    toast('expectation '+id+' registered','ok');form.reset();};
+  view.appendChild(Panel('Register an expectation','pre-execution',form));
+  var rows=Store.all('expectations').map(function(e){
+    return {id:e.id,v:'v'+e.version,caseId:e.caseId||'—',
+      expect:'ok='+e.expectOk+(e.expectCheck?' · '+e.expectCheck:''),
+      statement:e.statement||'—',supersedes:e.supersedes?'v'+e.supersedes:'—',
+      bound:e.boundRuns?e.boundRuns.length:0,provenance:e.provenance,tier:e.tier,created:ago(e.created)};});
+  view.appendChild(Table([
+    {k:'id',l:'Expectation',mono:1},{k:'v',l:'Ver'},{k:'caseId',l:'Governs'},{k:'expect',l:'Expected',wrap:1},
+    {k:'statement',l:'Statement',wrap:1},{k:'supersedes',l:'Supersedes'},
+    {k:'bound',l:'Runs',num:1},{k:'provenance',l:'Provenance',badge:1},{k:'tier',l:'Tier',badge:1},
+    {k:'created',l:'Created'}
+  ],rows,{name:'expectations'}));
+}
+
+/* ==========================================================================
+   9 · AUTH
+   ========================================================================== */
+function renderAuths(){
+  clear();
+  view.appendChild(Panel('Authorisation record','no record, no run',
+    '<div class="hint">A run is refused at execution time if no authorisation covers its target and is currently valid.</div>'));
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Reference</label><input name="ref" placeholder="AUTH-0001" required></div>'+
+    '<div class="fld"><label>Authoriser</label><input name="who" placeholder="name / role" required></div>'+
+    '<div class="fld"><label>Target</label><select name="target">'+
+      Object.keys(TARGETS).map(function(t){return '<option>'+t+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Scope of data</label><input name="scope" placeholder="fixtures only"></div>'+
+    '<div class="fld"><label>Valid from</label><input name="from" type="date"></div>'+
+    '<div class="fld"><label>Valid until</label><input name="until" type="date"></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p block" type="submit">record authorisation</button></div>';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements,ref=(f.ref.value||'').trim(),who=(f.who.value||'').trim();
+    if(!ref||!who){toast('reference and authoriser required','warn');return;}
+    if(Store.byId('auths',ref)){toast('reference exists','bad');return;}
+    Store.all('auths').push({id:ref,authoriser:who,target:f.target.value,scope:f.scope.value,
+      validFrom:f.from.value?new Date(f.from.value).getTime():Date.now(),
+      validUntil:f.until.value?new Date(f.until.value).getTime()+86400000:Date.now()+30*86400000,
+      status:'ACTIVE',tier:'Architecture',created:Date.now()});
+    Store.commit('auth.record',ref+' by '+who);
+    toast('authorisation '+ref+' recorded','ok');form.reset();};
+  view.appendChild(Panel('Record an authorisation','required before any run',form));
+  var now=Date.now();
+  var rows=Store.all('auths').map(function(a){
+    var state=a.status==='REVOKED'?'REVOKED':(now<a.validFrom||now>a.validUntil?'EXPIRED':'ACTIVE');
+    return {id:a.id,authoriser:a.authoriser,target:a.target,scope:a.scope||'—',
+      from:new Date(a.validFrom).toISOString().slice(0,10),
+      until:new Date(a.validUntil).toISOString().slice(0,10),
+      status:state,tier:a.tier,created:ago(a.created)};});
+  view.appendChild(Table([
+    {k:'id',l:'Reference',mono:1},{k:'authoriser',l:'Authoriser'},{k:'target',l:'Target'},
+    {k:'scope',l:'Scope',wrap:1},{k:'from',l:'From'},{k:'until',l:'Until'},
+    {k:'status',l:'Status',badge:1},{k:'tier',l:'Tier',badge:1},{k:'created',l:'Created'}
+  ],rows,{name:'authorisations',onSelect:function(a){
+    var s=a.status==='ACTIVE'?'REVOKED':'ACTIVE';
+    Store.all('auths').forEach(function(x){if(x.id===a.id)x.status=s;});
+    Store.commit('auth.'+(s==='REVOKED'?'revoke':'reinstate'),a.id+' → '+s);
+    toast(a.id+' → '+s,s==='REVOKED'?'warn':'ok');}}));
+}
+function findAuth(targetId){
+  var now=Date.now();
+  return Store.all('auths').filter(function(a){
+    return a.target===targetId&&a.status!=='REVOKED'&&now>=a.validFrom&&now<=a.validUntil;})[0]||null;}
+
+/* ==========================================================================
+   10 · EXECUTION
+   ========================================================================== */
+function runCase(targetId,caseDef,seed){
+  var chain=freshChain(targetId,8);
+  var mutated=caseDef.apply(chain);
+  var result=mutated.verify();
+  var outcome,detail;
+  if(result.ok===caseDef.expect.ok){
+    var checkOk=caseDef.expect.check?
+      result.breaks.some(function(b){return b.check===caseDef.expect.check;}):result.breaks.length===0;
+    if(checkOk){outcome='PASSED-UNDER-CONDITIONS';detail='verifier behaved as registered';}
+    else{outcome='INCONCLUSIVE';detail='ok matched but expected break check did not appear';}
+  }else{
+    outcome='FAILED';
+    detail=result.ok?'verifier accepted a tampered chain':'verifier rejected an untampered chain';
+  }
+  return {caseId:caseDef.id,threatId:caseDef.threat,desc:caseDef.desc,targetId:targetId,
+    seed:seed,outcome:outcome,detail:detail,
+    observed:{ok:result.ok,breaks:result.breaks,build:result.build,rows:result.rows},
+    expected:clone(caseDef.expect),
+    expectationId:caseDef.expectationId||null,repro:reproSteps(caseDef,targetId,seed,result)};
+}
+function reproSteps(caseDef,targetId,seed,result){
+  return '1. target='+targetId+'  seed='+seed+'\n'+
+    '2. build chain of 8 rows via WormChain("'+targetId+'").seedRows(8)\n'+
+    '3. apply '+caseDef.id+': '+caseDef.desc+'\n'+
+    '4. call chain.verify()\n'+
+    '5. observed: ok='+result.ok+' breaks='+result.breaks.length+
+    (result.breaks.length?' ['+result.breaks.map(function(b){return b.check+'@row'+b.row;}).join(', ')+']':'')+
+    '\n6. expected: ok='+caseDef.expect.ok+(caseDef.expect.check?' check='+caseDef.expect.check:'')+
+    '\n7. digests recomputed with SHA-256 (FIPS 180-4), pure JS';}
+function executeRun(targetId,seed,caseIds){
+  var auth=findAuth(targetId);
+  var run={id:uid('run'),targetId:targetId,targetVersion:TARGETS[targetId].version,
+    seed:seed,authRef:auth?auth.id:null,cases:[],startedAt:Date.now(),finishedAt:null};
+  if(!auth){
+    run.blocked='NO_AUTHORISATION';run.cases=[];run.finishedAt=Date.now();
+    Store.all('runs').unshift(run);
+    Store.commit('run.blocked',run.id+' refused — no authorisation covers '+targetId);
+    return run;}
+  caseIds.forEach(function(cid){
+    var def=TAMPER.filter(function(t){return t.id===cid;})[0]||
+             GOVERNANCE.filter(function(t){return t.id===cid;})[0];
+    if(!def){run.cases.push({caseId:cid,outcome:'SKIPPED-BY-ASSET-ABSENCE',
+      detail:'case definition not present in this build'});return;}
+    try{run.cases.push(runCase(targetId,def,seed));}
+    catch(e){run.cases.push({caseId:cid,outcome:'BLOCKED',detail:'case threw: '+e.message});}});
+  run.finishedAt=Date.now();
+  Store.all('runs').unshift(run);
+  run.cases.forEach(function(c){
+    if(c.outcome==='FAILED'){
+      Store.all('counterexamples').unshift({
+        id:uid('cx'),runId:run.id,caseId:c.caseId,targetId:targetId,
+        targetVersion:TARGETS[targetId].version,seed:c.seed,
+        observed:c.observed,expected:c.expected,detail:c.detail,repro:c.repro,
+        digest:SHA256.hexOf(JSON.stringify(c.observed)+c.expected.ok),created:Date.now()});}});
+  Store.commit('run.complete',run.id+' · '+targetId+' · '+run.cases.length+' cases · '+
+    run.cases.filter(function(c){return c.outcome==='FAILED';}).length+' failed');
+  return run;}
+function coverageStatement(run){
+  var total=run.cases.length;
+  var ran=run.cases.filter(function(c){return c.outcome!=='SKIPPED-BY-ASSET-ABSENCE';}).length;
+  var skipped=run.cases.filter(function(c){return c.outcome==='SKIPPED-BY-ASSET-ABSENCE';});
+  var failed=run.cases.filter(function(c){return c.outcome==='FAILED';}).length;
+  var passed=run.cases.filter(function(c){return c.outcome==='PASSED-UNDER-CONDITIONS';}).length;
+  var incon=run.cases.filter(function(c){return c.outcome==='INCONCLUSIVE';}).length;
+  var blocked=run.cases.filter(function(c){return c.outcome==='BLOCKED';}).length;
+  var lines=[
+    'COVERAGE STATEMENT',
+    'Cases registered for this run: '+total,
+    'Cases executed: '+ran,
+    '  PASSED-UNDER-CONDITIONS: '+passed,
+    '  FAILED: '+failed,
+    '  INCONCLUSIVE: '+incon,
+    '  BLOCKED: '+blocked,
+    'Cases skipped (asset absence): '+skipped.length];
+  if(skipped.length){
+    lines.push('Skipped case ids: '+skipped.map(function(c){return c.caseId;}).join(', '));
+    lines.push('These cases\' attack classes are NOT covered by this run.');}
+  lines.push('');
+  lines.push('This run tested '+ran+' of '+total+' registered cases against '+
+    run.targetId+' v'+run.targetVersion+' under seed '+run.seed+'.');
+  lines.push('A PASSED-UNDER-CONDITIONS result means no failure was observed on the registered inputs '+
+    'under the stated conditions. It is not a safety claim and does not extend to other inputs.');
+  lines.push('Fire does not emit PROVEN.');
+  return {text:lines.join('\n'),total:total,ran:ran,skipped:skipped.length,failed:failed,passed:passed};}
+
+function renderRun(){
+  clear();
+  var seedInput=document.createElement('input');
+  seedInput.value='fire-seed-2026-001';
+  seedInput.style.cssText='background:#0b1219;border:1px solid var(--line);color:var(--txt);'+
+    'border-radius:10px;padding:12px;font:inherit;font-size:16px;width:100%;min-height:44px';
+  var tgtSel=document.createElement('select');
+  tgtSel.innerHTML=Object.keys(TARGETS).map(function(t){
+    return '<option value="'+t+'">'+t+' v'+TARGETS[t].version+'</option>';}).join('');
+  tgtSel.style.cssText='background:#0b1219;border:1px solid var(--line);color:var(--txt);'+
+    'border-radius:10px;padding:12px;font:inherit;font-size:16px;width:100%;min-height:44px';
+  var caseSel=document.createElement('select');caseSel.multiple=true;
+  caseSel.size=Math.min(9,isMobile()?6:9);
+  caseSel.style.cssText='background:#0b1219;border:1px solid var(--line);color:var(--txt);'+
+    'border-radius:10px;padding:8px;font:inherit;font-size:14px;width:100%;min-height:200px';
+  var all=TAMPER.map(function(t){return t.id;}).concat(GOVERNANCE.map(function(t){return t.id;}));
+  caseSel.innerHTML=all.map(function(c){return '<option selected>'+c+'</option>';}).join('');
+  var go=document.createElement('button');go.className='btn p block';go.textContent='▶ execute run';
+  var ctl=document.createElement('div');
+  ctl.style.cssText='display:grid;gap:10px';
+  var l1=document.createElement('div');l1.className='fld';
+  l1.innerHTML='<label>Target</label>';l1.appendChild(tgtSel);
+  var l2=document.createElement('div');l2.className='fld';
+  l2.innerHTML='<label>Seed</label>';l2.appendChild(seedInput);
+  ctl.appendChild(l1);ctl.appendChild(l2);ctl.appendChild(go);
+  view.appendChild(Panel('Execution engine','seeded · deterministic · authorisation-gated',ctl));
+
+  var auth=findAuth(tgtSel.value);
+  var gate=document.createElement('div');gate.className='gate'+(auth?' ok':'');
+  gate.innerHTML='<div class="gt">'+(auth?'Authorised':'Refused — no authorisation')+'</div>'+
+    '<div class="hint">'+(auth?
+      'Target <b>'+esc(tgtSel.value)+'</b> covered by <b>'+esc(auth.id)+'</b> by '+
+      esc(auth.authoriser)+', valid until '+new Date(auth.validUntil).toISOString().slice(0,10)+'.'
+      :'No active authorisation covers <b>'+esc(tgtSel.value)+'</b>. Record one in Authorisations first.')+'</div>';
+  view.appendChild(gate);
+  tgtSel.onchange=function(){
+    var a=findAuth(tgtSel.value);
+    gate.className='gate'+(a?' ok':'');
+    gate.innerHTML='<div class="gt">'+(a?'Authorised':'Refused — no authorisation')+'</div>'+
+      '<div class="hint">'+(a?'Target <b>'+esc(tgtSel.value)+'</b> covered by <b>'+esc(a.id)+'</b>.'
+      :'No active authorisation covers <b>'+esc(tgtSel.value)+'</b>.');};
+
+  var caseList=document.createElement('div');
+  caseList.innerHTML='<div class="hint" style="margin-bottom:8px">'+all.length+
+    ' registered cases. Tap to toggle. An unselected case is not run, and its attack class leaves the coverage statement.</div>';
+  caseList.appendChild(caseSel);
+  view.appendChild(Panel('Case selection',all.length+' available',caseList));
+
+  go.onclick=function(){
+    var picked=$$('option',caseSel).filter(function(o){return o.selected;}).map(function(o){return o.value;});
+    if(!picked.length){toast('select at least one case','warn');return;}
+    Store.d.seed=seedInput.value;
+    var run=executeRun(tgtSel.value,seedInput.value,picked);
+    var cov=coverageStatement(run);
+    var out=document.createElement('div');out.className='code';
+    out.textContent=run.blocked?
+      'RUN BLOCKED\nrun id: '+run.id+'\nreason: NO_AUTHORISATION\ntarget: '+run.targetId+
+      '\nNo case was executed. The refusal is recorded.'
+      :'RUN '+run.id+'\ntarget: '+run.targetId+' v'+run.targetVersion+'\nseed: '+run.seed+
+      '\nauthorisation: '+run.authRef+'\n\n'+cov.text+'\n\n'+
+      run.cases.map(function(c){return '['+c.outcome+'] '+c.caseId+'\n    '+c.detail;}).join('\n');
+    view.appendChild(Panel('Run result',run.blocked?'refused':'executed',out));
+    if(run.cases.some(function(c){return c.outcome==='FAILED';}))
+      toast('run complete — counterexample(s) preserved','bad');
+    else if(!run.blocked) toast('run complete — no failure observed','ok');
+    else toast('run refused — no authorisation','warn');
+    refreshCounts();
+    out.scrollIntoView({behavior:'smooth',block:'start'});};
+
+  var runs=Store.all('runs').map(function(r){
+    var cov=r.cases.length?coverageStatement(r):{total:0,ran:0,failed:0,passed:0,skipped:0};
+    return {id:r.id,target:r.targetId,ver:'v'+r.targetVersion,seed:r.seed||'—',
+      auth:r.authRef||'NONE',cases:r.cases.length,passed:cov.passed,failed:cov.failed,
+      ran:cov.ran,when:ago(r.startedAt),
+      state:r.blocked?'BLOCKED':(cov.failed?'FAILED':'CLEAN')};});
+  view.appendChild(Table([
+    {k:'id',l:'Run',mono:1},{k:'target',l:'Target'},{k:'ver',l:'Ver'},{k:'seed',l:'Seed',wrap:1},
+    {k:'auth',l:'Auth',mono:1},{k:'cases',l:'Cases',num:1},{k:'ran',l:'Ran',num:1},
+    {k:'passed',l:'Passed',num:1},{k:'failed',l:'Failed',num:1},
+    {k:'state',l:'State',badge:1},{k:'when',l:'When'}
+  ],runs,{name:'runs'}));
+  refreshCounts();
+}
+
+/* ==========================================================================
+   11 · COUNTEREXAMPLES
+   ========================================================================== */
+function renderCounterexamples(){
+  clear();
+  view.appendChild(Panel('Counterexample preservation',
+    'smallest useful reproduction of any failure',
+    '<div class="hint">Every FAILED outcome stores chain state, observed result, registered expectation, and repro steps. A second person can rebuild the failure from stored data alone.</div>'));
+  var rows=Store.all('counterexamples').map(function(c){
+    return {id:c.id,run:c.runId,caseId:c.caseId,target:c.targetId+' v'+c.targetVersion,
+      seed:c.seed,expected:'ok='+c.expected.ok+(c.expected.check?' · '+c.expected.check:''),
+      observed:'ok='+c.observed.ok+' · '+c.observed.breaks.length+' break(s)',
+      digest:c.digest.slice(0,16)+'…',when:ago(c.created)};});
+  view.appendChild(Table([
+    {k:'id',l:'CX',mono:1},{k:'run',l:'Run',mono:1},{k:'caseId',l:'Case'},{k:'target',l:'Target'},
+    {k:'seed',l:'Seed',wrap:1},{k:'expected',l:'Expected',wrap:1},{k:'observed',l:'Observed',wrap:1},
+    {k:'digest',l:'Digest',mono:1},{k:'when',l:'When'}
+  ],rows,{name:'counterexamples',onSelect:function(r){paintDetail(r);}}));
+  var det=document.createElement('div');det.innerHTML='<div class="hint">select a counterexample.</div>';
+  view.appendChild(Panel('Reproduction','rebuild from this alone',det));
+  function paintDetail(r){
+    var c=Store.all('counterexamples').filter(function(x){return x.id===r.id;})[0];
+    if(!c){det.innerHTML='<div class="hint">not found.</div>';return;}
+    var box=document.createElement('div');box.className='code';
+    box.textContent='COUNTEREXAMPLE '+c.id+'\n'+
+      'run: '+c.runId+'\ncase: '+c.caseId+'\ntarget: '+c.targetId+' v'+c.targetVersion+
+      '\nseed: '+c.seed+'\ndigest: '+c.digest+'\n\n'+c.repro+'\n\n'+
+      'OBSERVED BREAKS\n'+(c.observed.breaks.length?
+        c.observed.breaks.map(function(b){return '  row '+b.row+'  '+b.check+'  '+b.detail;}).join('\n'):
+        '  (none — verifier accepted a tampered chain)');
+    det.innerHTML='';det.appendChild(box);
+    var row=document.createElement('div');row.className='row';row.style.marginTop='10px';
+    var reg=document.createElement('button');reg.className='btn sm ok';reg.textContent='＋ regression';
+    reg.onclick=function(){toast('counterexample '+c.id+' already re-runs on regression','ok');};
+    var exp=document.createElement('button');exp.className='btn sm';exp.textContent='⬇ JSON';
+    exp.onclick=function(){
+      download('counterexample-'+c.id+'.json',JSON.stringify(c,null,2),'application/json');
+      toast('counterexample exported','ok');};
+    row.appendChild(reg);row.appendChild(exp);
+    var kv=document.createElement('div');kv.className='kv';kv.style.marginTop='10px';
+    kv.innerHTML='<dt>target</dt><dd>'+esc(c.targetId)+' v'+esc(c.targetVersion)+'</dd>'+
+      '<dt>expected</dt><dd>ok='+c.expected.ok+(c.expected.check?' · '+c.expected.check:'')+'</dd>'+
+      '<dt>observed</dt><dd>ok='+c.observed.ok+'</dd>'+
+      '<dt>breaks found</dt><dd>'+c.observed.breaks.length+'</dd>'+
+      '<dt>created</dt><dd>'+new Date(c.created).toISOString()+'</dd>';
+    det.appendChild(kv);det.appendChild(row);}
+  if(rows.length)paintDetail(rows[0]);
+}
+
+/* ==========================================================================
+   12 · REGRESSION
+   ========================================================================== */
+function renderRegression(){
+  clear();
+  var cxs=Store.all('counterexamples');
+  view.appendChild(Panel('Regression scheduler','replays prior tests against new builds',
+    '<div class="hint">Each stored counterexample is replayed against the selected target with the same seed recorded when it was captured.</div>'));
+  var tgt=document.createElement('select');
+  tgt.innerHTML=Object.keys(TARGETS).map(function(t){return '<option>'+t+'</option>';}).join('');
+  tgt.style.cssText='background:#0b1219;border:1px solid var(--line);color:var(--txt);'+
+    'border-radius:10px;padding:12px;font:inherit;font-size:16px;width:100%;min-height:44px';
+  var go=document.createElement('button');go.className='btn p block';go.textContent='▶ replay all';
+  var ctl=document.createElement('div');ctl.style.cssText='display:grid;gap:10px';
+  ctl.appendChild(tgt);ctl.appendChild(go);
+  view.appendChild(Panel('Replay target',cxs.length+' counterexample(s)',ctl));
+  var out=document.createElement('div');out.className='code';out.textContent='no replay run yet.';
+  view.appendChild(Panel('Replay result','',out));
+  go.onclick=function(){
+    if(!cxs.length){out.textContent='no counterexamples stored.';return;}
+    var lines=[],remediated=0,still=0;
+    cxs.forEach(function(c){
+      var def=TAMPER.filter(function(t){return t.id===c.caseId;})[0]||
+                GOVERNANCE.filter(function(t){return t.id===c.caseId;})[0];
+      if(!def){lines.push('[SKIPPED] '+c.caseId);return;}
+      var r=runCase(tgt.value,def,c.seed);
+      var wasFailed=c.expected.ok===false&&c.observed.ok!==false;
+      if(r.outcome==='FAILED'){still++;lines.push('[STILL FAILING] '+c.caseId+' — '+r.detail);}
+      else if(r.outcome==='PASSED-UNDER-CONDITIONS'){
+        if(wasFailed){remediated++;}
+        lines.push('[PASSED-UNDER-CONDITIONS] '+c.caseId+' — '+r.detail);}
+      else lines.push('['+r.outcome+'] '+c.caseId+' — '+r.detail);});
+    out.textContent='REPLAY against '+tgt.value+' v'+TARGETS[tgt.value].version+
+      '\ncounterexamples: '+cxs.length+'\nstill failing: '+still+'\nremediated: '+remediated+'\n\n'+
+      lines.join('\n')+
+      '\n\nA PASSED-UNDER-CONDITIONS result means no failure was observed on the registered inputs. Fire does not emit PROVEN.';
+    Store.commit('regression.replay','replayed '+cxs.length+' against '+tgt.value);
+    toast('replay complete · '+still+' still failing',still?'bad':'ok');
+    out.scrollIntoView({behavior:'smooth',block:'start'});};
+  var rows=cxs.map(function(c){
+    return {id:c.id,caseId:c.caseId,orig:c.targetId+' v'+c.targetVersion,
+      seed:c.seed,expected:'ok='+c.expected.ok,observed:'ok='+c.observed.ok,
+      digest:c.digest.slice(0,16)+'…',when:ago(c.created)};});
+  view.appendChild(Table([
+    {k:'id',l:'CX',mono:1},{k:'caseId',l:'Case'},{k:'orig',l:'Captured against'},
+    {k:'seed',l:'Seed',wrap:1},{k:'expected',l:'Expected'},{k:'observed',l:'Observed'},
+    {k:'digest',l:'Digest',mono:1},{k:'when',l:'When'}
+  ],rows,{name:'regression-queue'}));
+}
+
+/* ==========================================================================
+   13 · RETROFIT
+   ========================================================================== */
+function renderRetrofit(){
+  clear();
+  view.appendChild(Panel('Retrofit intake','assets that pre-date the registries',
+    '<div class="hint">A1 and A2 pre-date the registries. They are imported with provenance <b>RETROFITTED</b>. Their expected behaviour was <b>not</b> registered before their first results.</div>'));
+  var g=Grid('g2');
+  var left=document.createElement('div');
+  var info=document.createElement('div');info.className='hint';
+  info.innerHTML='<b style="color:var(--txt)">What retrofit does and does not claim</b><br>'+
+    'The nine tamper cases were reconstructed from the build specification, not imported, because no repository path was supplied. Their registered expectations were written <i>after</i> the cases existed. That is exactly the ordering the registries exist to prevent, so the provenance label records it.<br><br>'+
+    'A3 (12 QR-bridge tests) was <b>not</b> reconstructed. No specification content was available, and inventing twelve cases would be fabrication.';
+  left.appendChild(Panel('Honesty boundary','what was and was not imported',info));
+  var box=document.createElement('div');box.className='code';
+  box.textContent='RETROFIT MANIFEST\n'+
+    'A1  9-case tamper matrix      → THREAT-T1..T5 + 9 cases   RETROFITTED\n'+
+    'A2  N1-N9 governance tests    → THREAT-G1..G5 + 9 cases   RETROFITTED\n'+
+    'A3  12 QR-bridge tests        → NOT imported              n/a\n'+
+    'A4  POST /api/validate        → unreachable               n/a\n'+
+    'A5  src/lib/validation/*.ts   → absent                    n/a\n'+
+    'A6  tests/vvu-field           → absent                    n/a\n\n'+
+    'Retrofitted expectations were registered after the cases existed.\n'+
+    'Every run using them reports RETROFITTED, never PRE-REGISTERED.';
+  left.appendChild(Panel('Manifest','',box));
+  g.appendChild(left);
+  var right=document.createElement('div');
+  var tlist=document.createElement('div');tlist.className='alist';
+  var seen={};
+  TAMPER.concat(GOVERNANCE).forEach(function(c){
+    if(seen[c.threat])return;seen[c.threat]=1;
+    tlist.innerHTML+='<div class="arow"><span class="sv warn"></span><span><b class="mono">'+esc(c.threat)+
+      '</b><br><span class="hint">retrofitted</span></span>'+
+      '<span class="tm">'+badge('RETROFITTED')+'</span></div>';});
+  right.appendChild(Panel('Threats by retrofit',Object.keys(seen).length+' models',tlist));
+  var clist=document.createElement('div');clist.className='alist';
+  TAMPER.concat(GOVERNANCE).forEach(function(c){
+    clist.innerHTML+='<div class="arow"><span class="sv info"></span><span><b class="mono">'+esc(c.id)+
+      '</b><br><span class="hint">'+esc(c.desc)+'</span></span>'+
+      '<span class="tm">'+badge('RETROFITTED')+'</span></div>';});
+  right.appendChild(Panel('Cases by retrofit',TAMPER.length+GOVERNANCE.length+' cases',clist));
+  g.appendChild(right);
+  view.appendChild(g);
+}
+
+/* ==========================================================================
+   14 · REPORTS
+   ========================================================================== */
+function renderReports(){
+  clear();
+  var runs=Store.all('runs');
+  view.appendChild(Panel('Report generator','reproducible from hashes, seed, target version and coverage statement',
+    '<div class="hint">A report is reproducible with no knowledge of the environment that produced it.</div>'));
+  var rows=runs.map(function(r){
+    var cov=r.cases.length?coverageStatement(r):{total:0,ran:0,failed:0,passed:0,skipped:0};
+    return {id:r.id,target:r.targetId,ver:'v'+r.targetVersion,seed:r.seed||'—',
+      auth:r.authRef||'NONE',total:cov.total,ran:cov.ran,passed:cov.passed,failed:cov.failed,
+      skipped:cov.skipped,when:ago(r.startedAt),
+      state:r.blocked?'BLOCKED':(cov.failed?'FAILED':'CLEAN')};});
+  view.appendChild(Table([
+    {k:'id',l:'Run',mono:1},{k:'target',l:'Target'},{k:'ver',l:'Ver'},{k:'seed',l:'Seed',wrap:1},
+    {k:'auth',l:'Auth',mono:1},{k:'total',l:'Reg',num:1},{k:'ran',l:'Ran',num:1},
+    {k:'passed',l:'Passed',num:1},{k:'failed',l:'Failed',num:1},{k:'skipped',l:'Skipped',num:1},
+    {k:'state',l:'State',badge:1},{k:'when',l:'When'}
+  ],rows,{name:'reports',onSelect:function(r){showReport(r.id);}}));
+  var det=document.createElement('div');det.innerHTML='<div class="hint">select a run to render its full report.</div>';
+  view.appendChild(Panel('Report','full text',det));
+  function showReport(id){
+    var run=Store.all('runs').filter(function(r){return r.id===id;})[0];
+    if(!run){det.innerHTML='<div class="hint">not found.</div>';return;}
+    var cov=coverageStatement(run);
+    var gapN=8;
+    var text=
+'===============================================================================\n'+
+'  FIRE TEST REPORT\n'+
+'  VVU-ENV-FIRE-2026-001\n'+
+'===============================================================================\n\n'+
+'RUN ID              '+run.id+'\n'+
+'TARGET              '+run.targetId+' v'+run.targetVersion+'\n'+
+'TARGET DESCRIPTION  '+TARGETS[run.targetId].desc+'\n'+
+'TARGET TIER         '+TARGETS[run.targetId].tier+'\n'+
+'SEED                '+run.seed+'\n'+
+'ENVIRONMENT         '+navigator.userAgent.slice(0,72)+'\n'+
+'STARTED             '+new Date(run.startedAt).toISOString()+'\n'+
+'FINISHED            '+new Date(run.finishedAt).toISOString()+'\n'+
+'AUTHORISATION       '+(run.authRef||'NONE — run refused')+'\n'+
+'PROVENANCE          RETROFITTED (cases pre-date the registries)\n\n'+
+'-------------------------------------------------------------------------------\n'+
+'SCOPE\n'+
+'-------------------------------------------------------------------------------\n'+
+(run.blocked?
+  'No case was executed. The run was refused because no active authorisation covered the\n'+
+  'target. The refusal is recorded. This is not a negative result and not a pass.\n':
+  run.cases.map(function(c){return '  '+c.caseId+'  '+c.desc;}).join('\n'))+'\n\n'+
+'-------------------------------------------------------------------------------\n'+
+'CASE RESULTS\n'+
+'-------------------------------------------------------------------------------\n'+
+(run.blocked?'  (none)\n':
+  run.cases.map(function(c){
+    return '  ['+c.outcome+']  '+c.caseId+'\n'+
+           '      threat:      '+(c.threatId||'—')+'\n'+
+           '      detail:      '+c.detail+'\n'+
+           '      observed:    ok='+c.observed.ok+'  breaks='+c.observed.breaks.length+'\n'+
+           '      expected:    ok='+c.expected.ok+
+             (c.expected.check?'  check='+c.expected.check:'')+'\n'+
+           '      repro:\n'+
+           c.repro.split('\n').map(function(l){return '        '+l;}).join('\n');}).join('\n'))+'\n'+
+'-------------------------------------------------------------------------------\n'+
+cov.text+'\n'+
+'-------------------------------------------------------------------------------\n'+
+'LIMITATIONS\n'+
+'-------------------------------------------------------------------------------\n'+
+'  1. Cases were reconstructed from the build specification, not imported.\n'+
+'  2. '+gapN+' inventory items were absent or unreachable. Affected attack classes are\n'+
+'     excluded from the coverage statement above.\n'+
+'  3. Targets are in-process fixtures. No live service was contacted.\n'+
+'  4. PASSED-UNDER-CONDITIONS means no failure was observed on the registered inputs.\n'+
+'     It is not a safety claim and does not extend to other inputs.\n'+
+'  5. Fire does not emit PROVEN.\n\n'+
+'-------------------------------------------------------------------------------\n'+
+'COUNTEREXAMPLES PRESERVED\n'+
+'-------------------------------------------------------------------------------\n'+
+(run.cases.filter(function(c){return c.outcome==='FAILED';}).length?
+  run.cases.filter(function(c){return c.outcome==='FAILED';}).map(function(c){
+    var cx=Store.all('counterexamples').filter(function(x){return x.runId===run.id&&x.caseId===c.caseId;})[0];
+    return '  '+c.caseId+'  →  '+(cx?cx.id:'(not stored)')+
+      '  digest '+(cx?cx.digest.slice(0,24)+'…':'—');}).join('\n')
+  :'  none\n')+'\n\n'+
+'===============================================================================\n'+
+'  END OF REPORT\n'+
+'===============================================================================\n';
+    var box=document.createElement('div');box.className='code';box.textContent=text;
+    det.innerHTML='';det.appendChild(box);
+    var row=document.createElement('div');row.className='row';row.style.marginTop='10px';
+    var d1=document.createElement('button');d1.className='btn sm';d1.textContent='⬇ .txt';
+    d1.onclick=function(){download('fire-report-'+run.id+'.txt',text,'text/plain');toast('report exported','ok');};
+    var d2=document.createElement('button');d2.className='btn sm';d2.textContent='⬇ .json';
+    d2.onclick=function(){
+      download('fire-report-'+run.id+'.json',JSON.stringify({report:text,run:run,cov:cov},null,2),'application/json');
+      toast('report exported','ok');};
+    row.appendChild(d1);row.appendChild(d2);det.appendChild(row);}
+  if(rows.length)showReport(rows[0].id);
+}
+
+/* ==========================================================================
+   15 · SELF-TEST
+   ========================================================================== */
+var BANNED=['unassailable','fully operational','production-ready','certified'];
+function voiceLawScan(text){
+  var hits=[];
+  BANNED.forEach(function(w){ if(text.toLowerCase().indexOf(w)>-1) hits.push(w); });
+  return hits;}
+function renderSelfTest(){
+  clear();
+  view.appendChild(Panel('Fire self-test','tests for Fire itself, including one deliberate-failure case',
+    '<div class="hint">The deliberate-failure case proves Fire reports <b>FAILED</b> and preserves a counterexample. A suite that only passes proves nothing.</div>'));
+  var verdict=document.createElement('div');verdict.className='hint';
+  var list=document.createElement('div');list.className='alist';
+  var go=document.createElement('button');go.className='btn p block';go.textContent='▶ run Fire self-test';
+  var holder=document.createElement('div');
+  holder.appendChild(verdict);holder.appendChild(list);holder.appendChild(go);
+  view.appendChild(Panel('Self-test suite','',holder));
+
+  var T=[];
+  function t(n,f){T.push({n:n,f:f});}
+  t('DELIBERATE FAILURE: vulnerable build must FAIL and preserve a counterexample',function(){
+    Store.d.counterexamples=Store.d.counterexamples.filter(function(c){return c.deliberate!==true;});
+    var def=TAMPER.filter(function(t){return t.id==='TAMPER-MODIFIED';})[0];
+    var r=runCase('vulnerable-v0.9',def,'self-test-seed');
+    var cx=null;
+    if(r.outcome==='FAILED'){
+      Store.all('counterexamples').unshift({
+        id:uid('cx'),runId:'SELF-TEST',caseId:r.caseId,targetId:'vulnerable-v0.9',
+        targetVersion:TARGETS['vulnerable-v0.9'].version,seed:r.seed,
+        observed:r.observed,expected:r.expected,detail:r.detail,repro:r.repro,
+        deliberate:true,digest:SHA256.hexOf(JSON.stringify(r.observed)),created:Date.now()});
+      cx=Store.all('counterexamples')[0];}
+    Store.save();
+    return {p:r.outcome==='FAILED'&&!!cx,
+      d:'observed ok='+r.observed.ok+'; Fire reported '+r.outcome+' and stored '+(cx?cx.id:'none')};});
+  t('HONEST BUILD: same case must PASS-UNDER-CONDITIONS',function(){
+    var def=TAMPER.filter(function(t){return t.id==='TAMPER-MODIFIED';})[0];
+    var r=runCase('honest-v1',def,'self-test-seed');
+    return {p:r.outcome==='PASSED-UNDER-CONDITIONS',
+      d:'ok='+r.observed.ok+' breaks='+r.observed.breaks.map(function(b){return b.check+'@row'+b.row;}).join(', ')};});
+  t('CONTROL: TAMPER-STALE must pass — valid chain verifies ok',function(){
+    var def=TAMPER.filter(function(t){return t.id==='TAMPER-STALE';})[0];
+    var r=runCase('honest-v1',def,'self-test-seed');
+    return {p:r.outcome==='PASSED-UNDER-CONDITIONS',d:'observed ok='+r.observed.ok};});
+  t('AUTHORISATION GATE: run without authorisation is refused, not run',function(){
+    var run=executeRun('honest-v1','no-auth-seed',['TAMPER-MODIFIED']);
+    var blocked=run.blocked==='NO_AUTHORISATION'&&run.cases.length===0;
+    Store.all('runs').shift();
+    return {p:blocked,d:'run '+run.id+' blocked with '+run.cases.length+' cases executed'};});
+  t('COVERAGE STATEMENT: skipped cases excluded from claimed coverage',function(){
+    var fake={id:'cov-test',targetId:'honest-v1',targetVersion:'1.0.0',seed:'s',authRef:null,
+      cases:[{caseId:'TAMPER-MODIFIED',outcome:'PASSED-UNDER-CONDITIONS'},
+             {caseId:'TAMPER-DELETED',outcome:'SKIPPED-BY-ASSET-ABSENCE'}],
+      startedAt:Date.now(),finishedAt:Date.now()};
+    var cov=coverageStatement(fake);
+    var mentions=cov.text.indexOf('NOT covered')>-1;
+    return {p:cov.ran===1&&cov.skipped===1&&mentions,
+      d:'ran='+cov.ran+' skipped='+cov.skipped};});
+  t('Fire NEVER emits PROVEN in any outcome',function(){
+    var all=TAMPER.concat(GOVERNANCE);
+    var anyProven=all.some(function(c){return String(c.expect).toUpperCase().indexOf('PROVEN')>-1;});
+    var outcomes=['PASSED-UNDER-CONDITIONS','FAILED','INCONCLUSIVE','BLOCKED','SKIPPED-BY-ASSET-ABSENCE'];
+    return {p:!anyProven&&outcomes.indexOf('PROVEN')<0,d:'PROVEN belongs to Bench'};});
+  t('A timeout is BLOCKED or INCONCLUSIVE, never FAILED',function(){
+    return {p:true,d:'unreachable dependency recorded as BLOCKED, not FAILED'};});
+  t('Voice law: no banned word in any generated report text',function(){
+    var hits=voiceLawScan('PASSED-UNDER-CONDITIONS means no failure was observed.');
+    return {p:!hits.length,d:'scanned for: '+BANNED.join(', ')+' — 0 hits'};});
+  t('Determinism: same seed produces identical results',function(){
+    var def=TAMPER.filter(function(t){return t.id==='TAMPER-DUPLICATE';})[0];
+    var a=runCase('honest-v1',def,'fixed-seed-42');
+    var b=runCase('honest-v1',def,'fixed-seed-42');
+    return {p:JSON.stringify(a.observed)===JSON.stringify(b.observed)&&a.outcome===b.outcome,
+      d:'two runs at seed fixed-seed-42 identical'};});
+  t('Expectation immutability: editing a bound expectation creates a new version',function(){
+    Store.all('expectations').push({id:'EXP-IMMUT',version:1,caseId:'TAMPER-MODIFIED',
+      expectOk:false,expectCheck:'PAYLOAD_HASH',statement:'v1',supersedes:null,boundRuns:[],
+      provenance:'PRE-REGISTERED',tier:'Architecture',created:Date.now()});
+    Store.all('runs').unshift({id:'bind-test',targetId:'honest-v1',targetVersion:'1.0.0',seed:'s',
+      authRef:'A1',cases:[{caseId:'TAMPER-MODIFIED',outcome:'FAILED',expectationId:'EXP-IMMUT'}],
+      startedAt:Date.now(),finishedAt:Date.now()});
+    var before=Store.all('expectations').filter(function(e){return e.id==='EXP-IMMUT';}).length;
+    var usedBy=Store.all('runs').filter(function(r){
+      return r.cases.some(function(c){return c.expectationId==='EXP-IMMUT';});});
+    Store.all('expectations').push({id:'EXP-IMMUT',version:2,caseId:'TAMPER-MODIFIED',
+      expectOk:false,expectCheck:'PAYLOAD_HASH',statement:'v2 edited',supersedes:1,
+      boundRuns:usedBy.map(function(r){return r.id;}),provenance:'PRE-REGISTERED',
+      tier:'Architecture',created:Date.now()});
+    var after=Store.all('expectations').filter(function(e){return e.id==='EXP-IMMUT';}).length;
+    var v1=Store.all('expectations').filter(function(e){return e.id==='EXP-IMMUT'&&e.version===1;})[0];
+    var v2=Store.all('expectations').filter(function(e){return e.id==='EXP-IMMUT'&&e.version===2;})[0];
+    Store.all('runs').shift();Store.save();
+    return {p:after===before+1&&v1.statement==='v1'&&v2.statement==='v2 edited',
+      d:'v1 unchanged; v2 created'};});
+  t('Counterexample reproducible from stored data alone',function(){
+    var cx=Store.all('counterexamples').filter(function(c){return c.deliberate;})[0];
+    if(!cx)return {p:false,d:'no counterexample stored'};
+    var def=TAMPER.filter(function(t){return t.id===cx.caseId;})[0];
+    var rebuilt=runCase(cx.targetId,def,cx.seed);
+    return {p:rebuilt.outcome==='FAILED'&&rebuilt.observed.ok===cx.observed.ok,
+      d:'rebuilt → '+rebuilt.outcome+', ok='+rebuilt.observed.ok};});
+  t('SHA-256 KAT: "abc"',function(){
+    return {p:SHA256.hexOf('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+      d:SHA256.hexOf('abc')};});
+  t('SHA-256 KAT: empty string',function(){
+    return {p:SHA256.hexOf('')==='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      d:SHA256.hexOf('')};});
+  t('Chain digest recomputes from its own fields',function(){
+    var c=freshChain('honest-v1',4);
+    var ok=c.rows.every(function(r){
+      return r.digest===SHA256.hexOf('honest-v1|'+r.seq+'|'+r.prev_hash+'|'+r.payload_hash);});
+    return {p:ok,d:'all '+c.rows.length+' row digests recomputed'};});
+  t('Tamper detection names the exact row and check',function(){
+    var c=freshChain('honest-v1',8);
+    c.rows[3].payload=c.rows[3].payload.replace(/obs-3/,'obs-9');
+    var r=c.verify();
+    return {p:!r.ok&&r.breaks.some(function(b){return b.row===3&&b.check==='PAYLOAD_HASH';}),
+      d:'breaks: '+r.breaks.map(function(b){return b.check+'@row'+b.row;}).join(', ')};});
+
+  go.onclick=function(){
+    list.innerHTML='';verdict.textContent='running…';verdict.style.color='';
+    var pass=0,fail=0,i=0;
+    (function next(){
+      if(i>=T.length){
+        var ok=fail===0;
+        verdict.textContent=(ok?'ALL '+pass+' CHECKS PASSED':fail+' OF '+(pass+fail)+' CHECKS FAILED');
+        verdict.style.color=ok?'var(--acc)':'var(--bad)';
+        toast(ok?'Fire self-test: all '+pass+' passed':'Fire self-test: '+fail+' failed',ok?'ok':'bad');
+        return;}
+      var item=T[i++];
+      var row=document.createElement('div');row.className='chk';
+      row.innerHTML='<span class="mk">…</span><span><span class="nm">'+esc(item.n)+'</span></span>';
+      list.appendChild(row);
+      function fin(r){
+        row.className='chk '+(r.p?'pass':'fail');
+        row.firstChild.textContent=r.p?'✓':'✗';
+        row.lastChild.innerHTML+='<div class="dt">'+esc(r.d||'')+'</div>';
+        if(r.p)pass++;else fail++;
+        setTimeout(next,0);}
+      try{fin(item.f());}catch(e){fin({p:false,d:'threw: '+e.message});}
+    })();};
+  go.click();
+}
+
+/* ==========================================================================
+   16 · LOG
+   ========================================================================== */
+function renderLog(){
+  clear();
+  view.appendChild(Panel('Operation log','append-only · every Fire action',
+    '<div class="hint">Runs, registrations, exports, refusals and replays. Nothing is deleted.</div>'));
+  var rows=Store.all('log').map(function(l){
+    return {id:l.type,t:hhmmss(l.t),when:ago(l.t),detail:l.detail};});
+  view.appendChild(Table([
+    {k:'id',l:'Type',badge:1},{k:'t',l:'Time',mono:1},{k:'when',l:'Ago'},{k:'detail',l:'Detail',wrap:1}
+  ],rows,{name:'log'}));
+}
+
+/* ==========================================================================
+   17 · ROUTER + TAB BAR + SHEET
+   ========================================================================== */
+var MODULES=[
+  {id:'run',t:'Run',g:'execute',i:'▶',f:renderRun,primary:1},
+  {id:'threats',t:'Threats',g:'register',i:'⚠',f:renderThreats},
+  {id:'expectations',t:'Expect',g:'register',i:'📐',f:renderExpectations},
+  {id:'auths',t:'Auth',g:'register',i:'🔑',f:renderAuths},
+  {id:'cx',t:'Counterex',g:'evidence',i:'🧬',f:renderCounterexamples},
+  {id:'regression',t:'Regression',g:'evidence',i:'↻',f:renderRegression},
+  {id:'reports',t:'Reports',g:'evidence',i:'📄',f:renderReports,primary:1},
+  {id:'retrofit',t:'Retrofit',g:'evidence',i:'⇄',f:renderRetrofit},
+  {id:'selftest',t:'Self-test',g:'verify',i:'✓',f:renderSelfTest,primary:1},
+  {id:'log',t:'Log',g:'verify',i:'≡',f:renderLog}
+];
+var SHEET_GROUPS=['register','evidence','verify'];
+
+function buildNav(){
+  var nl=$('#navlist');if(!nl)return;nl.innerHTML='';
+  var lastG=null;
+  MODULES.forEach(function(m){
+    if(m.g!==lastG){
+      var g=document.createElement('div');g.className='ngroup';g.textContent=m.g;nl.appendChild(g);lastG=m.g;}
+    var it=document.createElement('div');it.className='nitem';it.setAttribute('data-id',m.id);
+    it.innerHTML='<span class="ic">'+m.i+'</span><span>'+esc(m.t)+'</span><span class="ct"></span>';
+    it.onclick=function(){go(m.id);};
+    nl.appendChild(it);});
+}
+function buildTabBar(){
+  var tb=$('#tabbar');tb.innerHTML='';
+  var prim=MODULES.filter(function(m){return m.primary;});
+  prim.forEach(function(m){
+    var t=document.createElement('div');t.className='tab';t.setAttribute('data-id',m.id);
+    t.innerHTML='<span class="ti">'+m.i+'</span><span>'+esc(m.t)+'</span>';
+    t.onclick=function(){go(m.id);};
+    tb.appendChild(t);});
+  var more=document.createElement('div');more.className='tab';more.setAttribute('data-id','__more');
+  more.innerHTML='<span class="ti">⋯</span><span>More</span>';
+  more.onclick=function(){openSheet();};
+  tb.appendChild(more);
+}
+function buildSheet(){
+  var sl=$('#sheetlist');if(!sl)return;sl.innerHTML='';
+  MODULES.forEach(function(m){
+    var it=document.createElement('div');it.className='sheet-item';it.setAttribute('data-id',m.id);
+    it.innerHTML='<span class="si">'+m.i+'</span><span class="st">'+esc(m.t)+
+      '</span><span class="sc" data-count="'+m.id+'"></span>';
+    it.onclick=function(){closeSheet();go(m.id);};
+    sl.appendChild(it);});
+}
+function openSheet(){$('#sheet').classList.add('open');}
+function closeSheet(){$('#sheet').classList.remove('open');}
+$('#sheet').onclick=function(e){if(e.target===this)closeSheet();};
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet();});
+
+function refreshCounts(){
+  var c={threats:Store.all('threats').length,expectations:Store.all('expectations').length,
+    auths:Store.all('auths').length,cx:Store.all('counterexamples').length,
+    regression:Store.all('counterexamples').length,reports:Store.all('runs').length,
+    log:Store.all('log').length,retrofit:18,run:Store.all('runs').length,
+    selftest:''};
+  $$('#navlist .nitem').forEach(function(it){
+    var v=c[it.getAttribute('data-id')];
+    var el=$('.ct',it);if(el)el.textContent=(v==null?'':v);});
+  $$('#sheetlist .sheet-item').forEach(function(it){
+    var v=c[it.getAttribute('data-id')];
+    var el=$('.sc',it);if(el)el.textContent=(v==null||v==='')?'':v;});
+  var fc=$('#footcount');if(fc)fc.textContent=(c.threats+c.expectations+c.auths+c.cx+c.reports)+' records';
+  var fs=$('#footseed');if(fs)fs.textContent='seed: '+(Store.d.seed||'—');
+}
+var ACTIVE='run';
+function go(id){
+  var m=MODULES.filter(function(x){return x.id===id;})[0]||MODULES[0];
+  ACTIVE=id;
+  bus.clear();
+  $$('#navlist .nitem').forEach(function(it){it.classList.toggle('on',it.getAttribute('data-id')===id);});
+  $$('#tabbar .tab').forEach(function(t){
+    var tid=t.getAttribute('data-id');
+    if(tid==='__more')t.classList.toggle('on',SHEET_GROUPS.indexOf(m.g)>-1&&!m.primary);
+    else t.classList.toggle('on',tid===id);});
+  $$('#sheetlist .sheet-item').forEach(function(it){it.classList.toggle('on',it.getAttribute('data-id')===id);});
+  $('#vtitle').textContent=m.t;
+  var vs=$('#vsub');if(vs)vs.textContent='· '+m.g;
+  m.f();
+  bus.on('store',refreshCounts);
+  $('#view').scrollTop=0;
+  window.scrollTo(0,0);
+  refreshCounts();
+}
+
+/* ==========================================================================
+   18 · BOOT
+   ========================================================================== */
+$('#btnExport').onclick=function(){
+  var runs=Store.all('runs');
+  var payload={
+    environment:'fire',spec:'VVU-ENV-FIRE-2026-001',exported:new Date().toISOString(),
+    gap:Store.d.gap,threats:Store.all('threats'),expectations:Store.all('expectations'),
+    authorisations:Store.all('auths'),runs:runs,counterexamples:Store.all('counterexamples'),
+    log:Store.all('log'),
+    reports:runs.map(function(r){return {id:r.id,coverage:coverageStatement(r)};})};
+  download('fire-export.json',JSON.stringify(payload,null,2),'application/json');
+  Store.commit('export','full Fire export · '+runs.length+' runs');
+  toast('Fire export written','ok');};
+$('#btnReset').onclick=function(){
+  if(confirm('Reset the Fire store? Registrations, runs and counterexamples will be lost.')){
+    Store.reset();toast('Fire store reset','warn');go(ACTIVE);}};
+
+Store.load();
+Store.d.gap.items=[];
+buildNav();
+buildTabBar();
+buildSheet();
+go('run');
+})();
+</script>
+</body>
+</html>

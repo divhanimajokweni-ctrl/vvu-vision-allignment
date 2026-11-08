@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluid Studio • Sequence</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+      :root {
+        --bg: #07090a;
+        --ink: #e8e6e0;
+        --ochre: #c47a2a;
+        --moss: #6a8a4f;
+        --yellow: #e8d56b;
+        --cream: #f5f0e0;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background-color: var(--bg);
+        color: var(--ink);
+        font-family: "JetBrains Mono", monospace;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      /* Background Gradients */
+      .bg-glow {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(65% 65% at 50% 50%, rgba(232, 230, 224, 0.06) 0%, rgba(0, 0, 0, 0) 58%),
+          radial-gradient(120% 120% at 50% 120%, rgba(196, 122, 42, 0.08) 0%, transparent 60%);
+      }
+
+      /* Top / Bottom HUD */
+      .hud {
+        position: absolute;
+        width: 100%;
+        max-width: 680px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        color: rgba(232, 230, 224, 0.4);
+        z-index: 10;
+      }
+      .hud-top {
+        top: 40px;
+        padding: 0 24px;
+      }
+      .hud-bottom {
+        bottom: 40px;
+        padding: 0 24px;
+      }
+
+      .status-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--moss);
+        margin-right: 8px;
+        animation: pulse 1.5s infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          opacity: 0.4;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* The Stage */
+      .stage {
+        position: relative;
+        width: min(600px, 92vw);
+        height: min(600px, 92vw);
+        display: grid;
+        place-items: center;
+        z-index: 5;
+      }
+
+      /* SVG Wrapper */
+      svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        /* The blur will be controlled by JS */
+        filter: drop-shadow(0 0 0px rgba(232, 230, 224, 0)) blur(0px);
+      }
+
+      .rotor {
+        transform-origin: 300px 300px;
+      }
+
+      /* Animation Classes */
+      .phase-2 .rotor {
+        animation: spinCrescendo 3s cubic-bezier(0.6, 0, 0.9, 0.2) forwards;
+      }
+
+      .phase-2 svg {
+        animation: blurCrescendo 3s cubic-bezier(0.6, 0, 0.9, 0.2) forwards;
+      }
+
+      @keyframes spinCrescendo {
+        0% {
+          transform: rotate(120deg) scale(1);
+        }
+        100% {
+          transform: rotate(840deg) scale(1.08);
+        }
+      }
+
+      @keyframes blurCrescendo {
+        0% {
+          filter: drop-shadow(0 0 0px rgba(232, 230, 224, 0)) blur(0px);
+        }
+        100% {
+          filter: drop-shadow(0 0 20px rgba(232, 230, 224, 0.4)) blur(14px);
+        }
+      }
+
+      .phase-3 .central-text {
+        animation: fadeOut 1s forwards;
+      }
+
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+      }
+
+      /* Individual Ring Transitions */
+      .ring-moss,
+      .ring-yellow,
+      .ring-ochre {
+        transform-origin: 300px 300px;
+        transition:
+          transform 1.5s cubic-bezier(0.25, 1, 0.5, 1),
+          stroke 1s ease;
+      }
+
+      /* Final Phase States */
+      .phase-3 .ring-moss {
+        transform: translate(-64px, 42px);
+        stroke: var(--moss);
+      }
+      .phase-3 .ring-yellow {
+        transform: translate(64px, 42px);
+        stroke: var(--yellow);
+      }
+      .phase-3 .ring-ochre {
+        transform: translate(0px, -44px);
+        stroke: var(--ochre);
+      }
+
+      .phase-3 svg {
+        animation: unblur 1s forwards;
+      }
+      @keyframes unblur {
+        0% {
+          filter: blur(14px);
+        }
+        100% {
+          filter: blur(0px);
+        }
+      }
+
+      .phase-3 .center-dot {
+        animation: revealDot 1s 0.5s forwards;
+        opacity: 0;
+      }
+      @keyframes revealDot {
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* Replay Button */
+      .controls {
+        position: absolute;
+        bottom: -60px;
+        display: flex;
+        gap: 20px;
+        opacity: 0;
+        transition: opacity 0.5s;
+      }
+      .phase-3 .controls {
+        opacity: 1;
+      }
+
+      button {
+        background: var(--ink);
+        color: var(--bg);
+        border: none;
+        padding: 12px 24px;
+        border-radius: 30px;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      button:hover {
+        background: var(--cream);
+        transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-glow"></div>
+
+    <!-- Top HUD -->
+    <div class="hud hud-top">
+      <div>FLUID_STUDIO / SEAL_03</div>
+      <div id="phase-label"><span class="status-dot"></span>INITIALIZING</div>
+    </div>
+
+    <!-- The Stage -->
+    <div class="stage" id="stage">
+      <svg viewBox="0 0 600 600" id="main-svg">
+        <defs>
+          <!-- Text paths -->
+          <path id="topArc" d="M 95 300 A 205 205 0 0 1 505 300" fill="none" />
+          <path id="bottomArc" d="M 505 300 A 205 205 0 0 1 95 300" fill="none" />
+        </defs>
+
+        <!-- THE ROTOR (Seal + Rings together during spin) -->
+        <g class="rotor">
+          <!-- The Central Seal (Text & Outer Rings) -->
+          <g class="central-text">
+            <!-- Outer Rings -->
+            <circle
+              cx="300"
+              cy="300"
+              r="256"
+              fill="none"
+              stroke="#E8E6E0"
+              stroke-width="0.9"
+              opacity="0.85"
+            />
+            <circle
+              cx="300"
+              cy="300"
+              r="240"
+              fill="none"
+              stroke="#E8E6E0"
+              stroke-width="0.6"
+              opacity="0.38"
+            />
+
+            <!-- Top Text: FLUID STUDIO -->
+            <text
+              font-family="'Cormorant Garamond', serif"
+              font-size="20"
+              font-weight="700"
+              letter-spacing="4.2"
+              fill="#E8E6E0"
+            >
+              <textPath href="#topArc" startOffset="50%" textAnchor="middle">FLUID STUDIO</textPath>
+            </text>
+
+            <!-- Bottom Text: BENCH... -->
+            <text
+              font-family="'JetBrains Mono', monospace"
+              font-size="10.5"
+              font-weight="500"
+              letter-spacing="1.8"
+              fill="#E8E6E0"
+              opacity="0.9"
+            >
+              <textPath href="#bottomArc" startOffset="50%" textAnchor="middle">
+                BENCH • NODE-LOCKED LICENSE SEAL
+              </textPath>
+            </text>
+
+            <!-- Center Diamond & FS -->
+            <rect
+              x="240"
+              y="240"
+              width="120"
+              height="120"
+              transform="rotate(45 300 300)"
+              fill="none"
+              stroke="#E8E6E0"
+              stroke-width="2"
+              opacity="0.28"
+            />
+            <text
+              x="300"
+              y="318"
+              textAnchor="middle"
+              font-family="'Cormorant Garamond', serif"
+              font-size="58"
+              font-weight="700"
+              letter-spacing="-1"
+              fill="#E8E6E0"
+              font-style="italic"
+            >
+              FS
+            </text>
+          </g>
+
+          <!-- The Three Rings (Start centered inside the seal) -->
+          <g class="ring-moss">
+            <circle
+              cx="300"
+              cy="300"
+              r="86"
+              fill="none"
+              stroke="#E8E6E0"
+              stroke-width="21"
+              stroke-linecap="round"
+            />
+          </g>
+
+          <g class="ring-ochre">
+            <circle
+              cx="300"
+              cy="300"
+              r="86"
+              fill="none"
+              stroke="#E8E6E0"
+              stroke-width="21"
+              stroke-linecap="round"
+            />
+          </g>
+
+          <g class="ring-yellow">
+            <circle
+              cx="300"
+              cy="300"
+              r="86"
+              fill="none"
+              stroke="#E8E6E0"
+              stroke-width="21"
+              stroke-linecap="round"
+            />
+          </g>
+
+          <!-- Center Dot (appears at the very end) -->
+          <circle class="center-dot" cx="300" cy="300" r="7.5" fill="#F5F0E0" />
+          <circle class="center-dot" cx="300" cy="300" r="2.2" fill="#07090A" opacity="0.4" />
+        </g>
+      </svg>
+
+      <!-- Replay Controls -->
+      <div class="controls">
+        <button onclick="startSequence()">REPLAY SEQUENCE ↻</button>
+      </div>
+    </div>
+
+    <!-- Bottom HUD -->
+    <div class="hud hud-bottom">
+      <div>SEAL CONSTRUCTION: 3× TORUS 86R / 21W</div>
+      <div id="timer-text">0.0s / 7.0s</div>
+    </div>
+
+    <script>
+      const stage = document.getElementById("stage");
+      const timerText = document.getElementById("timer-text");
+      const phaseLabel = document.getElementById("phase-label");
+
+      let isPlaying = false;
+      let startTime;
+      let reqId;
+
+      function startSequence() {
+        // Reset classes
+        stage.className = "stage";
+        void stage.offsetWidth; // Force reflow to restart CSS animations
+
+        isPlaying = true;
+        startTime = null;
+
+        // Phase 1: Spin up (0s - 2s)
+        phaseLabel.innerHTML = '<span class="status-dot"></span>SPIN 0.3×';
+
+        // Trigger Phase 2 (Crescendo)
+        setTimeout(() => {
+          if (!isPlaying) return;
+          stage.classList.add("phase-2");
+          phaseLabel.innerHTML =
+            '<span class="status-dot" style="background:var(--ochre)"></span>CRESCENDO';
+        }, 2000);
+
+        // Trigger Phase 3 (Split into rings)
+        setTimeout(() => {
+          if (!isPlaying) return;
+          stage.classList.remove("phase-2");
+          stage.classList.add("phase-3");
+          phaseLabel.innerHTML =
+            '<span class="status-dot" style="background:var(--yellow)"></span>SPLIT / BORROMEAN';
+        }, 5000);
+
+        // End Sequence
+        setTimeout(() => {
+          isPlaying = false;
+          phaseLabel.innerHTML =
+            '<span class="status-dot" style="background:var(--cream)"></span>VERIFIED';
+        }, 7000);
+
+        // Start Timer
+        function updateTimer(timestamp) {
+          if (!startTime) startTime = timestamp;
+          if (!isPlaying) return;
+
+          let elapsed = (timestamp - startTime) / 1000;
+          if (elapsed > 7) elapsed = 7;
+
+          timerText.innerText = `${elapsed.toFixed(1)}s / 7.0s`;
+          reqId = requestAnimationFrame(updateTimer);
+        }
+
+        if (reqId) cancelAnimationFrame(reqId);
+        reqId = requestAnimationFrame(updateTimer);
+      }
+
+      // Auto-start on load
+      window.onload = () => {
+        startSequence();
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,218 @@
+/* src/components/mesh/mesh-demo.css — FIELD DEMO · SENSOR MESH workspace
+   (#/mesh). Estate-consistent tokens (no indigo/blue), monospace console
+   typography, evidence text capped at 9pt. */
+
+.mesh-root {
+  --mesh-bg: #08090c;
+  --mesh-panel: rgba(13, 16, 22, 0.92);
+  --mesh-panel-solid: #0d1016;
+  --mesh-line: rgba(138, 153, 168, 0.22);
+  --mesh-line-strong: rgba(138, 153, 168, 0.45);
+  --mesh-ink: #d8e0e8;
+  --mesh-dim: #8a99a8;
+  --mesh-faint: #5c6a78;
+  --mesh-lime: #c8ff00;
+  --mesh-green: #7a8a6e;
+  --mesh-amber: #f2b84b;
+  --mesh-red: #e5484d;
+
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--mesh-bg);
+  font-family: 'SF Mono', Menlo, Consolas, 'Courier New', monospace;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--mesh-ink);
+  overflow: hidden;
+}
+
+.mesh-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--mesh-line);
+  background: var(--mesh-panel);
+}
+
+.mesh-brand {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--mesh-dim);
+}
+
+.mesh-title {
+  font-size: 16px;
+  letter-spacing: 1.5px;
+  color: #f3e38a;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.mesh-pill {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  border: 1px solid var(--mesh-line-strong);
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: var(--mesh-dim);
+  white-space: nowrap;
+}
+.mesh-pill.live { color: var(--mesh-lime); border-color: rgba(200, 255, 0, 0.4); }
+.mesh-pill.offline { color: var(--mesh-red); border-color: rgba(229, 72, 77, 0.5); }
+
+.mesh-spacer { flex: 1; }
+
+.mesh-btn {
+  font: inherit;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: var(--mesh-lime);
+  color: #000;
+  border: 1px solid #000;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 0 #000;
+  min-height: 36px;
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+}
+.mesh-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 0 #000; }
+.mesh-btn:disabled { opacity: 0.5; cursor: wait; }
+/* R192 · THE NAMED PATHS: the keyboard's arrival is visible — the
+   mesh's hard-shadow buttons carry the focus ring in the mesh's own
+   lime, composed after the offset shadow so both read. */
+.mesh-btn:focus-visible {
+  outline: none;
+  box-shadow: 2px 2px 0 0 #000, 0 0 0 2px var(--mesh-lime);
+}
+.mesh-btn.ghost {
+  background: transparent;
+  color: var(--mesh-ink);
+  border-color: var(--mesh-line-strong);
+  box-shadow: none;
+}
+
+.mesh-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.mesh-stage {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  border-right: 1px solid var(--mesh-line);
+  background: #06080a;
+}
+.mesh-stage iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #06080a;
+}
+.mesh-stage-tag {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--mesh-faint);
+  background: rgba(6, 8, 10, 0.8);
+  border: 1px solid var(--mesh-line);
+  border-radius: 4px;
+  padding: 3px 7px;
+  pointer-events: none;
+}
+
+.mesh-rail {
+  width: 320px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mesh-panel {
+  border: 1px solid var(--mesh-line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--mesh-panel);
+}
+
+.mesh-panel h4 {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--mesh-dim);
+  font-weight: 400;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.mesh-kv {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 4px 10px;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+.mesh-kv dt { color: var(--mesh-faint); }
+.mesh-kv dd { color: var(--mesh-ink); word-break: break-all; }
+
+.mesh-verify-out {
+  margin-top: 8px;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  line-height: 1.7;
+  color: var(--mesh-lime);
+  border-top: 1px dashed var(--mesh-line);
+  padding-top: 8px;
+  word-break: break-word;
+}
+.mesh-verify-out.bad { color: var(--mesh-red); }
+
+.mesh-beats {
+  font-size: 9px;
+  color: var(--mesh-dim);
+  line-height: 1.9;
+}
+.mesh-beats ol { margin-left: 14px; }
+.mesh-beats b { color: var(--mesh-ink); font-weight: 400; }
+.mesh-beats .u { color: var(--mesh-amber); }
+
+.mesh-note {
+  font-size: 8px;
+  line-height: 1.8;
+  color: var(--mesh-faint);
+  letter-spacing: 0.5px;
+}
+.mesh-note b { color: var(--mesh-dim); font-weight: 400; }
+
+.mesh-honesty {
+  border-top: 1px solid var(--mesh-line);
+  background: var(--mesh-panel);
+  padding: 6px 18px;
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--mesh-faint);
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.mesh-honesty .sep { color: var(--mesh-line-strong); }
+
+@media (max-width: 900px) {
+  .mesh-body { flex-direction: column; }
+  .mesh-stage { min-height: 420px; border-right: none; border-bottom: 1px solid var(--mesh-line); }
+  .mesh-rail { width: 100%; }
+}

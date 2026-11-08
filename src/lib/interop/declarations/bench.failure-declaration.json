@@ -1,0 +1,27 @@
+{
+  "environment": "bench",
+  "verification": "DECLARED from reading the uploaded single-file build; not yet executed by Fire against a running instance",
+  "offline_capability": {
+    "primary_function_offline": true,
+    "degraded_functions": [
+      "external anchoring (stub:* self-declared)",
+      "vault-bridge :3004 transport"
+    ],
+    "local_persistence": "localStorage key bench.vvu.v1 (~5 MB per origin, synchronous, unreachable from Workers); interop artefacts in IndexedDB vvu.<env>.interop"
+  },
+  "dependency_unavailability": {
+    "distinguishes_unavailable_from_negative": true,
+    "unavailable_status": "BLOCKED",
+    "behaviour": "Missing service or key yields BLOCKED for that check only; other checks still run and are reported separately."
+  },
+  "recovery": {
+    "unfinished_work_preserved": true,
+    "interrupted_operations_recorded": true,
+    "resume_safety": "Chain, receipts and seen-digest list reload from the store; replay check spans sessions."
+  },
+  "portability": {
+    "export_path_exists": true,
+    "export_requires_other_environment": false,
+    "export_format": "VVU-SF-2026-001 §8 export package (via vvu-interop core buildPackage)"
+  }
+}

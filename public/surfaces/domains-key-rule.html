@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a0e13">
+<title>VVU · Domains &amp; the Key Rule</title>
+<style>
+:root{
+  --bg:#0a0e13;--panel:#0f1a24;--line:#1c3a4a;
+  --txt:#dce8f2;--dim:#7a94a8;--dim2:#4e6478;
+  --cyan:#3ac8d8;--gold:#e8b850;--ok:#7fe8b0;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;padding:16px;min-height:100dvh;background-image:linear-gradient(rgba(58,200,216,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(58,200,216,.05) 1px,transparent 1px);background-size:42px 42px}
+.wrap{max-width:1200px;margin:0 auto}
+.sheet{border:1px solid var(--line);border-radius:10px;padding:20px;background:linear-gradient(180deg,rgba(15,26,36,.9),rgba(10,14,19,.9));margin-bottom:16px}
+/* three-level stack */
+.stack{display:flex;flex-direction:column;gap:12px;align-items:stretch}
+.level{border:1px solid var(--line);border-radius:8px;padding:14px;background:#0a1219}
+.level.obs{border-color:var(--cyan)}
+.level.der{border-color:var(--gold)}
+.level.dec{border-color:var(--txt)}
+.level .lbl{font-size:10.5px;letter-spacing:.2em;color:var(--cyan);text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.level.der .lbl{color:var(--gold)}
+.level.dec .lbl{color:var(--txt)}
+.level h3{margin:0 0 6px;font-size:14px}
+.level .v{font-size:12px;color:var(--txt);background:#071018;border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-top:6px}
+.level .note{font-size:10.5px;color:var(--dim);margin-top:6px;font-style:italic}
+.arrow{text-align:center;color:var(--cyan);font-size:20px}
+/* key rule */
+.rule{border:2px solid var(--gold);border-radius:10px;padding:18px;background:rgba(232,184,80,.04);position:relative}
+.rule::before,.rule::after{content:"";position:absolute;width:20px;height:20px;border:2px solid var(--gold)}
+.rule::before{top:6px;left:6px;border-right:0;border-bottom:0}
+.rule::after{bottom:6px;right:6px;border-left:0;border-top:0}
+.rule h2{font-size:22px;letter-spacing:.03em;text-align:center;color:var(--txt);margin:6px 0 16px}
+.rule h2 u{text-decoration-color:var(--gold);text-decoration-thickness:3px}
+.rule p{margin:0;color:var(--txt);font-size:13px;line-height:1.75}
+.rule p .gold{color:var(--gold);font-weight:700}
+.rule p .cyan{color:var(--cyan);font-weight:700}
+/* domain row */
+.domain h2{font-size:22px;margin:0 0 16px;color:var(--txt);letter-spacing:.02em}
+.domain .flow{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;margin-bottom:16px}
+.phone{border:2px solid var(--cyan);border-radius:14px;padding:14px 10px;text-align:center;color:var(--cyan);min-width:80px}
+.phone .ic{font-size:32px}
+.pipeline{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:6px 2px}
+.pnode{flex:none;border:1px solid var(--line);border-radius:6px;background:#0a1219;padding:10px 12px;text-align:center;font-size:10.5px;color:var(--dim);min-width:130px}
+.pnode b{display:block;color:var(--txt);font-size:11.5px;margin-bottom:4px}
+.pnode.warn{border-color:var(--gold)}
+.pnode.warn b{color:var(--gold)}
+.pnode .sub{font-size:9.5px;color:var(--dim2);margin-top:4px}
+.parrow{color:var(--cyan);font-size:16px;flex:none}
+.scope{margin-top:12px;border:2px solid var(--gold);border-radius:8px;padding:14px;background:rgba(232,184,80,.04)}
+.scope .t{font-size:11px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.scope p{margin:0;color:var(--txt);font-size:12.5px;line-height:1.7}
+.commercial{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:10px 12px;font-size:11px;color:var(--dim);letter-spacing:.04em}
+.commercial b{color:var(--cyan)}
+@media(max-width:640px){
+  .domain .flow{grid-template-columns:1fr}
+  .phone{margin:0 auto;width:80px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- SHEET 1: three-level rule -->
+  <div class="sheet">
+    <div class="stack">
+      <div class="level obs">
+        <div class="lbl">Step 1: Observed Fact</div>
+        <h3>What the sensor reported.</h3>
+        <div class="v">Pressure dropped by 1.2 bar over 4 minutes.</div>
+        <div class="note">This is the only absolute truth.</div>
+      </div>
+      <div class="arrow">▼</div>
+      <div class="level der">
+        <div class="lbl">Step 2: Derived Event</div>
+        <h3>What the software inferred.</h3>
+        <div class="v">Leak-Candidate Flagged.</div>
+        <div class="note">Always labeled with the firmware version that made the inference.</div>
+      </div>
+      <div class="arrow">▼</div>
+      <div class="level dec">
+        <div class="lbl">Step 3: Decision</div>
+        <h3>What action the system recommended or took.</h3>
+        <div class="v">Maintenance alert SMS dispatched.</div>
+      </div>
+    </div>
+
+    <div class="rule" style="margin-top:20px">
+      <h2>KEY <u>RULE</u></h2>
+      <p>
+        <span class="gold">No record may collapse these levels.</span>
+        A '<span class="cyan">leak</span>' is not an observed fact — it is an <span class="cyan">inference</span>.
+        The raw observation must always remain recoverable.
+      </p>
+    </div>
+  </div>
+
+  <!-- SHEET 2: domain 2 pipeline -->
+  <div class="sheet domain">
+    <h2>Domain 2: Cellphone &amp; Consumer Assets</h2>
+    <div class="flow">
+      <div class="phone"><div class="ic">▣</div>▤</div>
+      <div class="pipeline">
+        <div class="pnode">
+          <b>App + Bluetooth POD</b>
+          <div class="sub">Continuous handshake</div>
+        </div>
+        <span class="parrow">▶</span>
+        <div class="pnode">
+          <b>Seconds-Level Sync</b>
+          <div class="sub">Immediate tether break detection</div>
+        </div>
+        <span class="parrow">▶</span>
+        <div class="pnode warn">
+          <b>⚠ Theft Inference</b>
+          <div class="sub">Derived event</div>
+        </div>
+        <span class="parrow">▶</span>
+        <div class="pnode warn">
+          <b>⚠ Device Brick &amp; Beacon</b>
+          <div class="sub">Automated decision</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scope">
+      <div class="t">Explicit Negative Scope</div>
+      <p>
+        We do not recover stolen phones. We do not access cameras or microphones.
+        The chain records the provenance of the beacon event, nothing else.
+      </p>
+    </div>
+    <div class="commercial">
+      COMMERCIAL CONTEXT: <b>R25/month</b> for consumer app pilots (up to 1,000 users).
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

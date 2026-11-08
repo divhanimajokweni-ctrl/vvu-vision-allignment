@@ -1,0 +1,73 @@
+# ==============================================================================
+# VVU EARTH TECH — Weekly security audit
+# ------------------------------------------------------------------------------
+# Triggers:
+#   - schedule: every Monday 06:00 UTC (cron `0 6 * * 1`)
+#   - workflow_dispatch (manual)
+#
+# Runs `bun audit` (informational, never fails CI), the Golden Rule checker, and
+# the dashboard validator on runtime-health.json. Posts a summary the founder
+# can read in the Actions log.
+#
+# The VVU Golden Rule (75 → 28 deps in the earlier audit) means our attack
+# surface is minimal — most of the 28 are shadcn/ui primitives + Prisma + Next.
+# ==============================================================================
+name: Security Audit
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Weekly dependency + boundary audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup node 22 (for the AST + dashboard scripts)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies (frozen lockfile)
+        run: bun install --frozen-lockfile
+
+      - name: bun audit (informational — never fails CI)
+        # `bun audit` reports known CVEs against the installed dependency tree.
+        # We allow it to fail (continue-on-error: true) so a single upstream CVE
+        # doesn't block the rest of the audit. The output is in the Actions log
+        # for the founder to triage.
+        continue-on-error: true
+        run: bun audit
+
+      - name: Golden Rule AST check
+        run: node scripts/golden-rule-checker.js
+
+      - name: Dashboard validator (runtime-health.json only)
+        # water-infrastructure.json is an intentional broken fixture — see ci.yml.
+        run: node scripts/dashboard-panel-validator.mjs dashboards/runtime-health.json
+
+      - name: Print audit summary
+        run: |
+          echo "================================================================"
+          echo " VVU EARTH TECH — Weekly audit complete"
+          echo "================================================================"
+          echo ""
+          echo "Review the `bun audit` output above for vulnerabilities."
+          echo "The VVU Golden Rule (75 → 28 deps) means our attack surface is"
+          echo "minimal — most of the 28 are shadcn/ui primitives + Prisma + Next."
+          echo ""
+          echo "Golden Rule + dashboard validator both passed."
+          echo "================================================================"

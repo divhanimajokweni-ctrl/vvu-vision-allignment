@@ -1,0 +1,1173 @@
+// VVU Sovereign Database Schema — Design Freeze Level 1 · Release 20260901
+// Multi-tenant (RLS-style tenant scoping via tenantId columns), WORM ledger,
+// telemetry logs, audit trail, trust gate state.
+
+generator client {
+  provider        = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  // Prisma's generated client needs a schema URL even when the runtime uses
+  // the libSQL adapter for DATABASE_URL=libsql://... deployments.
+  url      = "file:./dev.db"
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  anchorLat String
+  anchorLon String
+  createdAt DateTime @default(now())
+}
+
+model GeographicAnchor {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  wgs84Lat  String
+  wgs84Lon  String
+  datum     String   @default("WGS84")
+  createdAt DateTime @default(now())
+}
+
+model PhysicalNode {
+  id               String   @id @default(cuid())
+  tenantId         String
+  nodeId           String
+  name             String
+  role             String
+  xCoordMm         Int
+  yCoordMm         Int
+  zCoordMm         Int
+  materialGrade    String?
+  diameterMm       Int?
+  assemblyTorqueNm Float?
+  createdAt        DateTime @default(now())
+
+  @@unique([tenantId, nodeId])
+}
+
+model PipeSpoolProfile {
+  id             String   @id @default(cuid())
+  nominalSize    String   @unique
+  odMm           Float
+  wallMm         Float
+  material       String
+  flangeStandard String
+  boltSpec       String
+  torqueNm       Float
+  createdAt      DateTime @default(now())
+}
+
+model HydraulicInvariant {
+  id        String   @id @default(cuid())
+  parameter String   @unique
+  minValue  Float?
+  maxValue  Float?
+  unit      String
+  createdAt DateTime @default(now())
+}
+
+model TelemetryLog {
+  id                String   @id @default(cuid())
+  tenantId          String
+  nodeId            String
+  flowRate          Float
+  pressureHead      Float
+  acousticAbnormal  Boolean  @default(false)
+  apuTemperature    Float
+  systemState       String
+  estimatedCelerity Float?
+  invariantOk       Boolean  @default(true)
+  createdAt         DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
+
+// WORM — Write Once Read Many append-only ledger. SHA-256 hash chain.
+model WormEvent {
+  id        String   @id @default(cuid())
+  seq       Int      @unique
+  source    String
+  event     String
+  details   String?
+  prevHash  String
+  hash      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  actor     String
+  action    String
+  fromState String?
+  toState   String?
+  symbol    String?
+  reason    String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
+
+model TrustGateState {
+  id           String    @id @default(cuid())
+  gateId       String    @unique
+  status       String    @default("PENDING")
+  beneficiary  String
+  shares       Int
+  certifiedAt  DateTime?
+  certifiedBy  String?
+  certHash     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// ─── Task 14-a — PILOT OUTREACH engine (REAL, not the MrrPanel sim) ─────────
+// POPIA s69 compliance: consentBasis NONE refuses every send (BLOCKED).
+// The table starts EMPTY — no fabricated targets. Tenant scope is the
+// outreach programme namespace (distinct from the Gqeberha GIS tenant).
+model OutreachTarget {
+  id            String   @id @default(cuid())
+  tenantId      String   @default("VVU_202625905307")
+  org           String
+  contactName   String
+  email         String
+  criticalIssue String?
+  // OPT_IN | EXISTING_CUSTOMER | NONE — NONE blocks sends (POPIA s69)
+  consentBasis  String   @default("NONE")
+  // NEW | PREVIEWED | CONTACTED | BLOCKED (Round 14) — Round 17 extends the
+  // pipeline vocabulary: SENT | OPENED | REPLIED | MEETING | PILOT | CLOSED.
+  // PREVIEWED/CONTACTED remain readable for rows produced by /send (legacy).
+  status        String   @default("NEW")
+  // Round 17 — sequence engine: assigned cadence + last completed step
+  // (-1 = not started; 0 = step 1 sent …). Steps live in OutreachSequence.
+  sequenceId    String?
+  currentStep   Int      @default(-1)
+  // Round 18 — ICP / lead-scoring framework (target-selection strategy).
+  // sector: MINING | CONSTRUCTION | FINANCIAL | GOV | MUNICIPAL | WATER |
+  // INDUSTRIAL | OTHER. Score is recomputed server-side on every write
+  // (src/lib/lead-scoring.ts — pure module shared with the client) and
+  // stored for cheap sorting; tier: PRIORITY | QUALIFIED | LONG_SHOT |
+  // UNSCORED. annualRevenue is in R millions (ICP band 50–500).
+  sector        String?
+  annualRevenue Int?
+  employees     Int?
+  bbbeeLevel    Int?
+  supplierCount Int?
+  auditFail12m  Boolean  @default(false)
+  popiaRisk     Boolean  @default(false)
+  govContracts  Boolean  @default(false)
+  score         Int      @default(0)
+  tier          String   @default("UNSCORED")
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([sequenceId])
+}
+
+model OutreachEmail {
+  id        String    @id @default(cuid())
+  targetId  String
+  subject   String
+  // QUEUED | SENT | FAILED | BLOCKED | DRY_RUN
+  status    String    @default("QUEUED")
+  resendId  String?
+  error     String?
+  wormSeq   Int?
+  // Round 17 — which sequence step produced this row (null = Round 14 /send).
+  stepIndex Int?
+  // Round 17 — the personalised body actually composed (AI or template), kept
+  // as WORM-adjacent evidence of exactly WHAT was sent per step.
+  bodyHtml  String?
+  aiGenerated Boolean @default(false)
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([targetId, createdAt])
+  @@index([stepIndex])
+}
+
+// Round 17 — multi-step outreach cadences ("Day 1 intro, Day 3 case study,
+// Day 7 demo"). stepsJson is a JSON array of { day, subject, angle } objects
+// (Prisma SQLite has no list primitives; the API validates shape strictly).
+model OutreachSequence {
+  id        String   @id @default(cuid())
+  tenantId  String   @default("VVU_202625905307")
+  name      String
+  stepsJson String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, name])
+}
+
+// ─── Round 19 — 6G NeXt HOLOCOM module (split-computing architecture) ───────
+// Adapted from Friese et al., "True 3D Holography: A Communication Service of
+// Tomorrow and Its Requirements for a New Converged Cloud and Network
+// Architecture on the Path to 6G" (project 6G NeXt, BMBF 16KISK17x).
+// Three server-authoritative tables back the #/holocom projection:
+//   · HoloRenderInstance — the remote-rendering registry the Discovery
+//     Service scores (§IV-B3) and the Service Broker deploys into (§IV-B4).
+//   · HoloDiscoveryLog  — every parameterized discovery request (evidence).
+//   · HoloQoeSample     — QoE alignment time-series (§IV-D): MOS predicted
+//     from raw QoS KPIs, recomputed server-side, never trusted from clients.
+model HoloRenderInstance {
+  id           String   @id @default(cuid())
+  code         String   @unique // e.g. "edge-gqeberha-01"
+  deployment   String // EDGE | CENTRAL
+  site         String // "Gqeberha Edge Cloud"
+  region       String // "ZA-EC"
+  engine       String // "Unity3D headless"
+  // ACTIVE | DEPLOYING | DRAINED — DEPLOYING auto-promotes to ACTIVE once
+  // createdAt is older than the simulated Docker pull+boot window (GET lazy
+  // state machine; the API never needs a timer thread).
+  status       String   @default("ACTIVE")
+  gpuClass     String // "A100 · 80GB" | "L4 · 24GB" | "MI300X"
+  cpuUtil      Float    @default(0.35)
+  gpuUtil      Float    @default(0.5)
+  memUtil      Float    @default(0.45)
+  // RAN + transport latency to a typical metro client (ms) — discovery input.
+  baseLatencyMs   Float    @default(8)
+  // Uplink capacity headroom the 6G NeXt backbone advertises (Gbps).
+  capacityGbps    Float    @default(10)
+  costPerHour     Float    @default(38)
+  // HoloCom sessions currently pinned to this instance.
+  sessions        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model HoloDiscoveryLog {
+  id               Int      @id @default(autoincrement())
+  clientId         String
+  maxLatencyMs     Int
+  minBandwidthMbps Int
+  // CONVERSATIONAL | STREAMING | CONTROL | BEST_EFFORT (paper §IV-B: QoS classes)
+  qosClass         String
+  maxCostPerHour   Float?
+  matchedCode      String?
+  score            Float?
+  candidates       Int      @default(0)
+  reason           String
+  wormSeq          Int?
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model HoloQoeSample {
+  id        Int      @id @default(autoincrement())
+  // ITU-T P.1203-inspired predicted MOS, recomputed server-side from the raw
+  // KPIs (client values are inputs, never scores).
+  mos         Float
+  latencyMs   Float
+  jitterMs    Float
+  lossPct     Float
+  stallMs     Float
+  codec       String   @default("H265")
+  wormSeq     Int?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ─── Round 29 — FIELD KIT · CAMPUS WALK (lecturer conversation captures) ────
+// The five-part field kit (leave-behind / four trust bottlenecks / three
+// questions / capture template / faculty map). This table stores the CAPTURE
+// TEMPLATE rows — the "people notes" filled in during campus walks. The single
+// most valuable output is the stack of Q3 trust conditions ("I would trust
+// this if …") — those are the design constraints for whatever ProofBridge
+// becomes next. Rows start EMPTY — no fabricated lecturers.
+model FieldKitCapture {
+  id                String   @id @default(cuid())
+  lecturer          String
+  faculty           String
+  field             String?
+  // Q1 — biggest unverifiable thing in their field.
+  q1Unverifiable    String
+  // Q2 — how failures are caught today / who pays for that check.
+  q2FailurePath     String
+  // Q3 — their trust condition, verbatim: "I would trust this if …".
+  q3TrustCondition  String
+  // PROVENANCE | EVIDENCE_CAPTURE | INSTITUTIONAL_TRUST | COST_OF_VERIFICATION
+  dominantBottleneck String
+  // YES | NO | MAYBE — would they use it?
+  wouldUse          String
+  // What they offered (lecture invite, intro, data, collaboration).
+  offered           String?
+  followUp          String?
+  wormSeq           Int?
+  createdAt         DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([faculty])
+}
+
+// ─── Round 29 — SUPPORT & FUNDING endpoint (local reference engine) ──────────
+// Implements the VVU PUBLIC SUPPORT & INSTITUTIONAL FUNDING ENDPOINT
+// ARCHITECTURE v1.5.2 (design freeze Level 1) as a working local engine on the
+// validation dashboard: the same 5-state DFA (INITIATED → PENDING_SETTLEMENT →
+// VERIFIED_SETTLED → LEDGER_LOCKED, + FAILED), SHA-256 receipt hashes and the
+// Mk-I progress gauge — backed by SQLite + the WORM ledger instead of the
+// production Postgres/RLS/WSS stack (that stack is DESIGN, labelled as such in
+// the view's honesty table). Field vocabulary mirrors the production schema
+// (vvu-pis-db-schema-20260901.sql) so rows migrate 1:1.
+model FundingContribution {
+  id                    String   @id @default(cuid())
+  // UUIDv4 issued at σ_init (server-side).
+  contributionId        String   @unique
+  contributorName       String
+  contributorEmail      String
+  institutionAffiliation String   @default("Nelson Mandela University")
+  // ACADEMIC_GRANT | INSTITUTIONAL_SPONSOR | ALUMNI_CONTRIBUTION | PUBLIC_DONATION
+  contributionType      String
+  amountZar             Float
+  allocatedTarget       String   @default("Mk-I Prototype Fabrication")
+  // PAYFAST | EFT_DIRECT | CRYPTO (local reference: method label only).
+  paymentMethod         String
+  gatewayReference      String?  @unique
+  sha256ReceiptHash     String?
+  // INITIATED | PENDING_SETTLEMENT | VERIFIED_SETTLED | LEDGER_LOCKED | FAILED
+  paymentState          String   @default("INITIATED")
+  receiptId             String?
+  blockId               String?
+  wormSeq               Int?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([paymentState])
+  @@index([createdAt])
+}
+
+// Operator-editable funding target (singleton row id "mk1"). Starts at a
+// PROVISIONAL default clearly labelled in the UI as not-yet-quoted — never
+// presented as a supplier quote. Only LEDGER_LOCKED contributions count
+// towards the progress gauge.
+model FundingConfig {
+  id          String   @id @default("mk1")
+  targetZar   Float    @default(250000)
+  targetLabel String   @default("Mk-I Prototype Fabrication & Field Validation")
+  updatedAt   DateTime @updatedAt
+}
+
+// Round 22 — CAPABILITY DOSSIER (procurement capability data) ─────────────
+// Single-operator profile answering the exact three capability questions an
+// external procurement assistant asked (pilot status / entity / location) plus
+// the SA registration facts (CSD · SITA · provincial vendor database · VAT ·
+// B-BBEE). The SYSTEM facts (services, WORM chain, data provenance) are
+// computed live server-side and are NEVER editable — only this operator
+// profile is. One singleton row, id "operator"; created on first PUT.
+model CapabilityProfile {
+  id                   String   @id @default("operator")
+  // Registered entity name + trading name (feeds the capability statement).
+  entityName           String   @default("")
+  tradingAs            String   @default("")
+  // "Is 'Vivid' a separate company?" — canonical answer: it is a voice-to-text
+  // rendering of "VVU". Kept editable in case a separate entity really exists.
+  vividIsTranscription Boolean  @default(true)
+  // One of the 9 SA provinces (validated server-side) — the location answer.
+  province             String?
+  // SA procurement registration state — feeds the registration checklist.
+  csdRegistered        Boolean  @default(false)
+  sitaRegistered       Boolean  @default(false)
+  provincialRegistered Boolean  @default(false)
+  vatRegistered        Boolean  @default(false)
+  // EME | QSE | LEVEL_1..LEVEL_8 | NOT_RATED | GENERIC (validated).
+  bbbeeLevel           String?
+  contactEmail         String?
+  contactPhone         String?
+  // Operator declaration: SIMULATION_ONLY (honest default) | SEEKING_PILOT |
+  // PILOT_DEPLOYED. The live "is anything real?" fact is server-computed and
+  // always shown alongside this — the two can never silently diverge.
+  pilotDeclaration     String   @default("SIMULATION_ONLY")
+  notes                String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+// Task 47 · Trust Sphere Metrics — the SLA measurement substrate.
+// One row per rail-health sweep (the rails sampler writes every 15s once the
+// app is up; GET /api/vvu/rails reads the window back). SLA is DERIVED from
+// these rows — never declared. A sweep is "up" iff every probed rail answered
+// 200 within its 2.5s timeout. `downPorts` is a comma-separated port list
+// ("" = all rails up) — SQLite has no list type; the derivation lives in
+// src/lib/rails-sampler.ts.
+model RailSweep {
+  id        Int      @id @default(autoincrement())
+  at        DateTime @default(now())
+  probed    Int      // rails probed this sweep
+  downCount Int      // rails that failed
+  downPorts String   // "3004,3006" — "" when fully up
+  @@index([at])
+}
+
+// ─── Task 49 · THE 4TH STATE — contract on chain, THE LEDGER AS STORAGE ─────
+// Operator directive: every iteration from now on deploys on-chain. The ICSH
+// 11-beat unified loop (INGEST → INFER → LOG → SYNC → COMPARE → FOLD → MINT →
+// SHIP → WIPE → RETRIEVE → WATCHDOG) runs server-side with working memory
+// bounded at exactly 32 bytes (the orbit head). Storage IS the ledger:
+//   · IcshCycle     — ledger.jsonl, one line per cycle (hash-chained heads)
+//   · IcshVaultNode — the markdown neural vault (one .md per cycle)
+//   · WormEvent     — the WORM chain (CONTRACT at genesis, JOIN, per-run
+//                     ORBIT_HEAD_ANCHOR envelopes) — reused, not forked
+//   · IcshPeer      — the 25-peer registry (peers_seed.py lineage)
+//   · IcshNode      — TOTP-enrolled farm/estate nodes (JOIN METHOD wizard)
+//   · IcshRunStat   — one MEASURED row per zoom-sim run (no fabricated numbers)
+model IcshNode {
+  id         String    @id @default(cuid())
+  callsign   String    @unique // e.g. EDGE_GQ_MKONDO
+  farm       String
+  district   String
+  tier       String    @default("EDGE") // EDGE | DISTRICT | ROOT
+  trust      Float     @default(0.4) // enrolment base, grows with attributed cycles
+  totpSecret String    // base32, RFC 6238 — never returned by public reads
+  status     String    @default("PENDING") // PENDING | ACTIVE | BLOCKED
+  joinCode   String?   // E965B01E-style receipt code once committed
+  joinedAt   DateTime?
+  createdAt  DateTime  @default(now())
+  @@index([status])
+}
+
+model IcshPeer {
+  nodeId    String   @id // EDGE_GQ_001 … EDGE_GQ_025
+  endpoint  String // local://EDGE_GQ_001 (in-process sim) | http://… (real)
+  lastHead  String? // last 32-byte head this peer gossiped back
+  reachable Boolean  @default(true)
+  bucket    Int      @default(0) // drift bucket — rolls as the sim advances
+  createdAt DateTime @default(now())
+}
+
+model IcshCycle {
+  seq            Int      @id @default(autoincrement())
+  cycle          Int
+  viewport       String // "14:32 CITY TWIN"
+  head           String // 32-byte orbit head (hex) — the ONLY working memory
+  line           String // exact hash-preimage JSON (the ledger.jsonl payload)
+  districtHead   String // FOLD beat output (16-hex shown, 32 stored)
+  vaultCount     Int
+  memoryBytes    Int      @default(32)
+  peersReachable Int
+  agreement      Boolean // quorum ≥ 18 of 25 in the COMPARE beat
+  divergentPeers Int      @default(0)
+  durationMs     Float
+  createdAt      DateTime @default(now())
+
+  @@index([cycle])
+  @@index([createdAt])
+}
+
+model IcshVaultNode {
+  id        String   @id @default(cuid())
+  cycle     Int
+  name      String // node_00001.md
+  content   String // markdown with frontmatter — the neural substrate
+  createdAt DateTime @default(now())
+
+  @@unique([name])
+  @@index([cycle])
+}
+
+model IcshRunStat {
+  id             Int      @id @default(autoincrement())
+  cycles         Int
+  durationMs     Float // measured around the loop only
+  cyclesPerSec   Float // measured, never fabricated
+  finalHead      String
+  headBefore     String
+  agreementRate  Float // fraction of cycles with quorum
+  peersReachable Int
+  runner         String   @default("OPERATOR") // callsign attribution
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Task 50 · SESSION LAB — the session layer on top of the join path: every
+// TOTP login mints a 15-minute PWA session (SESSION_MINTED on the WORM
+// chain); revocations are SESSION_REVOKED events, rejections LOGIN_REJECTED.
+// The concurrent sweep (every phone logs in at once) is the honest
+// multi-user verification the operator ordered.
+model IcshSession {
+  id        String    @id @default(cuid())
+  nodeId    String
+  callsign  String
+  code      String    // S-3FA9C2 receipt-style session code (display)
+  totpCode  String    // the 6-digit code that minted it
+  drift     Int       // matched step offset −1 | 0 | +1
+  wormSeq   Int       // the SESSION_MINTED event
+  expiresAt DateTime  // mintedAt + 15 min
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([nodeId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+// ─── Round 56 · GOVERNANCE KERNEL — server-side single-actuator SIL slice ───
+// Spec: "A registered actuator cannot execute unless it receives a valid,
+// signed, unexpired, single-use permit whose action, subject, policy epoch,
+// evidence manifest, and nonce all match authoritative state."
+//
+// The issuance invariant (permit ⇒ allow event durable ∧ nonce reserved ∧
+// manifest bound ∧ policy epoch current) is enforced by ONE transaction:
+// reserve nonce + append GOVERNANCE_ALLOW + create the permit record
+// (AUTHORIZED_UNSIGNED) COMMIT, and only THEN sign. A failed signing marks
+// the permit ABORTED and leaves the nonce permanently unusable.
+//
+// Release ladder: PROTOTYPE → SIL_CANDIDATE → SIL_PASS → CONTROLLED_BENCH →
+// PHYSICAL_PILOT. This build is SIL (software-in-the-loop): the one
+// registered actuator's side effect is a durable simulated row, never a
+// physical output. No ISO 26262 compliance is claimed — the system contains
+// an auditable safety-assessment interface that refuses unmapped assessments.
+
+// Authoritative subject registry. PROTOTYPE_AUTH: the only subject this build
+// resolves is the registered prototype operator (env GOVERNANCE_OPERATOR_
+// SUBJECT_ID); a revoked or unknown subject fails closed at every entry point.
+model GovernanceSubject {
+  id        String   @id // 'operator.prototype'
+  status    String   @default("ACTIVE") // ACTIVE | REVOKED
+  role      String   @default("OPERATOR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Singleton policy epoch — bumped when governance policy changes; permits and
+// consent bind the epoch they were issued under.
+model GovernancePolicyState {
+  id        String   @id @default("policy")
+  epoch     Int      @default(1)
+  updatedAt DateTime @updatedAt
+}
+
+// Hazard ledger per action. ASIL is DERIVED from (severity, exposure,
+// controllability) through the reviewed APPROVED_ASIL_TABLE only — anything
+// the table does not map is UNMAPPED and the evaluator refuses (ASIL_UNMAPPED).
+model GovernanceHazard {
+  id              String   @id
+  actionId        String
+  status          String // MITIGATED | UNMITIGATED
+  severity        String // S1 | S2 | S3
+  exposure        String // E1 | E2 | E3 | E4
+  controllability String // C1 | C2 | C3
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([actionId])
+}
+
+// Operator consent per (subject, action, policy epoch). An action that
+// requires consent refuses without a row at the CURRENT epoch.
+model GovernanceConsent {
+  id          String   @id @default(cuid())
+  subjectId   String
+  actionId    String
+  policyEpoch Int
+  grantedAt   DateTime @default(now())
+
+  @@unique([subjectId, actionId, policyEpoch])
+}
+
+// Durable single-use nonce. The (actionId, actionNonce) composite primary key
+// is the uniqueness constraint; CONSUMED is a compare-and-swap from RESERVED
+// via a conditional updateMany, so exactly one of N concurrent consumers wins.
+model GovernanceNonce {
+  actionId    String
+  actionNonce String
+  state       String // RESERVED | CONSUMED | ABORTED
+  expiresAt   DateTime
+  reservedAt  DateTime @default(now())
+  consumedAt  DateTime?
+  permitId    String?
+
+  @@id([actionId, actionNonce])
+  @@index([state, expiresAt])
+}
+
+// Permit records. State ladder:
+//   AUTHORIZED_UNSIGNED → SIGNED → ACTUATOR_STARTED → ACTUATOR_CONFIRMED
+//   (ABORTED from AUTHORIZED_UNSIGNED/SIGNED when signing or recovery fails)
+// The signature and keyId columns are filled only by markPermitSigned after
+// the payload is signed; an AUTHORIZED_UNSIGNED permit is never executable.
+model GovernancePermit {
+  permitId             String    @id
+  actionId             String
+  actionNonce          String
+  subjectId            String
+  policyEpoch          Int
+  evidenceManifestHash String
+  governanceEventId    String // the GOVERNANCE_ALLOW event (bound pre-signing)
+  issuedAt             DateTime
+  expiresAt            DateTime
+  state                String // AUTHORIZED_UNSIGNED | SIGNED | ACTUATOR_STARTED | ACTUATOR_CONFIRMED | ABORTED
+  signature            String?
+  keyId                String?
+  signedAt             DateTime?
+  startedAt            DateTime?
+  confirmedAt          DateTime?
+  abortedAt            DateTime?
+  abortedReason        String?
+
+  @@unique([actionId, actionNonce])
+  @@index([subjectId, actionId])
+  @@index([state, issuedAt])
+}
+
+// The kernel's own SHA-256 hash-chained append-only ledger. Same discipline
+// as the estate WormEvent chain but separate: governance events must append
+// INSIDE the issuance transaction (SQLite gives the atomicity), and the
+// estate chain is appended post-hoc by the ledger writers.
+model GovernanceWormEvent {
+  seq        Int      @id @default(autoincrement())
+  eventId    String   @unique
+  type       String // GOVERNANCE_ALLOW | GOVERNANCE_REFUSAL | GOVERNANCE_EXECUTED | PERMIT_ABORTED
+  actionId   String?
+  subjectId  String?
+  permitId   String?
+  payload    String // canonical JSON (the hash-preimage component)
+  prevHash   String
+  hash       String
+  observedAt DateTime
+
+  @@index([type, observedAt])
+  @@index([actionId, seq])
+}
+
+// The SIL test actuator's durable side effect (SIMULATED output — a real row,
+// never a physical actuation).
+model ActuatorEffect {
+  id        String   @id @default(cuid())
+  permitId  String   @unique
+  actionId  String
+  subjectId String
+  effect    String
+  createdAt DateTime @default(now())
+
+  @@index([actionId, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Round 57 — SAFEGRID → VVU PIPELINE (transactional outbox / inbox / seal).
+//
+// §1 ORDERING DECISION (REPORTED — operator-decided, binding): the WORM
+// chain's append order is the authoritative order for the stream. Nothing
+// else is. worm_seal_index.position is assigned by the append operation,
+// monotonically, per stream — it is the ONLY field that establishes chain
+// order. No timestamp establishes order anywhere; receivedAt/sealedAt are
+// informational. Stream scope: stream_id = tenant_id (declared for this
+// pipeline; a different scope later = a NEW stream identifier).
+//
+// Table/column names are @map'ed to snake_case so the raw upsert SQL reads
+// exactly as the contract writes it (INSERT INTO safegrid_inbox ... ON
+// CONFLICT (consumer_name, event_id) DO UPDATE ...). SQLite has no enums —
+// status/state strings are app-validated fail-closed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// The VVU inbox — every decision event the consumer has ACCEPTED (at least
+// once). (consumer_name, event_id) is the idempotency key: a duplicate
+// POST during relay recovery lands on the existing row and NEVER creates a
+// second terminal effect. status: received | sealing | sealed | seal_failed.
+model SafegridInbox {
+  id            String    @id @default(cuid())
+  consumerName  String    @map("consumer_name")
+  eventId       String    @map("event_id")
+  eventType     String    @map("event_type")
+  streamId      String    @map("stream_id") // = payload.tenant_id (enforced at ingest)
+  payload       String // JSON exactly as accepted — the bytes the sealer hashed
+  status        String // received | sealing | sealed | seal_failed
+  receivedAt    DateTime @default(now()) @map("received_at") // informational — first arrival
+  leaseUntil    DateTime? @map("lease_until") // seal-lease bookkeeping (informational)
+  sealAttempts  Int       @default(0) @map("seal_attempts")
+  lastSealError String?   @map("last_seal_error")
+  sealedAt      DateTime? @map("sealed_at") // informational
+  sealRef       String?   @map("seal_ref")
+
+  @@unique([consumerName, eventId])
+  @@index([status, receivedAt])
+  @@map("safegrid_inbox")
+}
+
+// The WORM seal index — the authoritative stream order. position is
+// assigned by the append operation (appendIfAbsent), monotonically per
+// stream. event_id is the PRIMARY KEY: one WORM record per event, ever —
+// the correctness backstop against concurrent duplicate sealing.
+// canonical_bytes stores the EXACT JCS bytes hashed at seal time; any
+// future verifier hashes THESE bytes, never a re-serialization.
+model WormSealIndex {
+  eventId             String   @id @map("event_id")
+  streamId            String   @map("stream_id")
+  position            BigInt
+  recordHash          String   @map("record_hash")
+  previousRecordHash  String   @map("previous_record_hash")
+  canonicalEventHash  String   @map("canonical_event_hash") // sha256(canonical_bytes)
+  canonicalBytes      String   @map("canonical_bytes") // JCS(event_fields) — the sealed bytes
+  sealedAt            DateTime @default(now()) @map("sealed_at") // informational
+  algorithm           String   @default("VVU-WORM-v1")
+
+  @@unique([streamId, position]) // append contention backstop
+  @@index([streamId, position])
+  @@map("worm_seal_index")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: Epistemic Runtime — policies, shards, merges, proofs, violations,
+// shadow events, mined invariants, revisions. Reconstructed from API usage
+// in src/app/api/policies, src/app/api/shards, src/app/api/merges, etc.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Policy {
+  id               String   @id @default(cuid())
+  name             String   @unique
+  filename         String
+  source           String
+  domain           String?
+  version          String?
+  description      String?
+  ok               Boolean
+  errorCount       Int      @default(0)
+  warningCount     Int      @default(0)
+  invariantCount   Int      @default(0)
+  shardCount       Int      @default(0)
+  shardKey         String?
+  shardStrategy    String?
+  repairStrategy   String?
+  zkEnabled        Boolean  @default(false)
+  proofKind        String?
+  shadowEnabled    Boolean  @default(false)
+  takeoverLatencyMs Int?
+  wasmFingerprint  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  shards       Shard[]
+  merges       MergeProposal[]
+  proofs       AncestryProof[]
+  violations   InvariantViolation[]
+  shadowEvents ShadowEvent[]
+  mined        MinedInvariant[]
+  revisions    PolicyRevision[]
+}
+
+model PolicyRevision {
+  id              String   @id @default(cuid())
+  policyId        String
+  version         Int
+  source          String
+  wasmFingerprint String?
+  invariantCount  Int      @default(0)
+  changeSummary   String?
+  author          String?
+  createdAt       DateTime @default(now())
+
+  policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@unique([policyId, version])
+}
+
+model Shard {
+  id               String   @id @default(cuid())
+  policyId         String
+  shardKey         String
+  region           String
+  nodeId           String
+  state            String
+  invariantStatus  String
+  mmrRoot          String
+  peerCount        Int      @default(0)
+  lastMergeAt      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+}
+
+model MergeProposal {
+  id              String   @id @default(cuid())
+  policyId        String
+  sourceShardId   String?
+  targetShard     String
+  sourceShardName String
+  proposedState   String
+  repairedState   String?
+  status          String
+  violations      String
+  divergence      Float
+  iterations      Int      @default(0)
+  mmrProof        String
+  zkProof         String?
+  createdAt       DateTime @default(now())
+
+  policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+}
+
+model AncestryProof {
+  id         String   @id @default(cuid())
+  policyId   String
+  shardKey   String
+  mmrRoot    String
+  proofPath  String
+  zkProof    String?
+  anchored   Boolean  @default(false)
+  anchor     String?
+  createdAt  DateTime @default(now())
+
+  policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+}
+
+model InvariantViolation {
+  id         String   @id @default(cuid())
+  policyId   String
+  invariant  String
+  severity   String
+  soft       Boolean  @default(false)
+  shardKey   String?
+  actual     String?
+  expected   String?
+  repaired   Boolean  @default(false)
+  driftDelta Float?
+  createdAt  DateTime @default(now())
+
+  policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+}
+
+model ShadowEvent {
+  id            String   @id @default(cuid())
+  policyId      String
+  kind          String
+  summary       String
+  liveState     String
+  shadowState   String?
+  divergence    Float    @default(0)
+  authoritative Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+}
+
+model MinedInvariant {
+  id         String   @id @default(cuid())
+  policyId   String?
+  predicate  String
+  severity   String
+  rationale  String
+  confidence Float
+  accepted   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  policy Policy? @relation(fields: [policyId], references: [id], onDelete: SetNull)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: Workspace — users, settings, sessions, api keys, contributions,
+// changelog, roadmap, docs, incidents, invoices, subscriptions.
+// Reconstructed from src/lib/workspace/seed.ts and src/app/api/{account,dev,
+// subscriptions,settings}/route.ts usage.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  displayName    String
+  avatarColor    String   @default("#84cc16")
+  role           String   @default("OPERATOR")
+  orgName        String   @default("VVU EARTH TECH")
+  orgTier        String   @default("ENTERPRISE")
+  publicKey      String?
+  keyFingerprint String?
+  bio            String?
+  title          String?
+  location       String?
+  timezone       String   @default("Africa/Johannesburg")
+  locale         String   @default("en-ZA")
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  settings UserSettings?
+  apiKeys ApiKey[]
+  sessions UserSession[]
+}
+
+model UserSettings {
+  userId                String   @id
+  theme                 String   @default("dark")
+  accentColor           String   @default("vvu-lime")
+  density               String   @default("comfortable")
+  fontSize              String   @default("md")
+  sidebarCollapsed      Boolean  @default(false)
+  defaultDomain         String?
+  defaultShardStrategy  String   @default("hash")
+  emailNotifications    Boolean  @default(true)
+  inAppNotifications    Boolean  @default(true)
+  slackWebhook          String?
+  alertOnViolations     Boolean  @default(true)
+  alertOnMerges         Boolean  @default(false)
+  alertOnShadowTakeover Boolean  @default(true)
+  alertOnMinedInvariants Boolean @default(false)
+  telemetryOptIn        Boolean  @default(true)
+  errorReportingOptIn   Boolean  @default(true)
+  dataRetentionDays     Int      @default(90)
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSession {
+  id         String   @id @default(cuid())
+  userId     String
+  label      String
+  ipHash     String?
+  userAgent  String?
+  lastSeenAt DateTime
+  createdAt  DateTime @default(now())
+  revokedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ApiKey {
+  id         String   @id @default(cuid())
+  userId     String
+  label      String
+  keyHint    String
+  keyHash    String   @unique
+  scopes     String   @default("read")
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id             String   @id @default(cuid())
+  subscriptionId String?
+  number         String   @unique
+  customerName   String
+  customerEmail  String
+  amountZAR      Int
+  taxZAR         Int
+  totalZAR       Int
+  status         String   @default("PAID")
+  issuedAt       DateTime
+  dueAt          DateTime?
+  paidAt         DateTime?
+  lineItems      String
+  pdfPath        String?
+  createdAt      DateTime @default(now())
+}
+
+model Contribution {
+  id            String   @id @default(cuid())
+  type          String
+  title         String
+  author        String
+  authorEmail   String?
+  state         String
+  labels        String
+  repo          String
+  number        Int
+  url           String?
+  commentsCount Int      @default(0)
+  upvotes       Int      @default(0)
+  createdAt     DateTime
+  updatedAt     DateTime @updatedAt
+}
+
+model ChangelogEntry {
+  id          String   @id @default(cuid())
+  version     String   @unique
+  title       String
+  body        String
+  kind        String
+  publishedAt DateTime
+  author      String?
+}
+
+model RoadmapItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  milestone   String
+  status      String   @default("PLANNED")
+  priority    String   @default("MEDIUM")
+  assignee    String?
+  progressPct Int      @default(0)
+  tags        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DocPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  category  String
+  body      String
+  order     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model Incident {
+  id                String   @id @default(cuid())
+  title             String
+  severity          String
+  status            String   @default("INVESTIGATING")
+  affectedComponents String
+  body              String
+  startedAt         DateTime
+  resolvedAt        DateTime?
+  createdAt         DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: Skylantern — devices, evidence, witnesses, audit events,
+// subscriptions. Reconstructed from src/skylantern/server/repository.ts.
+//
+// IMPORTANT: the back-relation on Device is named `evidence` (the code uses
+// `db.device.findUnique({ include: { _count: { select: { evidence: true } } } })`),
+// and on EvidenceRecord the relation back to Device is named `device`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Device {
+  id              String   @id @default(cuid())
+  externalId      String   @unique
+  label           String
+  domain          String   @default("WATER")
+  primitive       String   @default("STATE")
+  lat             Float
+  lng             Float
+  firmwareVersion String?
+  hardwareKeyHint String?
+  status          String   @default("ACTIVE")
+  pricingBand     String?
+  lastSeenAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  evidence EvidenceRecord[]
+}
+
+model EvidenceRecord {
+  id                String   @id @default(cuid())
+  deviceId          String
+  hash              String   @unique
+  previousHash      String?
+  sequence          Int
+  verificationState String   @default("CANDIDATE")
+  tierTag           Int      @default(0)
+  observedFact      String
+  derivedEvent      String?
+  decision          String?
+  subject           String
+  source            String
+  observedAt        DateTime
+  signedAt          DateTime @default(now())
+  lat               Float    @default(0)
+  lng               Float    @default(0)
+  payload           String
+  signature         String
+  createdAt         DateTime @default(now())
+
+  device      Device       @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  witnesses   Witness[]
+  auditEvents AuditEvent[]
+}
+
+model Witness {
+  id             String   @id @default(cuid())
+  evidenceId     String
+  witnessType    String
+  witnessLabel   String
+  witnessKeyHint String?
+  signedAt       DateTime @default(now())
+
+  evidence EvidenceRecord @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+}
+
+model AuditEvent {
+  id         String   @id @default(cuid())
+  evidenceId String
+  action     String
+  fromState  String?
+  toState    String?
+  actor      String
+  note       String?
+  at         DateTime @default(now())
+
+  evidence EvidenceRecord @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  tierKey         String
+  tierLabel       String
+  priceZAR        Int
+  cadence         String
+  customerName    String
+  customerEmail   String
+  deviceExternalId String?
+  status          String   @default("ACTIVE")
+  startDate       DateTime @default(now())
+  cancelledAt     DateTime?
+  createdAt       DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: Proximity — record layer for the proximity stream (R60).
+// Reconstructed from src/server/proximity/{pipeline,verify}.ts. The eventId
+// is the join key to the WORM seal index; source/subjectId carry the
+// human-readable context the verifier's chain view joins in.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ProximityRecord {
+  id            String   @id @default(cuid())
+  eventId       String   @unique
+  source        String
+  subjectId     String
+  distanceCm    Int
+  rssiDbm       Int
+  batteryMv     Int
+  dwellMs       Int
+  riskMilli     Int
+  occurredAt    String
+  gateDecision  String
+  gateReason    String
+  action        String
+  rulesFired    String
+  sealRef       String?
+  ingestedAt    DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION: Watchboard — moved-board ledger (R128/R130/R133/R135).
+// Reconstructed from src/app/api/estate/watchboard/{route,ledger/route}.ts.
+// Each row is ONE moved sample — the board's own FLIPS, never the reader's
+// cadence. `rows` stores the JSON-stringified WatchboardSnapshotRow[] the
+// summarizer parses back; `signature` is the board signature used to detect
+// motion (a sample is recorded only when the signature differs from the
+// newest stored one).
+// ─────────────────────────────────────────────────────────────────────────────
+
+model WatchboardSnapshot {
+  id        String   @id @default(cuid())
+  builtAt   DateTime
+  signature String
+  hotCount  Int      @default(0)
+  rows      String
+  createdAt DateTime @default(now())
+
+  @@index([builtAt])
+}

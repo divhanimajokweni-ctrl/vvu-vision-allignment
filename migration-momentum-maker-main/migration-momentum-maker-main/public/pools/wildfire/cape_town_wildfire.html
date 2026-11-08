@@ -1,0 +1,638 @@
+<!doctype html>
+<!-- ==========================================================================
+     pools/wildfire/cape_town_wildfire.html — WINTER POOLS · WILDFIRE EMERGENCY VIEW
+     ==========================================================================
+     The operator surface (8-file contract, file 1). Single entry point, zero
+     dependencies, no CDN, no build step — runs from a USB stick with the
+     network physically unplugged (the service worker serves the cached
+     family once primed).
+
+     Read-only by default. One banner. One declared state. One colour.
+     Evidence rail at 9pt, below the fold, always on.
+
+     A fire officer or co-op facilitator can open this at 03:00 during a
+     declared event: the state machine is explicit, the mesh panel shows
+     only consented member nodes (absent means absent — never dimmed), the
+     evidence chain is real (SHA-256 chained + Ed25519-signed where the
+     browser supports it), and the revocation path is visible and testable.
+     ========================================================================== -->
+<html lang="en" class="pools-doc pools-theme--emergency">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Winter Pools · Wildfire Emergency View — Cape Town (Ward 62)</title>
+    <link rel="stylesheet" href="wildfire-view.css" />
+  </head>
+  <body class="pools-doc">
+    <canvas
+      id="wf-scene"
+      role="img"
+      aria-label="Isometric map of the Devil's Peak / Ward 62 fire area: fire polygon, wind vectors, evacuation zones and routes, consented mesh nodes, municipal assets and sensors"
+    ></canvas>
+
+    <!-- ── the ONE hazard banner ──────────────────────────────────────────────── -->
+    <header id="wf-banner">
+      <span id="wf-banner-state" data-state="NORMAL">NORMAL</span>
+      <span id="wf-banner-note">NO ACTIVE EVENT — ROUTINE MONITORING</span>
+      <span id="wf-banner-meta">
+        <span class="pools-chip pools-chip--seed">WARD 62 · DEVILS PEAK · SE SLOPE</span>
+        <span class="pools-chip" id="wf-banner-clock">--:--:--Z</span>
+      </span>
+    </header>
+
+    <!-- ── the 8 panels ───────────────────────────────────────────────────────── -->
+    <section id="wf-panels" aria-label="Emergency operations panels">
+      <details class="pools-panel" id="p-ops" open>
+        <summary class="pools-panel__title">
+          OPS · STATE <span class="evref" id="p-ops-ref">E—</span>
+        </summary>
+        <div class="panel-body">
+          <div class="pools-row">
+            State <b id="p-ops-state">NORMAL</b> · since <b id="p-ops-since">—</b>
+          </div>
+          <div class="pools-row dim" id="p-ops-hint">Fire danger index within seasonal norms.</div>
+          <div class="pools-row" style="margin-top: 6px">
+            Surface <span class="dim">OPERATOR · READ-ONLY BY DEFAULT</span>
+          </div>
+          <div id="wf-console"></div>
+          <div class="pools-row dim" id="wf-console-note" style="font-size: 9px">
+            Transitions are arm → confirm. Every attempt is a WORM event.
+          </div>
+        </div>
+      </details>
+
+      <details class="pools-panel" id="p-env">
+        <summary class="pools-panel__title">
+          ENVIRONMENTAL <span class="pools-chip pools-chip--seed">SEED</span>
+        </summary>
+        <div class="panel-body">
+          <div class="pools-row">Wind <b>38 km/h SE</b> · Temp <b>24°C</b> · RH <b>22%</b></div>
+          <div class="pools-row">Sun elev <b>4.2°</b> · azimuth <b>245°</b> · golden hour</div>
+          <div class="pools-row">Air PM2.5 <b>78 µg/m³</b> (proxy) · Visibility <b>2.1 km</b></div>
+          <div class="pools-row dim" style="margin-top: 5px">
+            Weather feed ·
+            <span class="warn">SEED — live feed is the pipeline engine's named next artifact</span>
+            <span class="evref">UNVERIFIED</span>
+          </div>
+        </div>
+      </details>
+
+      <details class="pools-panel" id="p-fire">
+        <summary class="pools-panel__title">
+          FIRE <span class="pools-chip pools-chip--seed">SIMULATED</span>
+        </summary>
+        <div class="panel-body">
+          <div class="pools-row">Status <b id="p-fire-status">DORMANT — watch area only</b></div>
+          <div class="pools-row">
+            Spread <b id="p-fire-spread">—</b> · Containment <b id="p-fire-contain">—</b>
+          </div>
+          <div class="pools-row dim" style="margin-top: 5px">
+            Polygon source <span class="warn">SIMULATED seed (twin scenario)</span>
+            <span class="evref">UNVERIFIED</span>
+          </div>
+        </div>
+      </details>
+
+      <details class="pools-panel" id="p-evac">
+        <summary class="pools-panel__title">
+          EVACUATION <span class="pools-chip pools-chip--seed">SIMULATED</span>
+        </summary>
+        <div class="panel-body">
+          <div class="pools-row">In force <b id="p-evac-force">NONE</b></div>
+          <div class="pools-row">Mandatory zone <b id="p-evac-zone">—</b></div>
+          <div class="pools-row">Routes <b>3</b> (east · south · CBD) · Shelters <b>2 open</b></div>
+          <div class="pools-row dim" style="margin-top: 5px">
+            Zones/routes <span class="warn">SIMULATED seed</span>
+            <span class="evref">UNVERIFIED</span>
+          </div>
+        </div>
+      </details>
+
+      <details class="pools-panel" id="p-mesh" open>
+        <summary class="pools-panel__title">
+          MESH · CO-OP POOL <span class="evref" id="p-mesh-ref">E—</span>
+        </summary>
+        <div class="panel-body">
+          <div class="pools-row">
+            Bridge <b id="p-mesh-bridge">CONNECTING…</b>
+            <span class="evref" id="p-mesh-transport"></span>
+          </div>
+          <div class="pools-row">
+            Node <b id="p-mesh-node">—</b> · paired devices <b id="p-mesh-paired">—</b>
+          </div>
+          <div class="pools-row">Field agent <b id="p-mesh-agent">—</b></div>
+          <div class="pools-row">
+            Receipts <b id="p-mesh-receipts">—</b> · root
+            <span class="evref" id="p-mesh-root">—</span>
+          </div>
+          <div class="pools-row">
+            Consented members <b id="p-mesh-nodes">—</b> · sensors <b>6</b> (admin scope)
+          </div>
+          <div class="pools-row dim" style="margin-top: 5px">
+            Positions <span class="warn">ROSTER-CACHED</span> — live GPS is the pipeline engine's
+            named next artifact
+          </div>
+        </div>
+      </details>
+
+      <details class="pools-panel" id="p-consent">
+        <summary class="pools-panel__title">
+          CONSENT LEDGER <span class="evref" id="p-consent-ref">E—</span>
+        </summary>
+        <div class="panel-body">
+          <div id="wf-consent-ledger"></div>
+          <div class="pools-row dim" style="margin-top: 6px">
+            Consent is not assumed. Consent is the first event.
+          </div>
+        </div>
+      </details>
+
+      <details class="pools-panel" id="p-assets">
+        <summary class="pools-panel__title">
+          ASSETS <span class="pools-chip pools-chip--seed">SIMULATED</span>
+        </summary>
+        <div class="panel-body">
+          <div class="pools-row" id="p-assets-engaged">
+            Engaged <b id="p-assets-count">0 / 8</b>
+          </div>
+          <div class="pools-row"><span class="fire">■</span> Roeland St Fire · Salt River Fire</div>
+          <div class="pools-row">
+            <span class="warn">■</span> Groote Schuur HS · Rondebosch Boys
+          </div>
+          <div class="pools-row"><span class="ok">■</span> CBD Clinic · Newlands Primary</div>
+          <div class="pools-row">
+            <span style="color: #58a6ff">■</span> Reservoir 1 ·
+            <span style="color: #a371f7">Ward 62 Ops</span>
+          </div>
+          <div class="pools-row dim" style="margin-top: 5px">
+            Engagement follows the state machine <span class="evref" id="p-assets-ref">E—</span>
+          </div>
+        </div>
+      </details>
+
+      <details class="pools-panel" id="p-evidence">
+        <summary class="pools-panel__title">
+          EVIDENCE <span class="pools-chip pools-chip--live" id="p-ev-tier-chip">TIER —</span>
+        </summary>
+        <div class="panel-body">
+          <div class="pools-row">Tier <b id="p-ev-tier">—</b></div>
+          <div class="pools-row">
+            Events <b id="p-ev-count">—</b> · Head <span class="evref" id="p-ev-head">—</span>
+          </div>
+          <div class="pools-row dim">Key <span class="evref" id="p-ev-key">—</span></div>
+          <button
+            type="button"
+            class="pools-btn"
+            id="p-ev-verify-btn"
+            style="margin-top: 6px; min-height: 34px"
+          >
+            VERIFY CHAIN (FULL RECOMPUTE + SIGNATURES)
+          </button>
+          <div id="wf-journal-tail" class="pools-scroll"></div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ── layer bar (honest label per layer) ──────────────────────────────────── -->
+    <nav id="wf-toggle-layer" aria-label="Map layers"></nav>
+
+    <!-- ── legend ──────────────────────────────────────────────────────────────── -->
+    <aside id="wf-legend" aria-label="Map legend">
+      <div><span class="swatch" style="background: #c4422a"></span>Active burn polygon</div>
+      <div><span class="swatch" style="background: #f2b84b"></span>Precautionary zone</div>
+      <div><span class="swatch" style="background: #52b788"></span>Safe / evacuation route</div>
+      <div><span class="swatch" style="background: #58a6ff"></span>Member phone (consented)</div>
+      <div><span class="swatch" style="background: #e8a020"></span>Fire station / shelter</div>
+      <div><span class="swatch" style="background: #a371f7"></span>Municipal sensor</div>
+    </aside>
+
+    <!-- ── the evidence rail — 9pt, below the fold, always on ──────────────────── -->
+    <footer id="wf-evidence-rail">
+      <span class="lede" id="wf-ev-lede">WORM · APPEND-ONLY · TIER — · EVENTS —</span>
+      <span class="head" id="wf-ev-head-rail">HEAD —</span>
+      <button type="button" class="verify" id="wf-ev-verify">VERIFY /verify</button>
+      <span id="wf-ev-verify-result" data-ok=""></span>
+      <span class="pools-chip" id="wf-sw-chip">SW · BOOTING</span>
+      <span class="pools-chip" id="wf-mesh-chip">MESH · CONNECTING</span>
+    </footer>
+
+    <script src="wildfire-evidence.js"></script>
+    <script src="wildfire-state.js"></script>
+    <script src="wildfire-mesh-client.js"></script>
+    <script src="wildfire-layers.js"></script>
+    <script>
+      /* ==========================================================================
+   The bootstrap — wires the four modules to the DOM. Order matters:
+   journal first (state + mesh append into it), then state, then mesh,
+   then the renderer. Classic scripts, no modules — file:// compatible.
+   ========================================================================== */
+      (function () {
+        "use strict";
+
+        function el(id) {
+          return document.getElementById(id);
+        }
+
+        function evRefFor(needle, fallback) {
+          /* every claim carries an evidence reference or says UNVERIFIED */
+          try {
+            var evs = WildfireEvidence.snapshot().events;
+            for (var i = evs.length - 1; i >= 0; i--) {
+              if (evs[i].details.indexOf(needle) !== -1) return "E#" + evs[i].seq;
+            }
+          } catch (e) {
+            /* journal not ready */
+          }
+          return fallback || "UNVERIFIED";
+        }
+
+        function shortHash(h) {
+          return (h || "").slice(0, 16) + "…";
+        }
+
+        /* ── state rendering (banner + panels + console) ─────────────────────── */
+
+        var armed = null;
+
+        function renderConsole(snap) {
+          var box = el("wf-console");
+          if (!box) return;
+          box.innerHTML = "";
+          var legal = snap.transitions;
+          if (!legal.length) {
+            var none = document.createElement("div");
+            none.className = "pools-row dim";
+            none.style.marginTop = "6px";
+            none.textContent = "No transitions from " + snap.state + " (close the event first).";
+            box.appendChild(none);
+            return;
+          }
+          legal.forEach(function (t) {
+            var trig = WildfireState.TRIGGERS[t];
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "pools-btn " + (armed === t ? "pools-btn--confirm" : "pools-btn--arm");
+            b.textContent = armed === t ? "CONFIRM " + trig.label : trig.label;
+            b.setAttribute("data-armed", armed === t ? "1" : "0");
+            b.onclick = function () {
+              if (armed !== t) {
+                armed = t;
+                renderConsole(WildfireState.snapshot());
+                return;
+              }
+              armed = null;
+              WildfireState.transition(t); /* journaled inside — both outcomes */
+              renderConsole(WildfireState.snapshot());
+            };
+            box.appendChild(b);
+          });
+        }
+
+        function renderState(snap) {
+          var st = el("wf-banner-state");
+          st.textContent = snap.meta.label;
+          st.dataset.state = snap.state;
+          el("wf-banner-note").textContent = snap.meta.banner;
+
+          el("p-ops-state").textContent = snap.meta.label;
+          el("p-ops-since").textContent = (snap.sinceTs || "").slice(11, 19) + "Z";
+          el("p-ops-hint").textContent = snap.meta.hint;
+          el("p-ops-ref").textContent = evRefFor("wildfire.state", "E#1");
+
+          el("p-fire-status").textContent =
+            snap.state === "ESCALATED"
+              ? "ACTIVE — MULTI-SECTOR"
+              : snap.state === "DECLARED"
+                ? "ACTIVE — WARD 62"
+                : snap.state === "WATCH"
+                  ? "ACTIVE — ADVISORY"
+                  : snap.state === "STAND_DOWN"
+                    ? "CONTAINED — DEMOBILISING"
+                    : "DORMANT — watch area only";
+          el("p-fire-spread").textContent =
+            snap.state === "ESCALATED"
+              ? "SE at 3.4 km/h"
+              : snap.fireActive
+                ? "SE at 2.1 km/h"
+                : "—";
+          el("p-fire-contain").textContent =
+            snap.state === "STAND_DOWN"
+              ? "96%"
+              : snap.state === "ESCALATED"
+                ? "8%"
+                : snap.state === "DECLARED"
+                  ? "12%"
+                  : snap.state === "WATCH"
+                    ? "—"
+                    : "—";
+
+          el("p-evac-force").textContent = snap.evacMandatory
+            ? "MANDATORY"
+            : snap.state === "WATCH"
+              ? "PRECAUTIONARY"
+              : "NONE";
+          el("p-evac-zone").textContent = snap.evacMandatory
+            ? "ACTIVE (red)"
+            : snap.state === "STAND_DOWN"
+              ? "LIFTED"
+              : "—";
+
+          var engaged =
+            snap.state === "DECLARED" || snap.state === "ESCALATED"
+              ? 8
+              : snap.state === "WATCH"
+                ? 3
+                : 0;
+          el("p-assets-count").textContent = engaged + " / 8";
+          el("p-assets-ref").textContent = evRefFor("wildfire.state", "E#1");
+
+          renderConsole(snap);
+        }
+
+        /* ── mesh rendering (panel + chips + consent ledger) ──────────────────── */
+
+        function renderMesh(snap) {
+          var chip = el("wf-mesh-chip");
+          var label = "MESH · ";
+          if (snap.phase === "live") {
+            label += "LIVE";
+            chip.className = "pools-chip pools-chip--live";
+          } else if (snap.phase === "polling") {
+            label += "POLLING";
+            chip.className = "pools-chip pools-chip--cached";
+          } else if (snap.phase === "disabled") {
+            label += "N/A (file://)";
+            chip.className = "pools-chip pools-chip--off";
+          } else {
+            label += "OFFLINE";
+            chip.className = "pools-chip pools-chip--off";
+          }
+          chip.textContent = label;
+
+          var s = snap.status;
+          el("p-mesh-bridge").textContent =
+            snap.phase === "live"
+              ? "CONNECTED (websocket)"
+              : snap.phase === "polling"
+                ? "CONNECTED (http fallback)"
+                : snap.phase === "disabled"
+                  ? "OFFLINE — file:// (no bridge origin)"
+                  : "OFFLINE — unreachable";
+          el("p-mesh-transport").textContent =
+            snap.phase === "live"
+              ? "engine.io v4 · zero-dep client"
+              : snap.lastSeenTs
+                ? "last seen " + new Date(snap.lastSeenTs).toISOString().slice(11, 19) + "Z"
+                : "";
+          el("p-mesh-node").textContent = s ? s.node + " · " + (s.protocol || "") : "—";
+          el("p-mesh-paired").textContent = s ? String(s.pairedDevices) : "—";
+          el("p-mesh-agent").textContent =
+            s && s.agent
+              ? s.agent.name +
+                " · " +
+                Math.round((s.agent.lastSeenAgoMs || 0) / 1000) +
+                "s ago" +
+                (s.agentOnline ? "" : " (offline)")
+              : "not paired";
+          el("p-mesh-receipts").textContent =
+            s && s.receipts
+              ? s.receipts.count + (s.receipts.verified ? " · chainValid" : " · UNVERIFIED")
+              : "—";
+          el("p-mesh-root").textContent = s && s.receipts ? shortHash(s.receipts.root) : "—";
+          el("p-mesh-nodes").textContent =
+            snap.roster.granted +
+            " / " +
+            snap.roster.total +
+            " (" +
+            snap.roster.revoked +
+            " revoked · " +
+            snap.roster.expired +
+            " expired · " +
+            snap.roster.absent +
+            " no grant)";
+          el("p-mesh-ref").textContent = evRefFor("mesh.roster.baseline", "UNVERIFIED");
+          el("p-consent-ref").textContent = evRefFor("mesh.roster.baseline", "UNVERIFIED");
+
+          /* the consent ledger — granted / revoked / expired / absent */
+          var led = el("wf-consent-ledger");
+          if (led) {
+            led.innerHTML = "";
+            snap.ledger.forEach(function (row) {
+              var div = document.createElement("div");
+              div.className = "wf-consent-row";
+              var state = row.state === "granted" ? "granted" : row.state;
+              div.setAttribute("data-consent", state);
+              var who = document.createElement("div");
+              who.className = "who";
+              who.textContent = row.label;
+              var status = document.createElement("div");
+              status.className = "status";
+              status.textContent =
+                state.toUpperCase() + (row.state === "granted" ? "" : " — ABSENT FROM MAP");
+              var meta = document.createElement("div");
+              meta.className = "meta";
+              var c = row.consent;
+              if (!c) {
+                meta.textContent = "no grant — consent is not assumed";
+              } else if (row.state === "revoked") {
+                meta.textContent =
+                  c.channels.join("+") +
+                  " · revoked " +
+                  (c.revoked_at || "").slice(11, 19) +
+                  "Z · " +
+                  (c.revoke_reason || "") +
+                  " · " +
+                  evRefFor(c.device_id, "UNVERIFIED");
+              } else if (row.state === "expired") {
+                meta.textContent =
+                  c.channels.join("+") +
+                  " · " +
+                  c.scope +
+                  " window lapsed — re-grant is member-side only · " +
+                  evRefFor(c.device_id, "UNVERIFIED");
+              } else {
+                meta.textContent =
+                  c.channels.join("+") +
+                  " · " +
+                  c.scope +
+                  " · exp " +
+                  (c.expires_at || "").slice(11, 19) +
+                  "Z · " +
+                  evRefFor(c.device_id, "UNVERIFIED");
+              }
+              div.appendChild(who);
+              div.appendChild(status);
+              div.appendChild(meta);
+              led.appendChild(div);
+            });
+          }
+        }
+
+        /* ── evidence rendering (rail + panel) ─────────────────────────────────── */
+
+        function renderEvidence(snap) {
+          el("wf-ev-lede").textContent =
+            "WORM · APPEND-ONLY · " + snap.tier + " · EVENTS " + snap.count;
+          el("wf-ev-head-rail").textContent = "HEAD " + shortHash(snap.head);
+          el("p-ev-tier").textContent = snap.tier;
+          el("p-ev-count").textContent = snap.count + " (append-only)";
+          el("p-ev-head").textContent = shortHash(snap.head);
+          el("p-ev-key").textContent = snap.keyFp
+            ? "ed25519 " + snap.keyFp + "…"
+            : "no signing key this session";
+          var tierChip = el("p-ev-tier-chip");
+          tierChip.textContent = snap.signed ? "SIGNED" : "UNSIGNED";
+          tierChip.className =
+            "pools-chip " + (snap.signed ? "pools-chip--live" : "pools-chip--stale");
+
+          var tail = el("wf-journal-tail");
+          if (tail) {
+            tail.innerHTML = "";
+            snap.events
+              .slice(-8)
+              .reverse()
+              .forEach(function (e) {
+                var d = document.createElement("div");
+                d.className = "jev";
+                d.textContent =
+                  "#" + e.seq + " · " + e.event + " · " + e.ts.slice(11, 19) + "Z · " + e.actor;
+                tail.appendChild(d);
+              });
+          }
+        }
+
+        /* ── layer bar ─────────────────────────────────────────────────────────── */
+
+        function buildLayerBar() {
+          var bar = el("wf-toggle-layer");
+          if (!bar) return;
+          WildfireLayers.layers.forEach(function (l) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = l.visible ? "on" : "";
+            b.setAttribute("aria-pressed", l.visible ? "true" : "false");
+            b.setAttribute("data-layer", l.id);
+            b.innerHTML = l.label + ' <span class="src">' + l.src.slice(0, 3) + "</span>";
+            b.title = l.label + " — source: " + l.src;
+            b.onclick = function () {
+              var vis = WildfireLayers.toggle(l.id);
+              b.className = vis ? "on" : "";
+              b.setAttribute("aria-pressed", vis ? "true" : "false");
+            };
+            bar.appendChild(b);
+          });
+        }
+
+        /* ── boot ──────────────────────────────────────────────────────────────── */
+
+        async function boot() {
+          /* 1 · journal (state + mesh append into it — order matters) */
+          await WildfireEvidence.init();
+          WildfireEvidence.subscribe(renderEvidence);
+          renderEvidence(WildfireEvidence.snapshot());
+
+          /* 2 · state machine */
+          WildfireState.init();
+          WildfireState.subscribe(renderState);
+          renderState(WildfireState.snapshot());
+
+          /* 3 · mesh bridge (subscribes its own WS + consent windows) */
+          WildfireMesh.init();
+          WildfireMesh.subscribe(renderMesh);
+          renderMesh(WildfireMesh.snapshot());
+
+          /* 4 · renderer + layer bar */
+          WildfireLayers.init();
+          buildLayerBar();
+
+          /* mobile: collapse to the two panels a 03:00 operator needs open */
+          if (window.innerWidth < 720) {
+            ["p-env", "p-fire", "p-evac", "p-consent", "p-assets", "p-evidence"].forEach(
+              function (id) {
+                var d = el(id);
+                if (d) d.removeAttribute("open");
+              },
+            );
+          }
+
+          /* clock (scenario clock = the operator's own clock — honest) */
+          setInterval(function () {
+            el("wf-banner-clock").textContent = new Date().toISOString().slice(11, 19) + "Z";
+          }, 1000);
+
+          /* the verify links — REAL (full recompute + signatures) */
+          async function runVerify() {
+            var r = await WildfireEvidence.verify();
+            var out = el("wf-ev-verify-result");
+            out.textContent = r.valid
+              ? "CHAIN VALID · " +
+                r.checked +
+                " EVENTS" +
+                (r.signed ? " · " + r.signed + " SIGNED" : "")
+              : "CHAIN INVALID — " + r.reason;
+            out.setAttribute("data-ok", r.valid ? "1" : "0");
+            WildfireEvidence.append(
+              "journal.verify",
+              JSON.stringify({
+                valid: r.valid,
+                checked: r.checked,
+                signed: r.signed,
+              }),
+              "OPERATOR",
+            );
+          }
+          el("wf-ev-verify").addEventListener("click", runVerify);
+          el("p-ev-verify-btn").addEventListener("click", runVerify);
+
+          /* 5 · the service worker (http/https only — file:// is honest N/A) */
+          var swChip = el("wf-sw-chip");
+          if (location.protocol === "http:" || location.protocol === "https:") {
+            if ("serviceWorker" in navigator) {
+              try {
+                var reg = await navigator.serviceWorker.register("wildfire-sw.js");
+                swChip.textContent = "SW · CACHED";
+                swChip.className = "pools-chip pools-chip--live";
+                var reconcile = function () {
+                  try {
+                    reg.update();
+                  } catch (e) {
+                    /* offline */
+                  }
+                  if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ kind: "reconcile" });
+                  }
+                  WildfireMesh.reconnect();
+                };
+                window.addEventListener("online", reconcile);
+              } catch (e) {
+                swChip.textContent = "SW · UNAVAILABLE";
+                swChip.className = "pools-chip pools-chip--off";
+              }
+            } else {
+              swChip.textContent = "SW · UNSUPPORTED";
+              swChip.className = "pools-chip pools-chip--off";
+            }
+          } else {
+            swChip.textContent = "SW · N/A (file://)";
+            swChip.className = "pools-chip pools-chip--off";
+          }
+          window.addEventListener("offline", function () {
+            renderMesh(WildfireMesh.snapshot());
+          });
+        }
+
+        boot().catch(function (e) {
+          /* a failed boot is never a white screen of silence */
+          var rail = el("wf-evidence-rail");
+          if (rail) {
+            var span = document.createElement("span");
+            span.style.color = "#ff5a3d";
+            span.textContent = "BOOT ERROR — " + (e && e.message ? e.message : e);
+            rail.appendChild(span);
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

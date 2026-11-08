@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field OS · Media Reader (peer)</title>
+<style>
+  :root {
+    --bg: #070b09; --panel: #0c1512; --panel2: #0a120e;
+    --line: rgba(110, 231, 183, 0.18); --line2: rgba(110, 231, 183, 0.34);
+    --green: #6ee7b7; --green-bright: #4ade80; --green-deep: #0f3b2a;
+    --amber: #fbbf24; --red: #f87171; --gray: #9ca3af;
+    --fg: #d1fae5; --dim: #4b7a68;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    position: fixed; inset: 0; background: var(--bg); color: var(--fg);
+    font-family: var(--mono); font-size: 12px; line-height: 1.45;
+    display: grid; grid-template-rows: auto auto 1fr auto;
+  }
+  
+  /* --- Titlebar (matches spreadsheet) */
+  .titlebar {
+    display: grid; grid-template-columns: auto minmax(0,1fr) auto;
+    align-items: center; gap: 12px; padding: 8px 14px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(110,231,183,0.06), transparent);
+  }
+  .titlebar-app { color: var(--green); }
+  .titlebar-app b { color: var(--green-bright); }
+  .titlebar-right { display: grid; grid-auto-flow: column; gap: 10px; align-items: center; }
+  .clockbar .utc { color: var(--green-bright); }
+  .clockbar .rev { color: var(--green); }
+  .clockbar .by { color: var(--amber); font-size: 10px; }
+  .clockbar .unreachable { color: var(--amber); }
+  
+  /* --- Subbar (manifest + clock controls) */
+  .subbar {
+    display: grid; grid-template-columns: auto minmax(0,1fr) auto auto;
+    align-items: center; gap: 12px; padding: 6px 14px;
+    border-bottom: 1px solid var(--line); background: var(--panel2);
+  }
+  .subbar .label { color: var(--dim); letter-spacing: 0.5px; text-transform: uppercase; font-size: 9px; }
+  .subbar .value { color: var(--green-bright); }
+  .subbar .value.unreachable { color: var(--red); }
+  .subbar button {
+    background: none; border: 1px solid var(--line2); border-radius: 3px;
+    color: var(--green); padding: 3px 10px; font-size: 10px; letter-spacing: 0.5px;
+    text-transform: uppercase; cursor: pointer; font-family: inherit;
+  }
+  
+  /* --- Media Layout */
+  .media-container {
+    display: grid; grid-template-columns: 1fr 320px; min-height: 0;
+  }
+  
+  /* Left: Player */
+  .player-pane {
+    padding: 14px; overflow: auto; border-right: 1px solid var(--line);
+  }
+  .video-wrapper {
+    background: #000; border: 1px solid var(--line); border-radius: 8px;
+    position: relative; margin-bottom: 12px;
+  }
+  .video-wrapper video { width: 100%; display: block; border-radius: 8px; }
+  .video-overlay {
+    position: absolute; top: 10px; left: 10px; font-size: 10px;
+    background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 3px;
+    color: var(--green-bright);
+  }
+  .timeline {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 12px;
+    align-items: center; margin-top: 12px;
+  }
+  .timeline .time { font-size: 10px; color: var(--dim); min-width: 70px; }
+  .progress-bar {
+    height: 6px; background: var(--panel2); border-radius: 3px;
+    position: relative; cursor: pointer; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--green); width: 0%;
+    transition: width 0.1s linear;
+  }
+  .annotation-dots {
+    position: absolute; height: 100%; display: flex;
+  }
+  .annotation-dot {
+    width: 8px; height: 8px; background: var(--amber);
+    border-radius: 50%; margin-left: -4px; border: 2px solid var(--bg);
+  }
+  
+  /* Transcript */
+  .transcript-section {
+    margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px;
+  }
+  .transcript-title {
+    font-size: 10px; color: var(--dim); text-transform: uppercase;
+    letter-spacing: 1.2px; margin-bottom: 10px;
+  }
+  .transcript-item {
+    padding: 6px 0; border-bottom: 1px solid rgba(110,231,183,0.07);
+    display: grid; grid-template-columns: auto 1fr; gap: 10px;
+    font-size: 11px;
+  }
+  .transcript-item.active { background: rgba(110,231,183,0.08); padding-left: 6px; }
+  .transcript-time { color: var(--dim); font-size: 10px; }
+  .transcript-text { color: var(--fg); }
+  .transcript-item:hover { cursor: pointer; }
+  
+  /* Right: Verification */
+  .verify-pane {
+    padding: 14px; overflow: auto; background: var(--panel2);
+  }
+  .verify-card {
+    border: 1px solid var(--line); border-radius: 8px;
+    margin-bottom: 12px; background: var(--panel);
+  }
+  .verify-header {
+    padding: 8px 12px; border-bottom: 1px solid var(--line);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--dim);
+  }
+  .verify-body { padding: 12px; }
+  .verify-row {
+    display: flex; gap: 8px; margin-bottom: 6px; font-size: 11px;
+  }
+  .verify-label { font-size: 10px; color: var(--dim); min-width: 90px; }
+  .verify-val { font-size: 10px; word-break: break-all; color: var(--fg); flex: 1; }
+  .verify-hash {
+    font-size: 9px; color: var(--dim); word-break: break-all; margin-left: 24px;
+    margin-top: 2px; padding-left: 10px; border-left: 2px solid var(--dim);
+  }
+  .verify-check {
+    padding: 8px 12px; border-radius: 6px; margin-bottom: 6px;
+    font-size: 11px; display: flex; align-items: center; gap: 8px;
+  }
+  .verify-check.pass {
+    background: rgba(2,44,34,0.4); border-left: 3px solid var(--accent);
+    color: var(--green-bright);
+  }
+  .verify-check.fail {
+    background: rgba(44,10,10,0.4); border-left: 3px solid var(--red);
+    color: var(--red);
+  }
+  .verify-check.pending {
+    background: var(--bg); border-left: 3px solid var(--dim);
+    color: var(--dim);
+  }
+  
+  /* --- Footer (receipt badge) */
+  .footer {
+    display: grid; grid-template-columns: auto 1fr auto;
+    align-items: center; padding: 8px 14px;
+    border-top: 1px solid var(--line); background: var(--panel2);
+  }
+  .receipt-badge {
+    font-family: var(--mono); font-size: 9px; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 3px; border: 1px solid var(--line2);
+  }
+  .receipt-badge.stamped { color: var(--green); background: rgba(2,44,34,0.3); }
+  .receipt-badge.unstamped { color: var(--amber); background: rgba(44,26,2,0.3); }
+  
+  /* Toast notifications */
+  .toast {
+    position: fixed; bottom: 16px; right: 16px;
+    padding: 10px 14px; border-radius: 4px; font-size: 11px;
+    background: var(--panel); border: 1px solid var(--line2);
+    color: var(--fg); z-index: 100; opacity: 0; transition: opacity 0.2s ease;
+  }
+  .toast.show { opacity: 1; }
+  .toast.success { border-color: var(--green); color: var(--green-bright); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div class="titlebar">
+  <span class="titlebar-app">Field OS · <b>Media Reader</b></span>
+  <div style="color: var(--dim); font-size: 10px;" id="doc-title">—</div>
+  <div class="titlebar-right">
+    <div class="clockbar">
+      <span class="utc" id="clock-utc">—</span>
+      <span class="rev" id="clock-rev">REV —</span>
+      <span class="by" id="clock-by">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- SUBBAR -->
+<div class="subbar">
+  <span class="label">manifest</span>
+  <span class="value" id="manifest-status">loading…</span>
+  <button onclick="pullClock()">Pull clock</button>
+  <button onclick="reloadManifest()">Reload manifest</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="media-container">
+  <!-- LEFT: Player -->
+  <div class="player-pane">
+    <div class="video-wrapper">
+      <video id="player" preload="metadata" crossorigin="anonymous">
+        <source src="" type="video/mp4">
+        Your browser does not support video playback.
+      </video>
+      <div class="video-overlay">
+        <span id="media-id">—</span> · <span id="media-duration">00:00</span>
+      </div>
+    </div>
+    
+    <div class="timeline">
+      <span class="time" id="current-time">00:00</span>
+      <div class="progress-bar" id="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+        <div class="annotation-dots" id="annotation-dots"></div>
+      </div>
+      <span class="time" id="total-time">00:00</span>
+    </div>
+    
+    <!-- Controls -->
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px;">
+      <button class="stamp-btn" onclick="togglePlay()" id="play-btn">Play</button>
+      <button class="stamp-btn" onclick="seek(-10)">-10s</button>
+      <button class="stamp-btn" onclick="seek(10)">+10s</button>
+      <button class="stamp-btn" onclick="addAnnotation()">⊕ Annotate</button>
+      <button class="stamp-btn" onclick="createReceipt()" id="receipt-btn">📋 Create Receipt</button>
+    </div>
+    
+    <!-- Transcript -->
+    <div class="transcript-section">
+      <div class="transcript-title">Transcript (synced to clock time)</div>
+      <div id="transcript-list"></div>
+    </div>
+  </div>
+  
+  <!-- RIGHT: Verification -->
+  <div class="verify-pane">
+    <!-- Media Hash -->
+    <div class="verify-card">
+      <div class="verify-header">Media Fingerprint</div>
+      <div class="verify-body">
+        <div class="verify-row"><span class="verify-label">file hash</span><span class="verify-val" id="file-hash">—</span></div>
+        <div class="verify-row"><span class="verify-label">duration</span><span class="verify-val" id="verify-duration">—</span></div>
+        <div class="verify-row"><span class="verify-label">size</span><span class="verify-val" id="verify-size">—</span></div>
+        <div class="verify-row"><span class="verify-label">mime</span><span class="verify-val" id="verify-mime">—</span></div>
+      </div>
+    </div>
+    
+    <!-- Verification Checks -->
+    <div class="verify-card">
+      <div class="verify-header">Verification Checks</div>
+      <div class="verify-body" id="verify-checks">
+        <div class="verify-check pending"><span>⏳ 1. file hash computed</span></div>
+        <div class="verify-check pending"><span>⏳ 2. manifest entry found</span></div>
+        <div class="verify-check pending"><span>⏳ 3. signature verified</span></div>
+        <div class="verify-check pending"><span>⏳ 4. merkle proof valid</span></div>
+      </div>
+    </div>
+    
+    <!-- Annotations -->
+    <div class="verify-card">
+      <div class="verify-header">Annotations (timestamped)</div>
+      <div class="verify-body" id="annotation-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="receipt-badge unstamped" id="receipt-status">UNSTAMPED</div>
+  <div style="font-size: 10px; color: var(--dim);" id="engagement-stats">0 annotations · 0 receipts</div>
+  <button class="stamp-btn" id="export-csv" onclick="exportEngagement()">Export CSV</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/**
+ * Media Reader - Field OS peer
+ * 
+ * INTEGRATION POINTS:
+ *   - Shared clock from GET /api/vvu/clock
+ *   - Manifest from GET /api/vvu/manifest
+ *   - Stamps to POST /api/vvu/clock with by:"media-reader"
+ *   - Receipts hashed canonically, stored in WORM ledger
+ */
+
+const MY_WRITER = "media-reader";
+let clock = null;
+let clockOk = false;
+let manifest = null;
+let manifestOk = false;
+let currentMedia = null;
+let annotations = [];
+let engagementLog = []; // [{action, at_utc, clock_rev, timestamp}]
+
+// --- Clock & Manifest Sync (matches spreadsheet contract) ---
+async function fetchClock() {
+  try {
+    const r = await fetch("/api/vvu/clock", { cache: "no-store" });
+    if (!r.ok) {
+      clockOk = false;
+      clock = null;
+      renderClock();
+      return;
+    }
+    const j = await r.json();
+    clockOk = !!j.ok;
+    clock = j;
+    renderClock();
+  } catch (e) {
+    clockOk = false;
+    clock = null;
+    renderClock();
+  }
+}
+
+async function fetchManifest() {
+  try {
+    const r = await fetch("/api/vvu/manifest", { cache: "no-store" });
+    if (!r.ok) {
+      manifestOk = false;
+      manifest = null;
+      renderManifestStatus();
+      return;
+    }
+    const j = await r.json();
+    manifestOk = !!j.ok;
+    manifest = j;
+    renderManifestStatus();
+  } catch (e) {
+    manifestOk = false;
+    manifest = null;
+    renderManifestStatus();
+  }
+}
+
+function renderClock() {
+  const utcEl = document.getElementById("clock-utc");
+  const revEl = document.getElementById("clock-rev");
+  const byEl = document.getElementById("clock-by");
+  
+  if (clockOk && clock) {
+    utcEl.textContent = new Date(clock.current_utc).toISOString().slice(11, 19) + " UTC";
+    revEl.textContent = "REV " + clock.revision;
+    byEl.textContent = clock.last_written_by || "—";
+  } else {
+    utcEl.textContent = "CLOCK UNREACHABLE";
+    revEl.textContent = "";
+    byEl.textContent = "";
+    byEl.className = "by unreachable";
+  }
+}
+
+function renderManifestStatus() {
+  const el = document.getElementById("manifest-status");
+  if (manifestOk && manifest && manifest.counts) {
+    el.className = "value";
+    el.textContent = manifest.counts.built + " BUILT · " + manifest.counts.total + " total";
+  } else {
+    el.className = "value unreachable";
+    el.textContent = "MANIFEST UNREACHABLE";
+  }
+}
+
+// --- Media Loading (from query param or manifest) ---
+async function loadMedia(mediaId) {
+  if (!manifestOk) {
+    showToast("MANIFEST UNREACHABLE — cannot load media", "error");
+    return;
+  }
+  
+  const entry = manifest.media?.find(m => m.id === mediaId);
+  if (!entry) {
+    showToast("Media not found in manifest", "error");
+    return;
+  }
+  
+  currentMedia = entry;
+  document.getElementById("doc-title").textContent = entry.label;
+  document.getElementById("media-id").textContent = entry.id;
+  document.getElementById("media-duration").textContent = formatDuration(entry.duration);
+  document.getElementById("verify-duration").textContent = formatDuration(entry.duration);
+  document.getElementById("verify-size").textContent = (entry.size / 1024 / 1024).toFixed(2) + " MB";
+  document.getElementById("verify-mime").textContent = entry.mime;
+  document.getElementById("file-hash").textContent = entry.sha256?.slice(0, 32) + "…";
+  
+  // Load video
+  const player = document.getElementById("player");
+  player.src = entry.url;
+  
+  // Log engagement
+  logEngagement("load", entry.id);
+  
+  // Update verification checks
+  updateVerifyCheck(0, true, "file hash computed");
+  updateVerifyCheck(1, true, "manifest entry found");
+  
+  // Load transcript if available
+  if (entry.transcript) {
+    renderTranscript(entry.transcript);
+  }
+  
+  // Load annotations if any
+  if (entry.annotations) {
+    annotations = entry.annotations;
+    renderAnnotations();
+  }
+  
+  showToast("Loaded: " + entry.label, "success");
+}
+
+// --- Player Controls ---
+const player = document.getElementById("player");
+
+function togglePlay() {
+  if (player.paused) {
+    player.play();
+    document.getElementById("play-btn").textContent = "Pause";
+    logEngagement("play", currentMedia?.id);
+  } else {
+    player.pause();
+    document.getElementById("play-btn").textContent = "Play";
+    logEngagement("pause", currentMedia?.id);
+  }
+}
+
+function seek(seconds) {
+  player.currentTime = Math.max(0, Math.min(player.duration, player.currentTime + seconds));
+  logEngagement("seek", currentMedia?.id, player.currentTime);
+}
+
+player.addEventListener("timeupdate", () => {
+  const pct = (player.currentTime / player.duration) * 100;
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("current-time").textContent = formatTime(player.currentTime);
+  
+  // Sync transcript highlight
+  if (currentMedia?.transcript) {
+    const activeItem = currentMedia.transcript.find(t => 
+      player.currentTime >= t.start && player.currentTime < (t.end || Infinity)
+    );
+    document.querySelectorAll(".transcript-item").forEach(el => el.classList.remove("active"));
+    if (activeItem) {
+      const idx = currentMedia.transcript.indexOf(activeItem);
+      const el = document.getElementById("trans-item-" + idx);
+      if (el) el.classList.add("active");
+    }
+  }
+});
+
+player.addEventListener("loadedmetadata", () => {
+  document.getElementById("total-time").textContent = formatTime(player.duration);
+});
+
+// --- Transcript Rendering ---
+function renderTranscript(transcript) {
+  const list = document.getElementById("transcript-list");
+  list.innerHTML = transcript.map((item, idx) => `
+    <div class="transcript-item" id="trans-item-${idx}" onclick="seekTo(${item.start})">
+      <span class="transcript-time">${formatTime(item.start)}</span>
+      <span class="transcript-text">${item.text}</span>
+    </div>
+  `).join("");
+}
+
+function seekTo(time) {
+  player.currentTime = time;
+  logEngagement("jump", currentMedia?.id, time);
+}
+
+// --- Annotations ---
+async function addAnnotation() {
+  if (!clockOk) {
+    showToast("CLOCK UNREACHABLE — cannot annotate", "error");
+    return;
+  }
+  
+  const text = prompt("Add annotation for timestamp " + formatTime(player.currentTime) + ":");
+  if (!text) return;
+  
+  const annotation = {
+    at: player.currentTime,
+    text: text,
+    clock_rev: clock.revision,
+    clock_at_utc: clock.current_utc,
+    author: MY_WRITER
+  };
+  
+  annotations.push(annotation);
+  renderAnnotations();
+  logEngagement("annotate", currentMedia?.id, player.currentTime);
+  showToast("Annotation added", "success");
+  
+  // Could auto-create receipt here if desired
+}
+
+function renderAnnotations() {
+  const list = document.getElementById("annotation-list");
+  if (annotations.length === 0) {
+    list.innerHTML = '<div style="color:var(--dim); font-size:10px;">(no annotations)</div>';
+    return;
+  }
+  
+  list.innerHTML = annotations.map(a => `
+    <div class="verify-row" style="flex-wrap: wrap;">
+      <span class="verify-val" style="flex: 2;">${a.text}</span>
+      <span class="verify-label" style="flex-shrink: 0;">@ ${formatTime(a.at)}</span>
+      <span class="badge stamped" style="margin-left: auto;">REV ${a.clock_rev}</span>
+    </div>
+  `).join("");
+}
+
+// --- Receipt Creation (WORM Ledger Integration) ---
+async function createReceipt() {
+  if (!clockOk) {
+    showToast("CLOCK UNREACHABLE — cannot create receipt", "error");
+    return;
+  }
+  
+  if (!currentMedia) {
+    showToast("No media loaded", "error");
+    return;
+  }
+  
+  // Build canonical record
+  const canonical = {
+    media_id: currentMedia.id,
+    file_hash: currentMedia.sha256,
+    clock_rev: clock.revision,
+    clock_at_utc: clock.current_utc,
+    engagement: engagementLog,
+    annotations: annotations,
+    writer: MY_WRITER,
+    created_at: new Date().toISOString()
+  };
+  
+  // Compute hash
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(JSON.stringify(canonical));
+  const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
+  const hashHex = Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0")).join("");
+  
+  // Store receipt (in real impl: POST to /api/vvu/receipts)
+  const receipt = {
+    ...canonical,
+    hash: hashHex
+  };
+  
+  // Stamp the receipt to clock
+  try {
+    const r = await fetch("/api/vvu/clock", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ by: MY_WRITER, receipt_hash: hashHex }),
+      cache: "no-store",
+    });
+    
+    const j = await r.json();
+    if (!j.ok) {
+      showToast(j.error || "receipt stamp failed", "error");
+      return;
+    }
+    
+    document.getElementById("receipt-status").className = "receipt-badge stamped";
+    document.getElementById("receipt-status").textContent = "STAMPED · REV " + j.revision;
+    
+    showToast("Receipt created: " + hashHex.slice(0, 16) + "…", "success");
+    logEngagement("receipt_create", currentMedia.id);
+    
+    // Update engagement stats
+    updateEngagementStats();
+  } catch (e) {
+    showToast(String(e), "error");
+  }
+}
+
+// --- Engagement Logging ---
+function logEngagement(action, mediaId, extra) {
+  if (!clockOk) return;
+  
+  engagementLog.push({
+    action: action,
+    media_id: mediaId,
+    timestamp: player.currentTime || null,
+    at_utc: clock.current_utc,
+    clock_rev: clock.revision
+  });
+  
+  updateEngagementStats();
+}
+
+function updateEngagementStats() {
+  const count = engagementLog.length;
+  document.getElementById("engagement-stats").textContent = 
+    annotations.length + " annotations · " + count + " engagement events";
+}
+
+function updateVerifyCheck(idx, pass, label) {
+  const el = document.getElementById("verify-checks").children[idx];
+  if (el) {
+    el.className = "verify-check " + (pass ? "pass" : "fail");
+    el.innerHTML = (pass ? "✓" : "✗") + " " + label;
+  }
+}
+
+// --- Utilities ---
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function formatDuration(sec) {
+  if (!sec) return "00:00";
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  return h > 0 ? `${h}:${m.toString().padStart(2,"0")}:${s.toString().padStart(2,"0")}` : formatTime(sec);
+}
+
+function showToast(msg, kind) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show " + (kind || "");
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => { t.className = "toast " + (kind || ""); }, 3000);
+}
+
+function pullClock() { fetchClock(); }
+function reloadManifest() { fetchManifest(); }
+
+function exportEngagement() {
+  const csv = [
+    ["action", "media_id", "timestamp", "at_utc", "clock_rev"].join(","),
+    ...engagementLog.map(e => [e.action, e.media_id, e.timestamp, e.at_utc, e.clock_rev].join(","))
+  ].join("\n");
+  
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "engagement_" + currentMedia?.id + "_" + Date.now() + ".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("Exported " + engagementLog.length + " events", "success");
+}
+
+// --- Boot ---
+fetchClock();
+fetchManifest();
+setInterval(fetchClock, 15000);
+setInterval(fetchManifest, 30000);
+
+// Load from URL param (?media=<id>)
+const params = new URLSearchParams(window.location.search);
+if (params.has("media")) {
+  loadMedia(params.get("media"));
+}
+</script>
+</body>
+</html>

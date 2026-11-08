@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#000">
+<title>VVU · Runtime Overview</title>
+<style>
+:root{
+  --bg:#000;--panel:#0a0a0a;--line:#1e1e1e;--line2:#2a2a2a;
+  --txt:#e6e6e6;--dim:#7a7a7a;--dim2:#4a4a4a;
+  --lime:#d0f020;--lime2:#a8c818;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;overflow-x:hidden;min-height:100dvh}
+/* header */
+.head{padding:12px 14px;display:flex;align-items:center;gap:12px}
+.head .logo{font-weight:800;letter-spacing:.16em;font-size:16px;color:var(--txt)}
+.head .logo span{color:var(--dim);letter-spacing:.14em;font-size:11px;display:block;font-weight:400;margin-top:2px}
+.triquetra{width:42px;height:42px;color:var(--lime);flex:none}
+.head .icons{margin-left:auto;display:flex;gap:8px}
+.icon-btn{width:38px;height:38px;border:1px solid var(--line);background:transparent;border-radius:9px;color:var(--txt);font-size:16px;cursor:pointer;display:grid;place-items:center}
+.icon-btn:hover{border-color:var(--lime);color:var(--lime)}
+.subtitle{padding:0 14px 14px;color:var(--dim);font-size:11px;letter-spacing:.04em}
+/* tab bar */
+.tabs{display:flex;gap:6px;padding:6px 12px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{background:transparent;border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--dim);cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:13px;white-space:nowrap;flex:none}
+.tab.on{background:var(--lime);border-color:var(--lime);color:#000;font-weight:700}
+.tab:hover:not(.on){border-color:var(--line2);color:var(--txt)}
+/* main */
+.main{padding:8px 14px 40px}
+h1{font-size:26px;margin:4px 0 6px;letter-spacing:-.01em}
+.lead{color:var(--dim);font-size:13px;margin:0 0 18px}
+.pinned{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.pinned .l{font-size:11px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;margin-right:6px}
+.pinned .l svg{width:14px;height:14px;color:var(--lime)}
+.chip{width:36px;height:36px;border:1px solid var(--line);background:transparent;border-radius:9px;color:var(--dim);cursor:pointer;display:grid;place-items:center;font-size:15px}
+.chip.on{background:var(--lime);border-color:var(--lime);color:#000}
+.chip:hover:not(.on){border-color:var(--line2);color:var(--txt)}
+</style>
+</head>
+<body>
+<header class="head">
+  <svg class="triquetra" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+    <circle cx="12" cy="8" r="5"/><circle cx="8" cy="15" r="5"/><circle cx="16" cy="15" r="5"/>
+  </svg>
+  <div class="logo">VVU<span>venture vision ubuntu</span></div>
+  <div class="icons">
+    <button class="icon-btn" title="layout">▥</button>
+    <button class="icon-btn" title="panels">▤</button>
+    <button class="icon-btn" title="search">⌕</button>
+  </div>
+</header>
+<div class="subtitle">epistemic:// · invariant-enforced DAG · WORM chain</div>
+
+<nav class="tabs">
+  <button class="tab on">◉ Overview</button>
+  <button class="tab">⚙</button>
+  <button class="tab">▥</button>
+  <button class="tab">◷</button>
+  <button class="tab">⚙</button>
+  <button class="tab">▦</button>
+  <button class="tab">↻</button>
+</nav>
+
+<main class="main">
+  <h1>Runtime Overview</h1>
+  <p class="lead">Global epistemic health across all policies &amp; shards</p>
+
+  <div class="pinned">
+    <span class="l">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3L22 9.3l-5 4.7 1.2 6.9L12 17.8 5.8 20.9 7 14 2 9.3l7.1-1z"/></svg>
+      PINNED
+    </span>
+    <button class="chip on">◉</button>
+    <button class="chip">◆</button>
+    <button class="chip">✳</button>
+    <button class="chip">∿</button>
+  </div>
+</main>
+</body>
+</html>

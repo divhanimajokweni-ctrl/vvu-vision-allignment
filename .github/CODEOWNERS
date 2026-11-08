@@ -1,0 +1,23 @@
+# ==============================================================================
+# VVU EARTH TECH — CODEOWNERS
+# ------------------------------------------------------------------------------
+# Every PR automatically requests review from @divhanimajokweni (founder).
+# Sensitive paths are additionally gated (keys, prisma, vvu lib, license shared).
+# ==============================================================================
+
+# Global — every file requires founder review.
+*                           @divhanimajokweni
+
+# Cryptographic keys + sample licenses (gitignored anyway, but if anyone ever
+# tries to add a stray key file this rule forces founder review).
+/keys/                      @divhanimajokweni
+
+# Prisma schema — touching the DB schema requires founder sign-off.
+/prisma/                    @divhanimajokweni
+
+# VVU core library (license verification, policy DSL, MMR, shadow bridge) —
+# invariant-enforced, no silent changes.
+/src/lib/vvu/               @divhanimajokweni
+
+# Shared license module (used by both commercial + open-source distributions).
+/shared/license/            @divhanimajokweni

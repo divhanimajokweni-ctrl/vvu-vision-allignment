@@ -1,0 +1,786 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-vvu-bg: var(--vvu-bg);
+  --color-vvu-panel: var(--vvu-panel);
+  --color-vvu-sage: var(--vvu-sage);
+  --color-vvu-sage-bright: var(--vvu-sage-bright);
+  --color-vvu-ochre: var(--vvu-ochre);
+  --color-vvu-lime: var(--vvu-lime);
+  --color-vvu-text: var(--vvu-text);
+  --color-vvu-text-dim: var(--vvu-text-dim);
+  --color-vvu-crimson: var(--vvu-crimson);
+  --color-vvu-amber: var(--vvu-amber);
+  --color-vvu-teal: var(--vvu-teal);
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+:root {
+  --radius: 0.375rem;
+  /* VVU SCADA palette — charcoal canvas, sage/ochre/lime accents */
+  --vvu-bg: #060806;
+  --vvu-panel: #0b0f0a;
+  --vvu-sage: #6b8a40;
+  --vvu-sage-bright: #8fb35a;
+  --vvu-ochre: #f3e38a;
+  --vvu-lime: #c8ff00;
+  --vvu-text: #c9d4bd;
+  --vvu-text-dim: #7a8a6e;
+  --vvu-crimson: #e5484d;
+  --vvu-amber: #e0a030;
+  --vvu-teal: #2ea8a0;
+
+  --background: #060806;
+  --foreground: #c9d4bd;
+  --card: #0b0f0a;
+  --card-foreground: #c9d4bd;
+  --popover: #0d120b;
+  --popover-foreground: #c9d4bd;
+  --primary: #c8ff00;
+  --primary-foreground: #060806;
+  --secondary: #141a11;
+  --secondary-foreground: #c9d4bd;
+  --muted: #131811;
+  --muted-foreground: #7a8a6e;
+  --accent: #182116;
+  --accent-foreground: #d7e2c9;
+  --destructive: #e5484d;
+  --border: rgba(107, 138, 64, 0.25);
+  --input: rgba(107, 138, 64, 0.3);
+  --ring: #8fb35a;
+  --chart-1: #8fb35a;
+  --chart-2: #f3e38a;
+  --chart-3: #c8ff00;
+  --chart-4: #2ea8a0;
+  --chart-5: #e5484d;
+  --sidebar: #0b0f0a;
+  --sidebar-foreground: #c9d4bd;
+  --sidebar-primary: #c8ff00;
+  --sidebar-primary-foreground: #060806;
+  --sidebar-accent: #182116;
+  --sidebar-accent-foreground: #d7e2c9;
+  --sidebar-border: rgba(107, 138, 64, 0.25);
+  --sidebar-ring: #8fb35a;
+}
+
+.dark {
+  --background: #060806;
+  --foreground: #c9d4bd;
+  --card: #0b0f0a;
+  --card-foreground: #c9d4bd;
+  --popover: #0d120b;
+  --popover-foreground: #c9d4bd;
+  --primary: #c8ff00;
+  --primary-foreground: #060806;
+  --secondary: #141a11;
+  --secondary-foreground: #c9d4bd;
+  --muted: #131811;
+  --muted-foreground: #7a8a6e;
+  --accent: #182116;
+  --accent-foreground: #d7e2c9;
+  --destructive: #e5484d;
+  --border: rgba(107, 138, 64, 0.25);
+  --input: rgba(107, 138, 64, 0.3);
+  --ring: #8fb35a;
+  --chart-1: #8fb35a;
+  --chart-2: #f3e38a;
+  --chart-3: #c8ff00;
+  --chart-4: #2ea8a0;
+  --chart-5: #e5484d;
+  --sidebar: #0b0f0a;
+  --sidebar-foreground: #c9d4bd;
+  --sidebar-primary: #c8ff00;
+  --sidebar-primary-foreground: #060806;
+  --sidebar-accent: #182116;
+  --sidebar-accent-foreground: #d7e2c9;
+  --sidebar-border: rgba(107, 138, 64, 0.25);
+  --sidebar-ring: #8fb35a;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+}
+
+/* ── VVU app shell ──────────────────────────────────────────────────────── */
+.vvu-app-shell {
+  background: #060806;
+  color: #c9d4bd;
+  color-scheme: dark;
+  overscroll-behavior: none;
+}
+
+/* Custom scrollbars — SCADA aesthetic */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 138, 64, 0.35) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(107, 138, 64, 0.3);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 138, 64, 0.5);
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus rings on interactive elements */
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #f3e38a;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Subtle scanline overlay for the SCADA feel */
+.vvu-app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0,
+    transparent 2px,
+    rgba(107, 138, 64, 0.014) 2px,
+    rgba(107, 138, 64, 0.014) 4px
+  );
+}
+
+/* Panel hover glow — sage border lift on SCADA panels */
+.vvu-panel {
+  background: rgba(11, 15, 10, 0.88);
+  border: 1px solid rgba(107, 138, 64, 0.22);
+  border-radius: 6px;
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+.vvu-panel:hover {
+  border-color: rgba(107, 138, 64, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(107, 138, 64, 0.1),
+    0 4px 16px rgba(0, 0, 0, 0.35);
+}
+.vvu-panel-solid {
+  background: #0b0f0a;
+  border: 1px solid rgba(107, 138, 64, 0.22);
+  border-radius: 6px;
+}
+
+/* Panel entrance animation */
+@keyframes vvuPanelEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.vvu-enter {
+  animation: vvuPanelEnter 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* R165 — THE ARRIVAL'S HEARTBEAT: the estate pill's dot breathes while
+   the consent stands — the reader's own hue (inline style supplies the
+   color; the keyframe only moves opacity, so it rides any hue). A slow
+   two-beat rhythm: full strength, a soft dip, a second dip, rest — the
+   heartbeat the house knows. Color-agnostic and reduced-motion safe. */
+@keyframes vvuHeartbeat {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  14% {
+    opacity: 0.45;
+  }
+  28% {
+    opacity: 1;
+  }
+  42% {
+    opacity: 0.6;
+  }
+  56% {
+    opacity: 1;
+  }
+}
+.vvu-heartbeat {
+  animation: vvuHeartbeat 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vvu-heartbeat {
+    animation: none;
+  }
+}
+
+/* R172 · THE BRIDGE'S TEMPO — the clock chip's first-poll wait: a
+   gentle breath (a wait, not a verdict — the chip is silent, never
+   guessing). Reduced-motion readers get the static amber dot. */
+@keyframes vvuClockWait {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.vvu-clock-wait {
+  animation: vvuClockWait 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vvu-clock-wait {
+    animation: none;
+  }
+}
+
+/* HUD label style */
+.vvu-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* R85 — verdict curve bead hover: the bead breathes on hover (SVG2 geometry
+   properties animate as CSS in evergreen browsers; harmless static fallback
+   elsewhere). The transparent halo is the 13px hit unit that catches the
+   cursor; the bead itself is pointer-events:none (set in the markup) so the
+   pair never fights for the pointer. */
+.vvu-curve-pt {
+  cursor: pointer;
+}
+.vvu-curve-pt circle:last-child {
+  transition: r 140ms ease;
+}
+.vvu-curve-pt:hover circle:last-child {
+  r: 10px;
+  filter: drop-shadow(0 0 4px rgba(0, 212, 224, 0.45));
+}
+
+/* Live pulse dot */
+@keyframes vvuPulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(200, 255, 0, 0.45);
+  }
+  50% {
+    opacity: 0.65;
+    box-shadow: 0 0 0 5px rgba(200, 255, 0, 0);
+  }
+}
+.vvu-pulse {
+  animation: vvuPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes vvuBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.vvu-blink {
+  animation: vvuBlink 1.1s step-end infinite;
+}
+
+/* Sonner toast theme overrides */
+[data-sonner-toaster] [data-sonner-toast] {
+  background: rgba(15, 20, 16, 0.96) !important;
+  border: 1px solid rgba(107, 138, 64, 0.3) !important;
+  color: #c9d4bd !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important;
+}
+[data-sonner-toaster] [data-sonner-toast][data-type="error"] {
+  border-color: rgba(176, 42, 42, 0.45) !important;
+}
+[data-sonner-toaster] [data-sonner-toast][data-type="warning"] {
+  border-color: rgba(196, 109, 26, 0.4) !important;
+}
+[data-sonner-toaster] [data-sonner-toast][data-type="success"] {
+  border-color: rgba(107, 138, 64, 0.45) !important;
+}
+
+/* 3D canvas container — prevent pull-to-refresh interfering with orbit */
+.vvu-canvas-wrap {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Tactical map cursor */
+.vvu-map-cursor {
+  cursor: crosshair;
+}
+
+/* Text selection tint */
+::selection {
+  background: rgba(200, 255, 0, 0.25);
+  color: #f3e38a;
+}
+
+/* Hide number input spinners in scenario sliders */
+input[type="range"] {
+  accent-color: #8fb35a;
+}
+
+/* ── Chrome details (header/footer) ─────────────────────────────────────── */
+
+/* 1px signature edge under the header — lime fading into sage */
+.vvu-header-edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(200, 255, 0, 0.55) 0%,
+    rgba(200, 255, 0, 0.18) 18%,
+    rgba(107, 138, 64, 0.22) 55%,
+    rgba(107, 138, 64, 0) 100%
+  );
+}
+
+/* R71 — the edge tells the truth too. data-guard is written by VvuHeader
+   from the guardian heartbeat's zone: amber (≥80% of the OOM guard) tints
+   the edge ochre, rose (≥95% or stale/dead guardian) tints it rose. Lime
+   and dim keep the classic edge — no theater for a healthy estate. */
+.vvu-header-edge[data-guard="amber"] {
+  background: linear-gradient(
+    90deg,
+    rgba(224, 160, 48, 0.6) 0%,
+    rgba(224, 160, 48, 0.22) 18%,
+    rgba(107, 138, 64, 0.22) 55%,
+    rgba(107, 138, 64, 0) 100%
+  );
+}
+.vvu-header-edge[data-guard="rose"] {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 72, 77, 0.65) 0%,
+    rgba(229, 72, 77, 0.28) 18%,
+    rgba(107, 138, 64, 0.22) 55%,
+    rgba(107, 138, 64, 0) 100%
+  );
+}
+
+/* R71 — motion hygiene: the estate's live pulses (vvu-pulse / vvu-blink)
+   are meaningful in ops contexts but must not move for operators who
+   asked the platform for reduced motion. The dots stay, the animation
+   stops. */
+@media (prefers-reduced-motion: reduce) {
+  .vvu-pulse,
+  .vvu-blink {
+    animation: none;
+  }
+}
+
+/* R72 — chronicle search highlight. A mark is a READING AID over ledger
+   text, not a decoration: lime wash, inherited color, no layout shift
+   (padding is horizontal-only, 1px, inside the mono line). */
+.vvu-mark {
+  background: rgba(200, 255, 0, 0.22);
+  color: inherit;
+  border-radius: 1px;
+  padding: 0 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* R72 — the plateau scope draws in once per mount, left to right. The
+   animation is on the WRAPPER (transform only, no layout properties), so
+   the SVG geometry, gradient and non-scaling strokes are untouched. */
+@keyframes vvuScopeIn {
+  from {
+    transform: scaleX(0.04);
+    opacity: 0.35;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+.vvu-scope-in {
+  transform-origin: left center;
+  animation: vvuScopeIn 700ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* R72 — motion hygiene extension: the scope's draw-in joins the pulses in
+   the reduced-motion contract. The chart appears instantly, fully opaque;
+   the data never hides behind an animation. */
+@media (prefers-reduced-motion: reduce) {
+  .vvu-scope-in {
+    animation: none;
+  }
+}
+
+/* R74 — the mirror audit result slides in (opacity + 6px rise, transform-
+   and opacity-only so it composites without layout work). The verdict is
+   the point, not the motion: under prefers-reduced-motion it appears
+   instantly, fully opaque — same contract as the scope's draw-in. */
+@keyframes vvuAuditIn {
+  from {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.vvu-audit-in {
+  animation: vvuAuditIn 400ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vvu-audit-in {
+    animation: none;
+  }
+}
+
+/* Keyboard keycap chip — used by chrome hints (⌘K / CTRL K) */
+.vvu-kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  padding: 2px 4px;
+  border: 1px solid rgba(243, 227, 138, 0.3);
+  border-bottom-width: 2px; /* keycap depth */
+  border-radius: 3px;
+  background: rgba(243, 227, 138, 0.05);
+  color: #f3e38a;
+}
+
+/* ── DAYSHIFT light ops mode (Task 16-a) ───────────────────────────────────
+   High-contrast light theme for bright control rooms. The dark SCADA palette
+   is untouched (every rule above is additive-only); light mode is a root-level
+   invert + hue-rotate on <html>, so every DOM surface AND the WebGL/canvas
+   scenes re-theme automatically without refactoring ~30 components with
+   hard-coded hexes. hue-rotate(180deg) approximately preserves the palette
+   family: lime→gold, sage→light sage, near-black→near-white.
+   The filter MUST live on `html` ONLY — never on body or .vvu-app-shell:
+   a filter creates a containing block for fixed descendants, but on the root
+   element the containing block is the initial/viewport one, so fixed HUD
+   elements (WorkspaceToggle, sonner toaster, scanline overlay) stay
+   viewport-anchored. The self-filtered #060806 background yields a near-white
+   root backdrop. */
+html[data-theme="light"] {
+  filter: invert(1) hue-rotate(180deg);
+  background: #060806;
+  color-scheme: light;
+}
+
+/* Photographic/embedded content must render TRUE under the root inversion —
+   re-invert it back. Inside [data-theme-exempt] containers the two filters
+   cancel, which is exactly the intent (the outreach email preview is a light
+   inbox mock by design and must not flip dark). */
+html[data-theme="light"] img,
+html[data-theme="light"] video,
+html[data-theme="light"] [data-theme-exempt] {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Native scrollbar painting is not covered by the root filter — give the
+   light mode its own sage-toned scrollbar (chromium + firefox). */
+html[data-theme="light"] * {
+  scrollbar-color: rgba(60, 80, 40, 0.45) transparent;
+}
+html[data-theme="light"] *::-webkit-scrollbar-thumb {
+  background: rgba(60, 80, 40, 0.4);
+}
+html[data-theme="light"] *::-webkit-scrollbar-thumb:hover {
+  background: rgba(60, 80, 40, 0.6);
+}
+
+/* Theme toggle icon visibility — dark mode shows a SUN ("switch to light"),
+   light mode shows a MOON. Pure CSS, so the button renders identically on
+   server and client (zero hydration concerns; useTheme is not needed for
+   rendering, only for the click). */
+.vvu-theme-icon-moon {
+  display: none;
+}
+html[data-theme="light"] .vvu-theme-icon-moon {
+  display: inline-flex;
+}
+html[data-theme="light"] .vvu-theme-icon-sun {
+  display: none;
+}
+
+/* ── Task 49 · ICSH 4TH STATE — CRT phosphor layer ────────────────────────── */
+
+.icsh-crt {
+  position: relative;
+  animation: icsh-flicker 9s infinite;
+}
+.icsh-crt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.16) 0px,
+    rgba(0, 0, 0, 0.16) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+.icsh-crt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 31;
+  background: radial-gradient(ellipse at center, transparent 58%, rgba(0, 0, 0, 0.38) 100%);
+}
+@keyframes icsh-flicker {
+  0%,
+  93%,
+  100% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 0.88;
+  }
+  95% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0.93;
+  }
+  98% {
+    opacity: 1;
+  }
+}
+@keyframes icsh-scan {
+  0% {
+    transform: translateY(-80px);
+  }
+  100% {
+    transform: translateY(calc(100vh));
+  }
+}
+.icsh-scanbeam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 72px;
+  pointer-events: none;
+  z-index: 29;
+  background: linear-gradient(180deg, transparent, rgba(125, 255, 168, 0.045), transparent);
+  animation: icsh-scan 8s linear infinite;
+}
+.icsh-glow {
+  text-shadow: 0 0 8px rgba(125, 255, 168, 0.38);
+}
+.icsh-glow-lime {
+  text-shadow: 0 0 10px rgba(200, 255, 0, 0.42);
+}
+.icsh-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.icsh-scroll::-webkit-scrollbar-thumb {
+  background: #1d3325;
+}
+.icsh-scroll::-webkit-scrollbar-track {
+  background: #060b08;
+}
+@keyframes icsh-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.icsh-flow {
+  stroke-dasharray: 6 6;
+  animation: icsh-dash 1.2s linear infinite;
+}
+@keyframes icsh-blink {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  61%,
+  100% {
+    opacity: 0.25;
+  }
+}
+.icsh-blink {
+  animation: icsh-blink 1.6s steps(1) infinite;
+}
+@keyframes icsh-rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.icsh-rise {
+  animation: icsh-rise 0.24s ease-out both;
+}
+
+/* IVE marketing sub-app: isolated palette; existing VVU tokens stay unchanged. */
+@theme inline {
+  --color-ive-gold: var(--ive-gold);
+  --color-ive-proven: var(--ive-proven);
+  --color-ive-blocked: var(--ive-blocked);
+  --color-ive-pending: var(--ive-pending);
+  --color-ive-zk: var(--ive-zk);
+}
+.ive-site {
+  --radius: 0.5rem;
+  --background: #05070c;
+  --foreground: #e4e8ef;
+  --card: #0a0d13;
+  --border: rgba(255, 255, 255, 0.08);
+  --muted: #13161c;
+  --muted-foreground: #7f8793;
+  --ive-gold: #c9a84c;
+  --ive-proven: #3dffb0;
+  --ive-blocked: #ff4d5f;
+  --ive-pending: #3d9bff;
+  --ive-zk: #b23dff;
+  background: radial-gradient(at 50% 20%, rgb(15, 15, 24), rgb(9, 9, 15) 75%) fixed;
+  color: var(--foreground);
+  font-feature-settings: "ss01", "cv11";
+}
+
+.ive-grid-bg {
+  background-image:
+    linear-gradient(rgba(201, 168, 76, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201, 168, 76, 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* Scanline */
+.ive-scanline {
+  position: relative;
+}
+.ive-scanline::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.01) 0px,
+    rgba(255, 255, 255, 0.01) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.ive-mono {
+  font-family: var(--font-geist-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.ive-surface {
+  background: rgba(15, 15, 24, 0.65);
+}
+
+@keyframes ive-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.ive-live-pulse {
+  animation: ive-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ive-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+.ive-blink {
+  animation: ive-blink 1.1s step-end infinite;
+}

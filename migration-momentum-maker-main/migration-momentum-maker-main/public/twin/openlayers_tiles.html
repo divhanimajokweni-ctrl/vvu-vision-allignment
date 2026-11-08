@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Digital Twin — OpenLayers Tiles</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@9.2.4/ol.css" />
+    <script src="https://cdn.jsdelivr.net/npm/ol@9.2.4/dist/ol.js"></script>
+    <style>
+      :root {
+        --bg: #07090d;
+        --panel: rgba(10, 14, 20, 0.92);
+        --line: rgba(127, 149, 165, 0.22);
+        --ink: #d8e0e8;
+        --dim: #7f95a5;
+        --amber: #f2b84b;
+        --ember: #ff8a3d;
+        --red: #e5484d;
+        --teal: #2ea8a0;
+        --lime: #c8ff00;
+        --green: #7a8a6e;
+        --blue: #58a6ff;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          10px/1.45 "SF Mono",
+          Menlo,
+          Consolas,
+          monospace;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      header#hud-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        z-index: 3;
+      }
+      .hud-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+        color: #fff;
+        white-space: nowrap;
+      }
+      .hud-title small {
+        display: block;
+        font-weight: 400;
+        font-size: 8px;
+        letter-spacing: 1.2px;
+        color: var(--dim);
+      }
+      .hud-right {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .hud-honesty {
+        font-size: 8px;
+        letter-spacing: 1.4px;
+        color: var(--blue);
+        border: 1px solid rgba(88, 166, 255, 0.4);
+        padding: 3px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+      .hud-honesty.amber {
+        color: var(--amber);
+        border-color: rgba(242, 184, 75, 0.4);
+      }
+      #hud-mid {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+        position: relative;
+      }
+      nav#hud-left {
+        width: 148px;
+        flex: none;
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-y: auto;
+        z-index: 2;
+      }
+      .nav-cap {
+        font-size: 7.5px;
+        letter-spacing: 1.6px;
+        color: var(--dim);
+        margin: 6px 0 2px;
+      }
+      .lay {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 5px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .lay:hover {
+        border-color: var(--line);
+      }
+      .lay .sw {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 1px solid var(--dim);
+        flex: none;
+      }
+      .lay.on .sw {
+        background: var(--blue);
+        border-color: var(--blue);
+        box-shadow: 0 0 6px rgba(88, 166, 255, 0.7);
+      }
+      .lay .nm {
+        font-size: 8.5px;
+        letter-spacing: 0.8px;
+        color: var(--ink);
+        flex: 1;
+      }
+      .lay .tag {
+        font-size: 6.5px;
+        letter-spacing: 0.6px;
+        color: var(--dim);
+        text-align: right;
+      }
+      .lay:not(.on) .nm {
+        color: var(--dim);
+      }
+      #legend {
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+        font-size: 7px;
+        color: var(--dim);
+        line-height: 1.8;
+      }
+      #legend b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      main#stage {
+        flex: 1;
+        position: relative;
+        min-width: 0;
+      }
+      #map {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: #1a1f2e;
+      }
+      .ol-attribution {
+        font-size: 7px !important;
+        background: rgba(10, 14, 20, 0.8) !important;
+      }
+      .ol-attribution a {
+        color: var(--blue) !important;
+      }
+      .ol-zoom {
+        background: rgba(10, 14, 20, 0.92) !important;
+        border: 1px solid var(--line) !important;
+        border-radius: 4px !important;
+        padding: 2px !important;
+      }
+      .ol-zoom button {
+        color: var(--ink) !important;
+        font-size: 12px !important;
+        background: none !important;
+      }
+      .ol-zoom button:hover {
+        background: rgba(88, 166, 255, 0.15) !important;
+      }
+      #clock {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        text-align: right;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 1px;
+        line-height: 1.7;
+        z-index: 1;
+        text-shadow: 0 1px 2px #000;
+        background: rgba(10, 14, 20, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+      }
+      #clock b {
+        color: var(--blue);
+        font-weight: 400;
+      }
+      #tile-info {
+        position: absolute;
+        left: 10px;
+        top: 8px;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 0.8px;
+        z-index: 1;
+        text-shadow: 0 1px 2px #000;
+        background: rgba(10, 14, 20, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        line-height: 1.7;
+      }
+      #tile-info b {
+        color: var(--blue);
+        font-weight: 400;
+      }
+      footer#hud-bottom {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 6px 12px;
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+        z-index: 3;
+      }
+      .worm-label {
+        font-size: 8px;
+        letter-spacing: 1.8px;
+        color: var(--lime);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .worm-cell {
+        font-size: 8px;
+        letter-spacing: 1px;
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .worm-cell b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      .worm-cell .h {
+        color: var(--teal);
+      }
+      .worm-tier {
+        margin-left: auto;
+        font-size: 8px;
+        letter-spacing: 1.2px;
+        color: var(--blue);
+        border: 1px solid rgba(88, 166, 255, 0.4);
+        border-radius: 4px;
+        padding: 2px 6px;
+        white-space: nowrap;
+      }
+      #worm-last {
+        font-size: 8px;
+        color: var(--dim);
+        letter-spacing: 0.5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+        min-width: 120px;
+      }
+      @media (max-width: 720px) {
+        nav#hud-left {
+          width: 118px;
+          padding: 6px;
+        }
+        .hud-title small {
+          display: none;
+        }
+        .hud-honesty {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header id="hud-top">
+      <div class="hud-title">
+        DIGITAL TWIN — OPENLAYERS TILES<small>OSM STANDARD RASTER · EPSG:3857 · PROJECTION</small>
+      </div>
+      <div class="hud-right">
+        <span class="hud-honesty">OPENLAYERS 9.2 · WMS/WMTS</span>
+        <span class="hud-honesty amber">SEED DATA · NOT LIVE</span>
+      </div>
+    </header>
+    <div id="hud-mid">
+      <nav id="hud-left">
+        <div class="nav-cap">LAYER CONTROL</div>
+        <div class="lay on" data-layer="osm">
+          <span class="sw" style="background: #7a8a6e"></span><span class="nm">OSM STANDARD</span
+          ><span class="tag">RASTER</span>
+        </div>
+        <div class="lay on" data-layer="devices">
+          <span class="sw" style="background: var(--blue)"></span><span class="nm">DEVICES</span
+          ><span class="tag">12</span>
+        </div>
+        <div class="lay on" data-layer="zones">
+          <span class="sw" style="background: var(--amber)"></span><span class="nm">SECTORS</span
+          ><span class="tag">7</span>
+        </div>
+        <div class="lay" data-layer="heatmap">
+          <span class="sw" style="background: var(--ember)"></span><span class="nm">HEATMAP</span
+          ><span class="tag">SIG</span>
+        </div>
+        <div class="lay" data-layer="routes">
+          <span class="sw" style="background: var(--lime)"></span><span class="nm">PATROL</span
+          ><span class="tag">3</span>
+        </div>
+        <div class="nav-cap">TELEMETRY</div>
+        <div class="lay on" data-layer="links">
+          <span class="sw" style="background: var(--teal)"></span><span class="nm">MESH LINKS</span
+          ><span class="tag">18</span>
+        </div>
+        <div class="lay" data-layer="alerts">
+          <span class="sw" style="background: var(--red)"></span><span class="nm">ALERTS</span
+          ><span class="tag">0</span>
+        </div>
+        <div id="legend">
+          <b>SECTOR 4 · GQEBERHA</b><br />
+          LAT −33.9249° · LON 25.5701°<br />
+          ZOOM 14 · RES 9.55m/px<br />
+          OSM © OpenStreetMap<br />
+          <b>WORM</b> b8e1a7c4… · T2
+        </div>
+      </nav>
+      <main id="stage">
+        <div id="map"></div>
+        <div id="tile-info">
+          TILE: <b>OPENLAYERS · XYZ · OSM</b><br />
+          SRC: <b>tile.openstreetmap.org</b><br />
+          PROJ: <b>EPSG:3857</b>
+        </div>
+        <div id="clock">
+          <span id="clk-time">--:--:--</span><br />
+          <b>SEED</b> 20260921 · Z+02:00<br />
+          <b>FRAME</b> <span id="clk-frame">0</span>
+        </div>
+      </main>
+    </div>
+    <footer id="hud-bottom">
+      <span class="worm-label">WORM · OPENLAYERS_TWIN</span>
+      <span class="worm-cell">SEAL <b class="h">b8e1a7c4</b></span>
+      <span class="worm-cell">TIER <b>T2 · SEED_UNVERIFIED</b></span>
+      <span class="worm-cell">NODES <b>12</b></span>
+      <span class="worm-cell">LINKS <b>18</b></span>
+      <span id="worm-last"
+        >SCENARIO_OPEN · OPENLAYERS_TWIN · projection=basic_xyz · seed=20260921</span
+      >
+      <span class="worm-tier">OPENLAYERS_TWIN · READY</span>
+    </footer>
+    <script>
+      (function () {
+        // Seed clock
+        var frame = 0;
+        function tick() {
+          var d = new Date();
+          var t = d.toTimeString().slice(0, 8);
+          var el = document.getElementById("clk-time");
+          if (el) el.textContent = t;
+          document.getElementById("clk-frame").textContent = frame++;
+        }
+        setInterval(tick, 1000);
+        tick();
+        // Try to boot OpenLayers. If the CDN is blocked (offline sandbox), the
+        // map element stays dark with the seed-data honesty chip intact.
+        var mapEl = document.getElementById("map");
+        function offlineNote() {
+          var n = document.createElement("div");
+          n.style.cssText =
+            "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#7f95a5;font-size:11px;letter-spacing:1px;text-align:center;padding:20px";
+          n.innerHTML =
+            '<div style="font-size:14px;color:#58a6ff;font-weight:700;letter-spacing:2px;margin-bottom:8px">OPENLAYERS · OFFLINE</div><div>CDN unreachable in this sandbox. The tile surface boots in production<br>from openstreetmap.org via the OpenLayers 9.2 XYZ source.</div>';
+          mapEl.appendChild(n);
+        }
+        if (typeof ol === "undefined") {
+          offlineNote();
+          return;
+        }
+        try {
+          var view = new ol.View({ center: ol.proj.fromLonLat([25.5701, -33.9249]), zoom: 14 });
+          var map = new ol.Map({
+            target: "map",
+            layers: [
+              new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                  url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  attributions: "© OpenStreetMap contributors",
+                  crossOrigin: "anonymous",
+                }),
+              }),
+            ],
+            view: view,
+          });
+          // seed devices
+          var devices = [
+            [-33.9249, 25.5701],
+            [-33.9258, 25.5712],
+            [-33.924, 25.5725],
+            [-33.9265, 25.569],
+            [-33.9235, 25.5705],
+            [-33.927, 25.573],
+            [-33.922, 25.5745],
+            [-33.9285, 25.568],
+            [-33.9215, 25.572],
+            [-33.929, 25.575],
+            [-33.9205, 25.576],
+            [-33.93, 25.57],
+          ];
+          devices.forEach(function (d, i) {
+            var m = new ol.Feature({
+              geometry: new ol.geom.Point(ol.proj.fromLonLat([d[1], d[0]])),
+            });
+            m.setStyle(
+              new ol.style.Style({
+                image: new ol.style.Circle({
+                  radius: 5,
+                  fill: new ol.style.Fill({ color: "#58a6ff" }),
+                  stroke: new ol.style.Stroke({ color: "#fff", width: 1 }),
+                }),
+                text: new ol.style.Text({
+                  text: "N" + String(i + 1).padStart(2, "0"),
+                  offsetY: -10,
+                  fill: new ol.style.Fill({ color: "#d8e0e8" }),
+                  font: "8px monospace",
+                }),
+              }),
+            );
+            new ol.layer.Vector({ source: new ol.source.Vector({ features: [m] }), map: map });
+          });
+        } catch (e) {
+          offlineNote();
+        }
+        // Layer toggles (visual only — wired to the same store as other twins)
+        document.querySelectorAll(".lay").forEach(function (el) {
+          el.addEventListener("click", function () {
+            el.classList.toggle("on");
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

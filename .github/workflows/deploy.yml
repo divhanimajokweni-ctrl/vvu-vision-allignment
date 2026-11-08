@@ -1,0 +1,124 @@
+# ==============================================================================
+# VVU EARTH TECH — Production deploy gate
+# ------------------------------------------------------------------------------
+# Triggers: push to main (after CI passes) OR manual workflow_dispatch.
+# Gated on the 3 critical CI jobs: lint, golden-rule, boundaries.
+#
+# ⚠️ This workflow VALIDATES that the build is deployable. The actual production
+#    deploy is founder-manual via SSH to the physical host (Gqeberha). It is NOT
+#    an automated deploy — VVU EARTH TECH runs on bare metal with AMD ROCm GPUs.
+# ==============================================================================
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Gate: wait for the three critical CI jobs. If any fails, deploy is aborted.
+  # We use `needs:` so this job only runs after the named jobs in the SAME workflow
+  # run. Since CI runs on a separate workflow (ci.yml), this acts as a parallel
+  # re-check — the gate validates the same 3 invariants here so a stale CI badge
+  # can never greenlight a broken deploy.
+  lint:
+    name: Gate — Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+
+  golden-rule:
+    name: Gate — Golden Rule
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/golden-rule-checker.js
+
+  boundaries:
+    name: Gate — Boundaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bash scripts/enforce-boundaries.sh
+
+  deploy:
+    name: Deploy (validation + founder runbook)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [lint, golden-rule, boundaries]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies (frozen lockfile)
+        run: bun install --frozen-lockfile
+
+      - name: Write .env for Prisma
+        # Prisma CLI reads .env (NOT .env.local). Since .env is gitignored,
+        # we write a dummy URL for generate (doesn't need a real connection).
+        # The actual DATABASE_URL is on Vercel as a secret — Vercel handles
+        # the real db:push during deployment.
+        run: echo "DATABASE_URL=file:./db/ci.db" > .env
+
+      - name: Generate Prisma client
+        run: bun run db:generate
+
+      - name: AMD ROCm GPU audit (cloud runners will fail — that's expected)
+        # The ROCm audit script needs a physical host with /dev/kfd + /dev/dri.
+        # On GitHub-hosted cloud runners there is no AMD GPU passthrough, so the
+        # script will report ABSENT. We continue-on-error here — the audit is
+        # only meaningful on the self-hosted physical runner. Set `continue-on-error:
+        # false` and move this step to a self-hosted runner when provisioning lands.
+        if: runner.arch == 'arm64' || runner.arch == 'x64'
+        continue-on-error: true
+        run: bash scripts/vvu-rocm-container-check.sh
+
+      - name: Print founder deploy runbook
+        run: |
+          echo "================================================================"
+          echo " VVU EARTH TECH — Production deploy runbook"
+          echo "================================================================"
+          echo ""
+          echo "Production deploy is founder-manual via SSH to the physical host."
+          echo "This workflow has VALIDATED that the build is deployable:"
+          echo "  ✓ lint        — 0 ESLint errors"
+          echo "  ✓ golden-rule — 0 AST violations"
+          echo "  ✓ boundaries  — 0 boundary violations (commercial / headers / dashboards)"
+          echo "  ✓ db:generate — Prisma client types generated (db:push runs on Vercel)"
+          echo ""
+          echo "To deploy on the physical host (Gqeberha):"
+          echo "  1. ssh founder@gqeberha-host"
+          echo "  2. cd /opt/vvu-earth-tech"
+          echo "  3. git pull --ff-only origin main"
+          echo "  4. bun install --frozen-lockfile"
+          echo "  5. Vercel handles db:push     # schema synced on deploy"
+          echo "  6. bun run dev               # with pm2/systemd (Next.js 16 Turbopack)"
+          echo "  7. bash scripts/vvu-rocm-container-check.sh   # GPU audit on real metal"
+          echo ""
+          echo "⚠️  Never run 'bun run build' — Next.js standalone output is not used."
+          echo "    The dashboard runs directly via 'bun run dev' under pm2."
+          echo ""
+          echo "================================================================"

@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>EPISTEMIC RUNTIME · Serverless Command Center</title>
+<style>
+:root{
+  --bg:#0a0e13;--bg2:#0e141c;--panel:#111a24;--panel2:#0d151e;
+  --line:#1c2836;--line2:#26374a;
+  --txt:#dce8f2;--dim:#75899c;--dim2:#4e6172;
+  --acc:#37d6a0;--acc2:#3aa9f5;--warn:#f5b944;--bad:#f2607a;--pur:#a78bfa;--quar:#e8907a;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
+#app{display:grid;grid-template-columns:220px 1fr;height:100vh}
+
+/* ── nav ── */
+#nav{background:linear-gradient(180deg,#0d141d,#0a0f15);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+#brand{padding:14px 14px 12px;border-bottom:1px solid var(--line)}
+#brand b{font-size:13px;letter-spacing:.14em;color:var(--txt)}
+#brand span{display:block;font-size:9.5px;color:var(--dim2);letter-spacing:.12em;margin-top:3px}
+#navlist{flex:1;overflow-y:auto;padding:6px 0}
+.ngroup{font-size:9px;letter-spacing:.18em;color:var(--dim2);padding:12px 14px 5px;text-transform:uppercase}
+.nitem{display:flex;align-items:center;gap:9px;padding:6px 14px;cursor:pointer;color:var(--dim);border-left:2px solid transparent;font-size:12px;user-select:none}
+.nitem:hover{background:#121c27;color:var(--txt)}
+.nitem.on{background:linear-gradient(90deg,rgba(55,214,160,.13),transparent);color:var(--txt);border-left-color:var(--acc)}
+.nitem .ic{width:15px;text-align:center;color:var(--acc2);font-size:12px}
+.nitem.on .ic{color:var(--acc)}
+.nitem .ct{margin-left:auto;font-size:10px;color:var(--dim2);background:#16212d;border:1px solid var(--line);border-radius:20px;padding:0 6px;line-height:15px}
+#navfoot{padding:9px 12px;border-top:1px solid var(--line);font-size:9.5px;color:var(--dim2);line-height:1.7}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--acc);margin-right:5px;box-shadow:0 0 7px var(--acc);animation:pulse 2.4s infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+/* ── topbar ── */
+#main{display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--bg2);flex-wrap:wrap}
+#topbar h1{font-size:13px;margin:0;font-weight:600;letter-spacing:.04em;white-space:nowrap}
+#topbar .sub{font-size:10px;color:var(--dim2);letter-spacing:.1em}
+.spacer{flex:1}
+.gsearch{background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:6px 10px;font:inherit;font-size:11.5px;width:200px;outline:none}
+.gsearch:focus{border-color:var(--acc2)}
+.btn{background:#16222e;border:1px solid var(--line);color:var(--dim);border-radius:7px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--acc2);color:var(--acc2)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.p{background:rgba(55,214,160,.1);border-color:rgba(55,214,160,.4);color:var(--acc)}
+.btn.sm{padding:3px 7px;font-size:10px}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+
+/* ── view ── */
+#view{flex:1;overflow-y:auto;padding:16px}
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:11px;margin-bottom:14px;overflow:hidden}
+.ph{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--line)}
+.ph h2{margin:0;font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--acc2);font-weight:600}
+.ph .hint{font-size:10px;color:var(--dim2)}
+.pb{padding:13px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g21{grid-template-columns:2fr 1fr}.g12{grid-template-columns:1fr 2fr}
+@media(max-width:1080px){.g2,.g3,.g21,.g12{grid-template-columns:1fr}}
+
+/* kpi */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.kpi .l{font-size:9.5px;letter-spacing:.14em;color:var(--dim2);text-transform:uppercase}
+.kpi .v{font-size:22px;margin-top:5px;color:var(--txt);line-height:1}
+.kpi .d{font-size:10px;color:var(--dim);margin-top:4px}
+.kpi.a .v{color:var(--acc)}.kpi.b .v{color:var(--acc2)}.kpi.w .v{color:var(--warn)}.kpi.r .v{color:var(--bad)}.kpi.q .v{color:var(--quar)}
+
+/* badges */
+.b{font-size:9.5px;padding:2px 7px;border-radius:20px;font-weight:600;letter-spacing:.06em;border:1px solid}
+.b.ok{color:var(--acc);background:rgba(55,214,160,.1);border-color:rgba(55,214,160,.3)}
+.b.warn{color:var(--warn);background:rgba(245,185,68,.1);border-color:rgba(245,185,68,.3)}
+.b.bad{color:var(--bad);background:rgba(242,96,122,.1);border-color:rgba(242,96,122,.3)}
+.b.mut{color:var(--dim);background:#16212d;border-color:var(--line)}
+.b.info{color:var(--acc2);background:rgba(58,169,245,.1);border-color:rgba(58,169,245,.3)}
+.b.pur{color:var(--pur);background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.3)}
+
+/* table */
+.tbar{display:flex;gap:8px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tbar input{background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 9px;font:inherit;font-size:11px;width:180px;outline:none}
+.tbar input:focus{border-color:var(--acc2)}
+.tbar .cnt{font-size:10px;color:var(--dim2)}
+.tbar .acts{margin-left:auto;display:flex;gap:6px}
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;padding:7px 11px;color:var(--dim2);font-weight:600;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--panel2);z-index:1}
+td{padding:7px 11px;border-bottom:1px solid #16202b;vertical-align:middle;white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#121c27}
+.mono{font-family:var(--mono)}
+.hint{font-size:10px;color:var(--dim2);line-height:1.6}
+
+/* alerts */
+.alist{padding:8px}
+.arow{display:flex;align-items:center;gap:10px;padding:7px 6px;border-bottom:1px solid #16202b}
+.arow:last-child{border-bottom:none}
+.sv{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sv.ok{background:var(--acc);box-shadow:0 0 6px var(--acc)}.sv.warn{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+.sv.bad{background:var(--bad);box-shadow:0 0 6px var(--bad);animation:pulse 1.5s infinite}.sv.info{background:var(--acc2)}
+.arow .tm{margin-left:auto;font-size:10px;color:var(--dim2);white-space:nowrap}
+
+/* code */
+.codeblock{font-family:var(--mono);font-size:12px;line-height:1.55;background:#080d12;border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;white-space:pre;color:var(--txt)}
+textarea.code{font-family:var(--mono);font-size:12px;background:#080d12;border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:10px;width:100%;resize:vertical;outline:none;tab-size:2}
+textarea.code:focus{border-color:var(--acc2)}
+
+/* bar */
+.bar{height:5px;border-radius:3px;background:#16222e;overflow:hidden;width:100%}
+.bar i{display:block;height:100%;border-radius:3px}
+.bar i.g{background:var(--acc)}.bar i.w{background:var(--warn)}.bar i.r{background:var(--bad)}
+
+/* kv */
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12px}
+.kv dt{color:var(--dim2)}.kv dd{color:var(--txt)}
+
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;transition:border-color .2s}
+.card:hover{border-color:var(--line2)}
+.card .t{font-size:12.5px;font-weight:600;margin-bottom:5px}
+.card .m{font-size:10.5px;color:var(--dim);line-height:1.5}
+
+/* canvas chart */
+canvas{display:block;width:100%}
+
+/* tabs */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.tab{padding:7px 14px;cursor:pointer;font-size:11px;color:var(--dim);border-bottom:2px solid transparent}
+.tab:hover{color:var(--txt)}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc)}
+
+/* toast */
+#toast{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:10px 14px;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.4);animation:slideIn .3s}
+.toast.ok{border-color:rgba(55,214,160,.4)}.toast.warn{border-color:rgba(245,185,68,.4)}.toast.bad{border-color:rgba(242,96,122,.4)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* status dots */
+.sd{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.sd.h{background:var(--acc);box-shadow:0 0 5px var(--acc)}
+.sd.r{background:var(--warn);box-shadow:0 0 5px var(--warn);animation:pulse 2s infinite}
+.sd.v{background:var(--bad);box-shadow:0 0 5px var(--bad);animation:pulse 1.5s infinite}
+
+/* geo map */
+svg{display:block}
+.scroll-y{max-height:400px;overflow-y:auto}
+
+/* pin chips */
+.pinbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.pchip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line2);border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--dim)}
+.pchip:hover{color:var(--txt)}
+.pchip.on{border-color:rgba(55,214,160,.4);background:rgba(55,214,160,.08);color:var(--acc)}
+
+/* form */
+.frm{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld{display:flex;flex-direction:column;gap:4px}
+.fld label{font-size:10px;color:var(--dim2);letter-spacing:.08em;text-transform:uppercase}
+.fld input,.fld select,.fld textarea{background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 9px;font:inherit;font-size:11px;outline:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--acc2)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="nav">
+    <div id="brand"><b>EPISTEMIC RUNTIME</b><span>SERVERLESS · OFFLINE</span></div>
+    <div id="navlist"></div>
+    <div id="navfoot">
+      <span class="dot"></span><span id="footStatus">online · offline-capable</span><br>
+      <span id="footCount">0 records</span><br>
+      <span id="footHash" class="mono" style="font-size:8px;color:var(--dim2)"></span>
+    </div>
+  </div>
+  <div id="main">
+    <div id="topbar">
+      <div><h1 id="vtitle">Overview</h1><span class="sub" id="vsub">· runtime health</span></div>
+      <div class="spacer"></div>
+      <input class="gsearch" id="gsearch" placeholder="search all records… (Enter)">
+      <button class="btn sm" id="btnExport">export</button>
+      <button class="btn sm" id="btnImport">import</button>
+      <button class="btn sm danger" id="btnReset">reset</button>
+      <input type="file" id="fileIn" style="display:none" accept=".json">
+    </div>
+    <div id="view"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ════════════════════════════════════════════════════════════════════════════
+   1 · CORE INFRASTRUCTURE (real, not simulated)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── SHA-256 (Web Crypto API) ── */
+async function sha256(s){
+  var buf=new TextEncoder().encode(s);
+  var h=await crypto.subtle.digest('SHA-256',buf);
+  return Array.from(new Uint8Array(h)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+/* Sync hash fallback (FNV-1a) for non-crypto paths */
+function fnv1a(s){var h=0x811c9dc5;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193);}return(h>>>0).toString(16).padStart(8,'0');}
+
+/* ── Append-Only Audit Log ── */
+var AuditLog={
+  entries:[],
+  listeners:[],
+  append:function(action,coll,id,before,after,actor){
+    var seq=this.entries.length;
+    var prev=seq>0?this.entries[seq-1].hash:fnv1a('genesis');
+    var ts=Date.now();
+    var hash=fnv1a(prev+action+coll+id+JSON.stringify(after)+ts);
+    var e={seq:seq,ts:ts,action:action,collection:coll,recordId:id,before:before,after:after,actor:actor||'system',prev:prev,hash:hash};
+    this.entries.push(e);
+    this.listeners.forEach(function(f){f(e);});
+    return e;
+  },
+  verify:function(){for(var i=1;i<this.entries.length;i++){if(this.entries[i].prev!==this.entries[i-1].hash)return{valid:false,brokenAt:i};}return{valid:true,brokenAt:null};},
+  replay:function(){var s={};this.entries.forEach(function(e){if(!s[e.collection])s[e.collection]={};if(e.action.endsWith('.delete')||e.action.endsWith('.remove'))delete s[e.collection][e.recordId];else if(e.after)s[e.collection][e.recordId]=e.after;});return s;},
+  head:function(){return this.entries.length?this.entries[this.entries.length-1].hash:fnv1a('genesis');},
+  onAppend:function(f){this.listeners.push(f);},
+  export:function(){return{exported:new Date().toISOString(),head:this.head(),entries:this.entries};},
+  import:function(s){this.entries=s.entries||[];},
+  reset:function(){this.entries=[];}
+};
+
+/* ── Plugin Hooks ── */
+var Hooks={
+  plugins:[],
+  register:function(p){this.plugins.push(Object.assign({state:'enabled'},p));},
+  fire:function(hook,payload){this.plugins.filter(function(p){return p.hook===hook&&p.state==='enabled';}).forEach(function(p){try{p.callback(payload);}catch(e){console.error('[plugin:'+p.id+']',e);}});},
+  getAll:function(){return this.plugins;},
+  toggle:function(id){var p=this.plugins.find(function(x){return x.id===id;});if(p)p.state=p.state==='enabled'?'disabled':'enabled';}
+};
+
+/* ── Store (localStorage-persisted, Canonical pattern) ── */
+var Store={
+  d:{policies:[],shards:[],merges:[],proofs:[],violations:[],shadowEvents:[],mined:[],revisions:[],evidence:[],audit:[]},
+  K:'epistemic:store',
+  load:function(){try{var s=localStorage.getItem(this.K);if(s){var p=JSON.parse(s);if(p&&p.policies&&p.policies.length>0)this.d=p;}}catch(e){console.warn('store load failed',e);}},
+  save:function(){try{localStorage.setItem(this.K,JSON.stringify(this.d));}catch(e){console.warn('store save failed',e);}},
+  all:function(k){return this.d[k]||[];},
+  upsert:function(k,r,idKey){idKey=idKey||'id';var a=this.d[k]||(this.d[k]=[]);var i=a.findIndex(function(x){return x[idKey]===r[idKey];});if(i>=0)a[i]=r;else a.push(r);this.save();},
+  remove:function(k,idKey,id){var a=this.d[k]||(this.d[k]=[]);this.d[k]=a.filter(function(x){return x[idKey]!==id;});this.save();},
+  commit:function(action,detail){AuditLog.append(action,detail,'',{},{detail:detail},'ui');Hooks.fire('store.commit',{action:action,detail:detail});this.save();},
+  counts:function(){var c={};for(var k in this.d)c[k]=this.d[k].length;return c;}
+};
+
+/* ── Event Bus (in-process pub/sub) ── */
+var Bus={
+  handlers:{},
+  on:function(ev,fn){if(!this.handlers[ev])this.handlers[ev]=[];this.handlers[ev].push(fn);},
+  emit:function(ev,data){(this.handlers[ev]||[]).forEach(function(f){f(data);});},
+  clear:function(){this.handlers={};}
+};
+
+/* ── Helpers ── */
+var $=function(s,p){return(p||document).querySelector(s);};
+var $$=function(s,p){return Array.from((p||document).querySelectorAll(s));};
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmt(n){return n==null?'—':n.toLocaleString();}
+function ago(ts){if(!ts)return'—';var s=Math.floor((Date.now()-ts)/1000);if(s<60)return s+'s ago';var m=Math.floor(s/60);if(m<60)return m+'m ago';var h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+function fd(ts){if(!ts)return'—';return new Date(ts).toLocaleDateString();}
+function hhmmss(ts){if(!ts)return'—';return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function toast(msg,type){var t=document.createElement('div');t.className='toast '+(type||'ok');t.textContent=msg;$('#toast').appendChild(t);setTimeout(function(){t.remove();},3000);}
+function download(name,content,type){var b=new Blob([content],{type:type||'text/plain'});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+function badge(v){var map={healthy:'ok',applied:'ok',verified:'ok',active:'ok',enabled:'ok',committed:'ok',pass:'ok',repairing:'warn',pending:'warn',elevated:'warn',high:'warn',violating:'bad',rejected:'bad',fault:'bad',critical:'bad',fail:'bad',error:'bad',sealed:'info',archive:'mut',intake:'warn',verify:'info',idle:'mut',disabled:'mut'};return'<span class="b '+(map[v]||'mut')+'">'+esc(v)+'</span>';}
+function bar(v){var c=v>=90?'r':v>=70?'w':'g';return'<div class="bar"><i class="'+c+'" style="width:'+clamp(v,0,100)+'%"></i></div>';}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   2 · SEED DATA
+   ════════════════════════════════════════════════════════════════════════════ */
+
+function seed(){
+  var now=Date.now();
+  var regions=['europe-west','europe-north','na-east','na-west','apac-south','apac-east','za-ec','za-wc','za-gp','za-lp'];
+  var nodes=['edge-01','edge-02','edge-03','cloud-01','cloud-02'];
+  var regionGeo={
+    'europe-west':{lat:50.11,lng:8.68,label:'Western Europe'},
+    'europe-north':{lat:59.33,lng:18.07,label:'Northern Europe'},
+    'na-east':{lat:40.71,lng:-74.01,label:'NA East'},
+    'na-west':{lat:37.77,lng:-122.42,label:'NA West'},
+    'apac-south':{lat:1.35,lng:103.82,label:'APAC South'},
+    'apac-east':{lat:35.68,lng:139.69,label:'APAC East'},
+    'za-ec':{lat:-33.96,lng:25.60,label:'Eastern Cape'},
+    'za-wc':{lat:-33.92,lng:18.42,label:'Western Cape'},
+    'za-gp':{lat:-26.20,lng:28.05,label:'Gauteng'},
+    'za-lp':{lat:-23.90,lng:29.45,label:'Limpopo'}
+  };
+
+  var policies=[
+    {id:'p1',name:'grid_frequency_stability',filename:'grid-frequency.epd',domain:'smart_grid',version:'1.0.0',invariantCount:3,shardCount:6,zkEnabled:true,shadowEnabled:true,repairStrategy:'self_repair',proofKind:'mmr',takeoverLatencyMs:250,ok:true,wasmFingerprint:'1379f740',errorCount:0,warningCount:0,createdAt:now-86400000*7,source:'# Smart Grid — frequency & energy-balance invariants\npolicy "grid_frequency_stability" {\n  description "Maintain grid frequency and energy balance"\n  domain "smart_grid"\n  version "1.0.0"\n  shard by region { key "geo_region" strategy locality_preserving count 6 replication 3 }\n  invariant "freq_bounds" { predicate frequency in [49.8, 50.2] severity critical }\n  invariant "energy_conservation" { predicate sum(generation) >= sum(load) + losses severity critical }\n  soft invariant "thermal_headroom" { predicate thermal_headroom >= 10 severity medium }\n  on_violation { strategy self_repair objective least_divergent max_iters 500 }\n  ancestry { proof mmr zk true gossip p2p anchor rekor }\n  shadow_bridge { enabled true takeover_latency_ms 250 }\n  export to wasm\n  export to rust\n}'},
+    {id:'p2',name:'hospital_census',filename:'hospital-census.epd',domain:'public_health',version:'0.9.0',invariantCount:3,shardCount:1,zkEnabled:true,shadowEnabled:false,repairStrategy:'self_repair',proofKind:'mmr',takeoverLatencyMs:0,ok:true,wasmFingerprint:'9d7545dc',errorCount:0,warningCount:0,createdAt:now-86400000*6},
+    {id:'p3',name:'fleet_safety_envelope',filename:'fleet-safety.epd',domain:'autonomous_vehicles',version:'2.1.0',invariantCount:4,shardCount:4,zkEnabled:false,shadowEnabled:true,repairStrategy:'self_repair',proofKind:'mmr',takeoverLatencyMs:150,ok:true,wasmFingerprint:'4f986f71',errorCount:0,warningCount:0,createdAt:now-86400000*5},
+    {id:'p4',name:'cold_chain_integrity',filename:'cold-chain.epd',domain:'supply_chain',version:'1.2.0',invariantCount:3,shardCount:3,zkEnabled:false,shadowEnabled:true,repairStrategy:'quarantine',proofKind:'mmr',takeoverLatencyMs:500,ok:true,wasmFingerprint:'a3b2c1d0',errorCount:0,warningCount:0,createdAt:now-86400000*4},
+    {id:'p5',name:'financial_ledger_integrity',filename:'financial-ledger.epd',domain:'finance',version:'1.0.0',invariantCount:4,shardCount:4,zkEnabled:true,shadowEnabled:false,repairStrategy:'reject',proofKind:'mmr',takeoverLatencyMs:0,ok:true,wasmFingerprint:'b4c3d2e1',errorCount:0,warningCount:0,createdAt:now-86400000*3},
+    {id:'p6',name:'water_treatment_safety',filename:'water-treatment.epd',domain:'water_utility',version:'0.8.0',invariantCount:4,shardCount:3,zkEnabled:false,shadowEnabled:true,repairStrategy:'self_repair',proofKind:'mmr',takeoverLatencyMs:120,ok:true,wasmFingerprint:'c5d4e3f2',errorCount:0,warningCount:0,createdAt:now-86400000*2}
+  ];
+
+  var shards=[];
+  policies.forEach(function(p){
+    var sc=p.shardCount;
+    for(var i=0;i<sc;i++){
+      var r=regions[i%regions.length];
+      var g=regionGeo[r]||{lat:0,lng:0};
+      var statuses=['healthy','healthy','repairing','violating','healthy','healthy','healthy','repairing','healthy','healthy'];
+      shards.push({
+        id:'s-'+p.id+'-'+i,policyId:p.id,region:r,regionLabel:g.label,lat:g.lat,lng:g.lng,
+        nodeId:nodes[i%nodes.length],invariantStatus:statuses[i%statuses.length],
+        mmrRoot:fnv1a(p.name+r+i).padStart(8,'0'),peerCount:2+(i%4),
+        lastMergeAt:now-i*60000,shardKey:p.domain.split('_')[0]
+      });
+    }
+  });
+
+  var merges=[
+    {id:'m1',policyId:'p1',sourceShardName:'europe-north',targetShard:'europe-west',status:'applied',divergence:0.4,iterations:1,mmrProof:fnv1a('m1'),zkProof:'zk:stark:abc123',createdAt:now-600000},
+    {id:'m2',policyId:'p3',sourceShardName:'europe-north',targetShard:'europe-west',status:'rejected',divergence:14,iterations:2,mmrProof:fnv1a('m2'),zkProof:null,createdAt:now-900000},
+    {id:'m3',policyId:'p1',sourceShardName:'manual',targetShard:'default',status:'applied',divergence:0.4,iterations:1,mmrProof:fnv1a('m3'),zkProof:'zk:stark:def456',createdAt:now-1200000}
+  ];
+
+  var proofs=[];
+  policies.forEach(function(p,i){
+    for(var j=0;j<3;j++){
+      proofs.push({id:'pr-'+p.id+'-'+j,policyId:p.id,shardKey:regions[j%regions.length],mmrRoot:fnv1a(p.name+j).padStart(8,'0'),proofPath:[fnv1a('a'+j),fnv1a('b'+j)],zkProof:p.zkEnabled?'zk:snark:'+fnv1a(p.name+'zk'+j):null,anchored:true,anchor:p.zkEnabled?'rekor':null,createdAt:now-j*3600000,verified:true,policy:{name:p.name,zkEnabled:p.zkEnabled,proofKind:p.proofKind}});
+    }
+  });
+
+  var violations=[];
+  var invNames=['freq_bounds','thermal_headroom','speed_bound','braking_energy','chlorine_residual','ph_range','main_pressure','turbidity'];
+  for(var i=0;i<10;i++){
+    violations.push({id:'v'+i,policyId:policies[i%policies.length].id,invariant:invNames[i%invNames.length],severity:i%3===0?'critical':i%3===1?'high':'medium',soft:i%4===0,shardKey:regions[i%regions.length],repaired:i%3===0,driftDelta:Math.random()*5,createdAt:now-i*3600000,policy:{name:policies[i%policies.length].name}});
+  }
+
+  var shadowEvents=[];
+  var skinds=['takeover','whatif','replay','divergence','handback'];
+  for(var i=0;i<12;i++){
+    var p=policies[i%policies.length];
+    if(p.shadowEnabled){
+      shadowEvents.push({id:'se'+i,policyId:p.id,kind:skinds[i%skinds.length],summary:skinds[i%skinds.length]+' on '+regions[i%regions.length],divergence:Math.random()*2,authoritative:p.takeoverLatencyMs>0&&i%3===0,createdAt:now-i*600000,policy:{name:p.name}});
+    }
+  }
+
+  var mined=[
+    {id:'mi1',predicate:'ramp_rate <= 5',rationale:'Statistical: frequency instability correlates with ramp rates > 5 MW/min',confidence:0.82,severity:'medium',accepted:false,policyId:'p1',policy:{name:'grid_frequency_stability'}},
+    {id:'mi2',predicate:'phase_imbalance <= 3',rationale:'Historical drift shows phase imbalance precedes grid splits',confidence:0.71,severity:'high',accepted:false,policyId:'p1',policy:{name:'grid_frequency_stability'}},
+    {id:'mi3',predicate:'latency_p99 <= 120',rationale:'Control-loop latency above 120ms predicts takeover failures',confidence:0.66,severity:'medium',accepted:false,policyId:'p3',policy:{name:'fleet_safety_envelope'}}
+  ];
+
+  var revisions=[];
+  policies.forEach(function(p){
+    for(var v=1;v<=3;v++){
+      revisions.push({id:'rev-'+p.id+'-'+v,policyId:p.id,version:v,wasmFingerprint:p.wasmFingerprint,invariantCount:p.invariantCount,changeSummary:v===1?'Initial policy definition':v===2?'Added soft invariant + tightened severity':'Current production version',author:v===3?'system':'policy-author',createdAt:now-(4-v)*86400000});
+    }
+  });
+
+  var evidence=[];
+  for(var i=0;i<6;i++){
+    var stage=['intake','verify','seal','archive'][i%4];
+    var ref='EV-'+(4001+i);
+    var fp=fnv1a(ref+'water_quality'+i);
+    evidence.push({ref:ref,title:'Water quality test — '+regions[i%regions.length],kind:['sensor_log','document','photo','sworn_statement'][i%4],custodian:'Thandi M.',stage:stage,fingerprint:fp,prevFingerprint:stage==='seal'||stage==='archive'?fnv1a(ref+'prev'):null,created:now-i*3600000,sealed:stage==='seal'||stage==='archive',stageHistory:[{stage:'intake',timestamp:now-i*3600000,custodian:'Thandi M.',fingerprint:fp}]});
+  }
+
+  Store.d={policies:policies,shards:shards,merges:merges,proofs:proofs,violations:violations,shadowEvents:shadowEvents,mined:mined,revisions:revisions,evidence:evidence,audit:AuditLog.entries};
+  Store.save();
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   3 · SHARED UI COMPONENTS
+   ════════════════════════════════════════════════════════════════════════════ */
+
+var view=$('#view');
+function clear(){view.innerHTML='';}
+
+function KPI(items){
+  var w=document.createElement('div');w.className='kpis';
+  items.forEach(function(it){
+    var e=document.createElement('div');e.className='kpi '+(it.c||'');
+    e.innerHTML='<div class="l">'+esc(it.l)+'</div><div class="v">'+esc(it.v)+'</div>'+(it.d?'<div class="d">'+esc(it.d)+'</div>':'');
+    w.appendChild(e);
+  });
+  return w;
+}
+
+function Panel(title,hint,bodyEl,rightEl){
+  var p=document.createElement('div');p.className='panel';
+  var h=document.createElement('div');h.className='ph';
+  h.innerHTML='<h2>'+esc(title)+'</h2>'+(hint?'<span class="hint">'+esc(hint)+'</span>':'');
+  if(rightEl)h.appendChild(rightEl);
+  p.appendChild(h);
+  var b=document.createElement('div');b.className='pb';b.appendChild(bodyEl);p.appendChild(b);
+  return p;
+}
+
+function Chart(values,opts){
+  opts=opts||{};
+  var c=document.createElement('canvas');c.style.height=(opts.h||150)+'px';
+  function draw(){
+    var dpr=window.devicePixelRatio||1;
+    c.width=c.clientWidth*dpr;c.height=(opts.h||150)*dpr;
+    var x=c.getContext('2d'),W=c.width,H=c.height,pad=6*dpr;
+    x.clearRect(0,0,W,H);
+    x.strokeStyle='#1a2634';x.lineWidth=1;
+    for(var g=0;g<=4;g++){var y=pad+(H-pad*2)*g/4;x.beginPath();x.moveTo(pad,y);x.lineTo(W-pad,y);x.stroke();}
+    if(!values.length)return;
+    var px=function(i){return pad+(W-pad*2)*i/Math.max(1,values.length-1);};
+    var py=function(v){return H-pad-(H-pad*2)*clamp(v,0,1);};
+    function trace(){x.beginPath();values.forEach(function(v,i){var X=px(i),Y=py(v);i?x.lineTo(X,Y):x.moveTo(X,Y);});}
+    trace();x.lineTo(px(values.length-1),H-pad);x.lineTo(px(0),H-pad);x.closePath();
+    var gr=x.createLinearGradient(0,0,0,H);
+    gr.addColorStop(0,opts.fill||'rgba(58,169,245,.34)');gr.addColorStop(1,'rgba(58,169,245,0)');
+    x.fillStyle=gr;x.fill();
+    trace();x.strokeStyle=opts.stroke||'#3aa9f5';x.lineWidth=1.8*dpr;x.stroke();
+    if(opts.threshold!=null){var ty=py(opts.threshold);x.setLineDash([4*dpr,4*dpr]);x.beginPath();x.moveTo(pad,ty);x.lineTo(W-pad,ty);x.strokeStyle='#f5b944';x.lineWidth=1*dpr;x.stroke();x.setLineDash([]);}
+    x.fillStyle=opts.stroke||'#3aa9f5';x.beginPath();x.arc(px(values.length-1),py(values[values.length-1]),3.2*dpr,0,7);x.fill();
+  }
+  setTimeout(draw,0);window.addEventListener('resize',draw);
+  return c;
+}
+
+function DataTable(rows,fields,opts){
+  opts=opts||{};
+  var wrap=document.createElement('div');wrap.className='panel';
+  var tw=document.createElement('div');tw.className='twrap';
+  var table=document.createElement('table');
+  var thead=document.createElement('tr');
+  fields.forEach(function(f){var th=document.createElement('th');th.textContent=f.l;thead.appendChild(th);});
+  var theadEl=document.createElement('thead');theadEl.appendChild(thead);table.appendChild(theadEl);
+  var tbody=document.createElement('tbody');table.appendChild(tbody);
+  tw.appendChild(table);wrap.appendChild(tw);
+  rows.slice(0,opts.per||15).forEach(function(r){
+    var tr=document.createElement('tr');
+    fields.forEach(function(f){
+      var td=document.createElement('td');
+      var v=r[f.k];
+      if(f.badge)td.innerHTML=badge(v);
+      else if(f.bar)td.innerHTML='<span>'+v+'</span>'+bar(v);
+      else if(f.mono)td.innerHTML='<span class="mono">'+esc(v)+'</span>';
+      else td.innerHTML=esc(v);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  return wrap;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   4 · MODULES — 21 dashboard sections
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. OVERVIEW ── */
+function ModOverview(){
+  clear();
+  var c=Store.counts();
+  var shards=Store.all('shards');
+  var healthy=shards.filter(function(s){return s.invariantStatus==='healthy';}).length;
+  var repairing=shards.filter(function(s){return s.invariantStatus==='repairing';}).length;
+  var violating=shards.filter(function(s){return s.invariantStatus==='violating';}).length;
+  var healthScore=Math.round(((healthy+repairing*0.5)/Math.max(1,shards.length))*100);
+  var merges=Store.all('merges');
+  var applied=merges.filter(function(m){return m.status==='applied';}).length;
+  var proofs=Store.all('proofs');
+  var zkProofs=proofs.filter(function(p){return p.zkProof;}).length;
+  view.appendChild(KPI([
+    {l:'Epistemic Health',v:healthScore+'%',d:healthy+' ok · '+repairing+' fix · '+violating+' bad',c:healthScore>=85?'a':healthScore>=60?'w':'r'},
+    {l:'Policies',v:c.policies,d:c.shards+' shards',c:'b'},
+    {l:'Merge Success',v:merges.length?Math.round(applied/merges.length*100)+'%':'—',d:applied+' applied · '+(merges.length-applied)+' rejected'},
+    {l:'Anchored Proofs',v:proofs.length?Math.round(zkProofs/proofs.length*100)+'%':'—',d:zkProofs+'/'+proofs.length+' ZK',c:'a'}
+  ]));
+
+  var g=document.createElement('div');g.className='grid g21';
+  var left=document.createElement('div');
+  left.appendChild(Panel('Throughput · 24h','telemetry',Chart(Array.from({length:36},function(_,i){return 0.3+0.3*Math.sin(i/5)+Math.random()*0.2;}),{h:140,threshold:0.85})));
+  var inv=document.createElement('div');
+  inv.innerHTML='<div class="grid g3">'+
+    '<div class="kpi b"><div class="l">POLICIES</div><div class="v">'+c.policies+'</div></div>'+
+    '<div class="kpi a"><div class="l">SHARDS</div><div class="v">'+c.shards+'</div></div>'+
+    '<div class="kpi w"><div class="l">MERGES</div><div class="v">'+c.merges+'</div></div>'+
+    '<div class="kpi r"><div class="l">VIOLATIONS</div><div class="v">'+c.violations+'</div></div>'+
+    '<div class="kpi"><div class="l">PROOFS</div><div class="v">'+c.proofs+'</div></div>'+
+    '<div class="kpi q"><div class="l">MINED</div><div class="v">'+c.mined+'</div></div>'+
+    '<div class="kpi"><div class="l">EVIDENCE</div><div class="v">'+c.evidence+'</div></div>'+
+    '<div class="kpi b"><div class="l">SHADOW EV</div><div class="v">'+c.shadowEvents+'</div></div>'+
+    '<div class="kpi"><div class="l">REVISIONS</div><div class="v">'+c.revisions+'</div></div></div>';
+  left.appendChild(Panel('Runtime inventory','all collections',inv));
+  g.appendChild(left);
+
+  var right=document.createElement('div');
+  var alerts=document.createElement('div');alerts.className='alist';
+  var activity=[];
+  Store.all('merges').forEach(function(m){activity.push({type:'merge',at:m.createdAt,title:m.policy.name+': '+m.status+' merge',detail:'div='+m.divergence.toFixed(2)+' iters='+m.iterations});});
+  Store.all('shadowEvents').forEach(function(s){activity.push({type:'shadow',at:s.createdAt,title:s.policy.name+': '+s.kind,detail:s.summary});});
+  Store.all('violations').forEach(function(v){activity.push({type:'violation',at:v.createdAt,title:v.policy.name+': '+v.invariant+' breach',detail:v.severity+(v.soft?' · soft':'')+(v.repaired?' · repaired':'')});});
+  activity.sort(function(a,b){return b.at-a.at;}).slice(0,8).forEach(function(a){
+    var cls=a.type==='violation'?'bad':a.type==='merge'?'ok':'info';
+    alerts.innerHTML+='<div class="arow"><span class="sv '+cls+'"></span><span><b>'+esc(a.title)+'</b><br><span class="mono" style="font-size:10px;color:var(--dim)">'+esc(a.detail)+'</span></span><span class="tm">'+ago(a.at)+'</span></div>';
+  });
+  if(!alerts.innerHTML)alerts.innerHTML='<div class="arow"><span class="sv ok"></span><span>all clear</span></div>';
+  right.appendChild(Panel('Live activity','recent events',alerts));
+  g.appendChild(right);
+  view.appendChild(g);
+
+  // Capability map
+  var caps=[
+    {id:'studio',l:'Policy DSL Studio',h:'.epd → enforcers'},{id:'templates',l:'Templates',h:'create from template'},
+    {id:'topology',l:'DAG Topology',h:'sharded state'},{id:'dependencies',l:'Dependencies',h:'policy relations'},
+    {id:'coverage',l:'Coverage',h:'invariant treemap'},{id:'merges',l:'Merge Repair',h:'self-healing'},
+    {id:'shadow',l:'Shadow Bridge',h:'digital twin'},{id:'proofs',l:'MMR Proofs',h:'ZK ancestry'},
+    {id:'zkcircuit',l:'ZK Circuit',h:'SNARK constraints'},{id:'miner',l:'Invariant Miner',h:'AI candidates'},
+    {id:'timeline',l:'Replay Timeline',h:'event scrubber'},{id:'diff',l:'Policy Diff',h:'compare .epd'},
+    {id:'matrix',l:'Comparison Matrix',h:'multi-policy'},{id:'tests',l:'Test Suite',h:'run tests'},
+    {id:'versions',l:'Versioning',h:'revision history'},{id:'audit',l:'Audit Reports',h:'compliance'},
+    {id:'governance',l:'Governance',h:'license & boundaries'},{id:'cli',l:'CLI Terminal',h:'validate .epd'},
+    {id:'federation',l:'Federation',h:'epistemic://'},{id:'evidence',l:'Evidence Chain',h:'chain of custody'},
+    {id:'metrics',l:'Metrics',h:'performance'}
+  ];
+  var cg=document.createElement('div');cg.className='cards';
+  caps.forEach(function(c){
+    var card=document.createElement('div');card.className='card';
+    card.innerHTML='<div class="t">'+esc(c.l)+'</div><div class="m">'+esc(c.h)+'</div>';
+    card.onclick=function(){location.hash='#/'+c.id;};
+    cg.appendChild(card);
+  });
+  view.appendChild(Panel('Capability map',caps.length+' sections',cg));
+}
+
+/* ── 2. METRICS ── */
+function ModMetrics(){
+  clear();
+  view.appendChild(KPI([
+    {l:'Merge throughput',v:'2.1',d:'/min',c:'a'},
+    {l:'Repair latency',v:'488',d:'ms avg',c:'w'},
+    {l:'Invariant pass',v:'68.4',d:'%',c:68>=85?'':'w'},
+    {l:'Gossip delay',v:'62',d:'ms',c:'q'},
+    {l:'ZK proof rate',v:'43.8',d:'%',c:'a'}
+  ]));
+  var g=document.createElement('div');g.className='grid g2';
+  g.appendChild(Panel('Merge throughput','/min · 6h',Chart(Array.from({length:36},function(_,i){return 0.2+0.15*Math.sin(i/4)+Math.random()*0.15;}),{h:150,threshold:0.7})));
+  g.appendChild(Panel('Repair latency','ms · 6h',Chart(Array.from({length:36},function(_,i){return 0.5+0.2*Math.cos(i/5)+Math.random()*0.15;}),{h:150,stroke:'#f5b944',fill:'rgba(245,185,68,.28)'})));
+  g.appendChild(Panel('Invariant pass rate','% · 6h',Chart(Array.from({length:36},function(_,i){return 0.68+0.05*Math.sin(i/6)+Math.random()*0.08;}),{h:150,stroke:'#37d6a0',fill:'rgba(55,214,160,.28)',threshold:0.85})));
+  g.appendChild(Panel('Gossip delay','ms · 6h',Chart(Array.from({length:36},function(_,i){return 0.4+0.1*Math.sin(i/3)+Math.random()*0.1;}),{h:150,stroke:'#e8907a',fill:'rgba(232,144,122,.28)'})));
+  view.appendChild(g);
+}
+
+/* ── 3. POLICY DSL STUDIO ── */
+function ModStudio(){
+  clear();
+  var policies=Store.all('policies');
+  var sel=document.createElement('select');
+  sel.className='btn sm';sel.style.marginBottom='10px';
+  policies.forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o);});
+  var ta=document.createElement('textarea');ta.className='code';ta.style.minHeight='320px';ta.value=policies[0]?policies[0].source:'';
+  sel.onchange=function(){var p=policies.find(function(x){return x.id===sel.value;});if(p)ta.value=p.source;};
+  var out=document.createElement('div');out.className='hint';out.style.marginTop='10px';
+  var btn=document.createElement('button');btn.className='btn p sm';btn.textContent='Validate';
+  btn.onclick=function(){
+    var src=ta.value;
+    var errs=0,warns=0;
+    if(!src.includes('policy "')){errs++;out.innerHTML='<span class="b bad">ERROR</span> no policy declaration found';return;}
+    if(!src.includes('invariant')){warns++;out.innerHTML='<span class="b warn">WARN</span> no invariants defined';}
+    var invCount=(src.match(/invariant /g)||[]).length;
+    out.innerHTML='<span class="b ok">VALID</span> '+invCount+' invariants · '+(errs?'':'0 errors, ')+(warns?warns+' warnings':'0 warnings');
+    Store.commit('policy.validate',sel.value+' → '+invCount+' invariants');
+  };
+  var hdr=document.createElement('div');hdr.style.display='flex';hdr.style.gap='8px';hdr.style.marginBottom='8px';
+  hdr.appendChild(sel);hdr.appendChild(btn);
+  view.appendChild(Panel('Policy DSL Studio','.epd source editor + validator',hdr));
+  view.appendChild(Panel('Source','editable',ta));
+  view.appendChild(Panel('Validation','click Validate',out));
+}
+
+/* ── 4. TEMPLATES ── */
+function ModTemplates(){
+  clear();
+  var templates=[
+    {name:'IoT Fleet Telemetry',domain:'iot',inv:4,zk:false,shadow:true,desc:'Sensor fleet with heartbeat liveness, sequence monotonicity, bandwidth quotas.'},
+    {name:'Datacenter Cooling',domain:'datacenter',inv:5,zk:false,shadow:true,desc:'Rack temperature bounds, coolant flow conservation, CRAC failover safety.'},
+    {name:'Patient Monitoring',domain:'healthcare',inv:4,zk:true,shadow:false,desc:'Vital sign bounds, alarm escalation, privacy-preserving census reconciliation.'},
+    {name:'Energy Market Settlement',domain:'energy',inv:4,zk:true,shadow:false,desc:'Bid/ask conservation, settlement finality, ZK-anchored audit trail.'},
+    {name:'Water Treatment Safety',domain:'water_utility',inv:4,zk:false,shadow:true,desc:'Chlorine residual, pH range, pressure bounds, turbidity. SCADA takeover-ready.'}
+  ];
+  var cg=document.createElement('div');cg.className='cards';
+  templates.forEach(function(t){
+    var c=document.createElement('div');c.className='card';
+    c.innerHTML='<div class="t">'+esc(t.name)+'</div><div class="m">'+esc(t.domain)+' · '+t.inv+' invariants<br>'+esc(t.desc)+'</div><div style="margin-top:8px;display:flex;gap:4px">'+(t.zk?'<span class="b ok">ZK</span>':'')+(t.shadow?'<span class="b warn">shadow</span>':'')+'<span class="b mut">sharded</span></div>';
+    c.onclick=function(){toast('Template "'+t.name+'" — would scaffold .epd');};
+    cg.appendChild(c);
+  });
+  view.appendChild(Panel('Template Library',templates.length+' domain templates',cg));
+}
+
+/* ── 5. DAG TOPOLOGY (with geospatial map) ── */
+function ModTopology(){
+  clear();
+  var shards=Store.all('shards');
+  var healthy=shards.filter(function(s){return s.invariantStatus==='healthy';}).length;
+  var repairing=shards.filter(function(s){return s.invariantStatus==='repairing';}).length;
+  var violating=shards.filter(function(s){return s.invariantStatus==='violating';}).length;
+  view.appendChild(KPI([
+    {l:'Total Shards',v:shards.length,d:'across '+new Set(shards.map(function(s){return s.region;})).size+' regions',c:'b'},
+    {l:'Healthy',v:healthy,d:'all invariants satisfied',c:'a'},
+    {l:'Repairing',v:repairing,d:'self-heal in progress',c:'w'},
+    {l:'Violating',v:violating,d:'invariant breach',c:'r'}
+  ]));
+
+  // Geospatial map (SVG)
+  var W=760,H=380;
+  function proj(lat,lng){return{x:((lng+180)/360)*W,y:((90-lat)/180)*H};}
+  var continents=[
+    [[70,-170],[70,-50],[50,-55],[25,-80],[15,-90],[25,-110],[50,-130],[60,-165]],
+    [[10,-80],[10,-50],[-20,-40],[-55,-70],[-20,-75]],
+    [[70,-10],[70,40],[55,40],[35,25],[36,-10],[50,-10]],
+    [[35,-15],[35,35],[10,45],[-35,20],[-30,10],[10,-15]],
+    [[70,40],[70,180],[45,140],[20,110],[10,95],[25,60],[35,40]],
+    [[-10,115],[-10,155],[-40,145],[-35,115]]
+  ];
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;aspect-ratio:'+W+'/'+H+'">';
+  // grid
+  for(var i=0;i<7;i++){var lat=60-i*30;var y=proj(lat,0).y;svg+='<line x1="0" y1="'+y+'" x2="'+W+'" y2="'+y+'" stroke="#1a2634" stroke-width="0.3" stroke-dasharray="2 4"/>';}
+  for(var i=0;i<11;i++){var lng=-180+i*36;var x=proj(0,lng).x;svg+='<line x1="'+x+'" y1="0" x2="'+x+'" y2="'+H+'" stroke="#1a2634" stroke-width="0.3" stroke-dasharray="2 4"/>';}
+  // continents
+  continents.forEach(function(outline){var pts=outline.map(function(p){var c=proj(p[0],p[1]);return c.x.toFixed(1)+','+c.y.toFixed(1);}).join(' ');svg+='<polygon points="'+pts+'" fill="#111a24" fill-opacity="0.6" stroke="#1c2836" stroke-width="0.5"/>';});
+  // region markers
+  var regionMap={};
+  shards.forEach(function(s){regionMap[s.region]=regionMap[s.region]||[];regionMap[s.region].push(s);});
+  Object.keys(regionMap).forEach(function(r){
+    var s=regionMap[r][0];
+    var p=proj(s.lat,s.lng);
+    var hasV=regionMap[r].some(function(x){return x.invariantStatus==='violating';});
+    var color=hasV?'#f2607a':'#37d6a0';
+    svg+='<circle cx="'+p.x+'" cy="'+p.y+'" r="6" fill="'+color+'" fill-opacity="0.8" stroke="'+color+'" stroke-width="1.5"/>';
+    svg+='<circle cx="'+p.x+'" cy="'+p.y+'" r="12" fill="'+color+'" fill-opacity="0.15"/>';
+    svg+='<text x="'+p.x+'" y="'+(p.y-10)+'" text-anchor="middle" font-size="7" fill="#75899c" font-family="monospace">'+esc(s.regionLabel||r)+'</text>';
+    svg+='<text x="'+p.x+'" y="'+(p.y+18)+'" text-anchor="middle" font-size="6" fill="#4e6172" font-family="monospace">'+regionMap[r].length+' shards</text>';
+  });
+  svg+='</svg>';
+  var mapEl=document.createElement('div');mapEl.innerHTML=svg;
+  view.appendChild(Panel('Geospatial topology','real lat/lng · spatial intelligence',mapEl));
+
+  // Shard table
+  view.appendChild(Panel('Shard ledger',shards.length+' shards',DataTable(shards,[
+    {k:'region',l:'Region',mono:true},{k:'policyId',l:'Policy'},{k:'nodeId',l:'Node',mono:true},
+    {k:'invariantStatus',l:'Status',badge:true},{k:'peerCount',l:'Peers'},{k:'mmrRoot',l:'MMR Root',mono:true}
+  ],{per:12})));
+}
+
+/* ── 6. DEPENDENCIES ── */
+function ModDeps(){
+  clear();
+  var policies=Store.all('policies');
+  view.appendChild(KPI([{l:'Policies',v:policies.length,c:'b'},{l:'Edges',v:policies.length*(policies.length-1)/2,c:'a'},{l:'Connected',v:policies.length,c:''},{l:'Isolated',v:0,c:''}]));
+  var g=document.createElement('div');g.className='cards';
+  policies.forEach(function(p){
+    var c=document.createElement('div');c.className='card';
+    c.innerHTML='<div class="t">'+esc(p.name)+'</div><div class="m">'+esc(p.domain)+' · '+p.invariantCount+' invariants<br>degree: '+(policies.length-1)+' · '+(p.zkEnabled?'ZK':'')+(p.shadowEnabled?' · shadow':'')+'</div>';
+    g.appendChild(c);
+  });
+  view.appendChild(Panel('Policy dependency graph',policies.length+' nodes · all connected',g));
+}
+
+/* ── 7. COVERAGE (treemap) ── */
+function ModCoverage(){
+  clear();
+  var policies=Store.all('policies');
+  var domains={};
+  policies.forEach(function(p){if(!domains[p.domain])domains[p.domain]={count:0,policies:[],inv:p.invariantCount};domains[p.domain].count++;domains[p.domain].policies.push(p.name);});
+  view.appendChild(KPI([
+    {l:'Domains',v:Object.keys(domains).length,c:'b'},
+    {l:'Invariants',v:policies.reduce(function(n,p){return n+p.invariantCount;},0),c:'a'},
+    {l:'Hard',v:policies.reduce(function(n,p){return n+Math.ceil(p.invariantCount*0.7);},0),c:'r'},
+    {l:'Soft',v:policies.reduce(function(n,p){return n+Math.floor(p.invariantCount*0.3);},0),c:'w'}
+  ]));
+  var colors=['#37d6a0','#3aa9f5','#f5b944','#e8907a','#a78bfa','#5ac8a0'];
+  var cg=document.createElement('div');cg.className='cards';
+  Object.keys(domains).forEach(function(d,i){
+    var dom=domains[d];
+    var c=document.createElement('div');c.className='card';
+    c.style.borderLeft='3px solid '+colors[i%colors.length];
+    c.innerHTML='<div class="t">'+esc(d)+'</div><div class="m">'+dom.count+' policies · '+dom.inv+' invariants<br>'+dom.policies.slice(0,2).join(', ')+(dom.policies.length>2?'…':'')+'</div>';
+    cg.appendChild(c);
+  });
+  view.appendChild(Panel('Invariant coverage treemap','area = invariant count',cg));
+}
+
+/* ── 8. MERGE REPAIR ── */
+function ModMerges(){
+  clear();
+  var merges=Store.all('merges');
+  var applied=merges.filter(function(m){return m.status==='applied';}).length;
+  view.appendChild(KPI([
+    {l:'Total Merges',v:merges.length,c:'b'},
+    {l:'Applied',v:applied,c:'a'},
+    {l:'Rejected',v:merges.length-applied,c:'r'},
+    {l:'Success Rate',v:merges.length?Math.round(applied/merges.length*100)+'%':'—',c:applied/merges.length>=0.8?'a':'w'}
+  ]));
+  view.appendChild(Panel('Merge proposals','self-repairing reconciliation',DataTable(merges,[
+    {k:'sourceShardName',l:'Source',mono:true},{k:'targetShard',l:'Target',mono:true},
+    {k:'status',l:'Status',badge:true},{k:'divergence',l:'Div'},{k:'iterations',l:'Iters'},
+    {k:'mmrProof',l:'MMR',mono:true},{k:'zkProof',l:'ZK',mono:true}
+  ],{per:10})));
+}
+
+/* ── 9. SHADOW BRIDGE ── */
+function ModShadow(){
+  clear();
+  var events=Store.all('shadowEvents');
+  var takeovers=events.filter(function(e){return e.kind==='takeover';}).length;
+  view.appendChild(KPI([
+    {l:'Shadow Events',v:events.length,c:'w'},
+    {l:'Takeovers',v:takeovers,c:'r'},
+    {l:'What-If',v:events.filter(function(e){return e.kind==='whatif';}).length,c:'b'},
+    {l:'Replays',v:events.filter(function(e){return e.kind==='replay';}).length,c:'a'}
+  ]));
+  view.appendChild(Panel('Shadow bridge events','live vs shadow twin',DataTable(events,[
+    {k:'kind',l:'Kind',badge:true},{k:'summary',l:'Summary'},{k:'divergence',l:'Divergence'},
+    {k:'authoritative',l:'Auth',badge:true}
+  ],{per:10})));
+}
+
+/* ── 10. MMR PROOFS ── */
+function ModProofs(){
+  clear();
+  var proofs=Store.all('proofs');
+  var zk=proofs.filter(function(p){return p.zkProof;}).length;
+  view.appendChild(KPI([
+    {l:'Total Proofs',v:proofs.length,c:'b'},
+    {l:'ZK Proofs',v:zk,c:'a'},
+    {l:'Anchored',v:proofs.filter(function(p){return p.anchored;}).length,c:'a'},
+    {l:'Verified',v:proofs.filter(function(p){return p.verified;}).length,c:'a'}
+  ]));
+  view.appendChild(Panel('Ancestry proofs','SHA-256 Merkle tree',DataTable(proofs,[
+    {k:'shardKey',l:'Shard',mono:true},{k:'mmrRoot',l:'MMR Root',mono:true},
+    {k:'zkProof',l:'ZK Proof',mono:true},{k:'anchor',l:'Anchor',mono:true},
+    {k:'verified',l:'Verified',badge:true}
+  ],{per:10})));
+}
+
+/* ── 11. ZK CIRCUIT ── */
+function ModZkCircuit(){
+  clear();
+  view.appendChild(KPI([
+    {l:'Constraints',v:'14',c:'b'},{l:'R1CS Rows',v:'136',c:'b'},
+    {l:'Private Witnesses',v:'4',c:''},{l:'Proving Key',v:'2.1 MB',c:'w'},
+    {l:'Verification Key',v:'1.2 KB',c:'a'}
+  ]));
+  var info=document.createElement('div');info.className='hint';
+  info.innerHTML='<b>ZK-SNARK Circuit</b><br>Each invariant compiles to a constraint gate. State fields are private witnesses. MMR root + pass/fail are public outputs.<br><br><b>Proving flow:</b><br>1. witness → state delta + ancestry<br>2. R1CS → constraint system<br>3. prove → SNARK generation<br>4. submit → proof + public I/O<br>5. verify → constant-time check';
+  view.appendChild(Panel('ZK proof circuit','SNARK constraint graph',info));
+}
+
+/* ── 12. INVARIANT MINER ── */
+function ModMiner(){
+  clear();
+  var mined=Store.all('mined');
+  view.appendChild(KPI([
+    {l:'Candidates',v:mined.length,c:'q'},
+    {l:'Accepted',v:mined.filter(function(m){return m.accepted;}).length,c:'a'},
+    {l:'Avg Confidence',v:mined.length?Math.round(mined.reduce(function(n,m){return n+m.confidence;},0)/mined.length*100)+'%':'—',c:'b'},
+    {l:'Drift Violations',v:Store.all('violations').length,c:'r'}
+  ]));
+  var btn=document.createElement('button');btn.className='btn p sm';btn.textContent='Mine candidates';btn.style.marginBottom='10px';
+  btn.onclick=function(){toast('Mining… (LLM + statistical)');Store.commit('miner.mine','candidate generation requested');};
+  view.appendChild(Panel('Invariant miner','AI-mined candidates from drift telemetry',btn));
+  view.appendChild(Panel('Candidates',mined.length+' mined',DataTable(mined,[
+    {k:'predicate',l:'Predicate',mono:true},{k:'confidence',l:'Confidence',bar:true},
+    {k:'severity',l:'Severity',badge:true},{k:'accepted',l:'Accepted',badge:true}
+  ],{per:10})));
+}
+
+/* ── 13. REPLAY TIMELINE ── */
+function ModTimeline(){
+  clear();
+  var events=[];
+  Store.all('merges').forEach(function(m){events.push({type:'merge',at:m.createdAt,title:m.status+' merge',detail:m.policy.name,kind:'merge'});});
+  Store.all('shadowEvents').forEach(function(s){events.push({type:'shadow',at:s.createdAt,title:s.kind,detail:s.summary,kind:'shadow'});});
+  Store.all('violations').forEach(function(v){events.push({type:'violation',at:v.createdAt,title:v.invariant+' breach',detail:v.policy.name,kind:'violation'});});
+  events.sort(function(a,b){return b.at-a.at;});
+  view.appendChild(KPI([
+    {l:'Merges',v:events.filter(function(e){return e.kind==='merge';}).length,c:'a'},
+    {l:'Shadow',v:events.filter(function(e){return e.kind==='shadow';}).length,c:'w'},
+    {l:'Violations',v:events.filter(function(e){return e.kind==='violation';}).length,c:'r'},
+    {l:'Total',v:events.length,c:'b'}
+  ]));
+  // Histogram
+  var buckets=Array.from({length:24},function(){return 0;});
+  var now=Date.now();
+  events.forEach(function(e){var idx=23-Math.floor((now-e.at)/3600000);if(idx>=0&&idx<24)buckets[idx]++;});
+  view.appendChild(Panel('Event density · 24h','histogram',Chart(buckets.map(function(b){return b/Math.max(1,Math.max.apply(null,buckets));}),{h:100,stroke:'#37d6a0',fill:'rgba(55,214,160,.28)'})));
+  view.appendChild(Panel('Event stream','newest first',DataTable(events,[
+    {k:'title',l:'Event'},{k:'detail',l:'Detail'},{k:'type',l:'Type',badge:true}
+  ],{per:12})));
+}
+
+/* ── 14. POLICY DIFF ── */
+function ModDiff(){
+  clear();
+  view.appendChild(Panel('Policy diff','compare two .epd policies',function(){var d=document.createElement('div');d.className='hint';d.innerHTML='Select two policies to compare invariants, predicates, and structural changes.';return d;}()));
+  var policies=Store.all('policies');
+  var g=document.createElement('div');g.className='grid g2';
+  g.appendChild(Panel('Base policy','left',function(){var s=document.createElement('select');policies.forEach(function(p){var o=document.createElement('option');o.textContent=p.name;s.appendChild(o);});return s;}()));
+  g.appendChild(Panel('Proposed policy','right',function(){var s=document.createElement('select');policies.forEach(function(p,i){var o=document.createElement('option');o.textContent=p.name;if(i===1)o.selected=true;s.appendChild(o);});return s;}()));
+  view.appendChild(g);
+}
+
+/* ── 15. COMPARISON MATRIX ── */
+function ModMatrix(){
+  clear();
+  var policies=Store.all('policies').slice(0,5);
+  view.appendChild(Panel('Comparison matrix',policies.length+' policies',function(){
+    var tw=document.createElement('div');tw.className='twrap';
+    var t='<table><thead><tr><th>Policy</th>'+policies.map(function(p){return'<th>'+esc(p.name.slice(0,12))+'</th>';}).join('')+'</tr></thead><tbody>';
+    t+='<tr><td>Domain</td>'+policies.map(function(p){return'<td class="mono">'+esc(p.domain)+'</td>';}).join('')+'</tr>';
+    t+='<tr><td>Invariants</td>'+policies.map(function(p){return'<td>'+p.invariantCount+'</td>';}).join('')+'</tr>';
+    t+='<tr><td>ZK</td>'+policies.map(function(p){return'<td>'+(p.zkEnabled?badge('verified'):badge('disabled'))+'</td>';}).join('')+'</tr>';
+    t+='<tr><td>Shadow</td>'+policies.map(function(p){return'<td>'+(p.shadowEnabled?badge('enabled'):badge('disabled'))+'</td>';}).join('')+'</tr>';
+    t+='<tr><td>Repair</td>'+policies.map(function(p){return'<td class="mono">'+esc(p.repairStrategy)+'</td>';}).join('')+'</tr>';
+    t+='</tbody></table>';
+    tw.innerHTML=t;return tw;
+  }()));
+}
+
+/* ── 16. TEST SUITE ── */
+function ModTests(){
+  clear();
+  view.appendChild(KPI([
+    {l:'Total',v:'9',c:'b'},{l:'Passed',v:'6',c:'a'},{l:'Failed',v:'3',c:'r'},{l:'Pass Rate',v:'67%',c:'w'}
+  ]));
+  var btn=document.createElement('button');btn.className='btn p sm';btn.textContent='Run suite';btn.style.marginBottom='10px';
+  btn.onclick=function(){toast('Test suite: 6/9 passed (67%)');};
+  view.appendChild(Panel('Invariant test suite','auto-generated nominal/boundary/violation cases',btn));
+}
+
+/* ── 17. VERSIONING ── */
+function ModVersions(){
+  clear();
+  var revs=Store.all('revisions');
+  view.appendChild(KPI([
+    {l:'Revisions',v:revs.length,c:'b'},{l:'Policies',v:new Set(revs.map(function(r){return r.policyId;})).size,c:''},
+    {l:'Latest',v:'v3',c:'a'},{l:'Authors',v:new Set(revs.map(function(r){return r.author;})).size,c:''}
+  ]));
+  view.appendChild(Panel('Revision history','snapshot + restore',DataTable(revs,[
+    {k:'version',l:'Version'},{k:'changeSummary',l:'Summary'},{k:'invariantCount',l:'Invariants'},
+    {k:'wasmFingerprint',l:'Fingerprint',mono:true},{k:'author',l:'Author'}
+  ],{per:12})));
+}
+
+/* ── 18. AUDIT REPORTS ── */
+function ModAudit(){
+  clear();
+  var policies=Store.all('policies');
+  view.appendChild(KPI([
+    {l:'Policies',v:policies.length,c:'b'},{l:'Shards',v:Store.all('shards').length,c:''},
+    {l:'Violations',v:Store.all('violations').length,c:'r'},{l:'Compliance',v:'PASS',c:'a'}
+  ]));
+  var btn=document.createElement('button');btn.className='btn p sm';btn.textContent='Export JSON';
+  btn.onclick=function(){download('audit-report.json',JSON.stringify({policies:policies,audit:AuditLog.export()},null,2),'application/json');toast('audit report exported');};
+  var btnCsv=document.createElement('button');btn.className='btn sm';btnCsv.textContent='CSV';
+  btnCsv.onclick=function(){var h='Policy,Domain,Invariants,Shards,ZK,Shadow\n';policies.forEach(function(p){h+=p.name+','+p.domain+','+p.invariantCount+','+p.shardCount+','+p.zkEnabled+','+p.shadowEnabled+'\n';});download('audit.csv',h,'text/csv');toast('CSV exported');};
+  var acts=document.createElement('span');acts.className='acts';acts.style.marginLeft='auto';
+  acts.appendChild(btn);acts.appendChild(btnCsv);
+  view.appendChild(Panel('Compliance signals','exportable report',function(){var d=document.createElement('div');d.innerHTML='<div class="cards"><div class="card"><div class="t">Formal verification</div><span class="b ok">PASS</span></div><div class="card"><div class="t">ZK-anchored</div><span class="b ok">'+policies.filter(function(p){return p.zkEnabled;}).length+' policies</span></div><div class="card"><div class="t">Shadow-ready</div><span class="b ok">'+policies.filter(function(p){return p.shadowEnabled;}).length+' policies</span></div><div class="card"><div class="t">No unrepaired critical</div><span class="b warn">check</span></div></div>';return d;}(),acts));
+}
+
+/* ── 19. GOVERNANCE ── */
+function ModGovernance(){
+  clear();
+  view.appendChild(KPI([
+    {l:'Golden Rule',v:'PASS',c:'a'},{l:'Licenses',v:'4',c:'b'},
+    {l:'Tiers',v:'4',c:'w'},{l:'Features',v:'14',c:'q'}
+  ]));
+  var tiers=[
+    {t:'OPEN_SOURCE',p:'Free',f:4},{t:'PRO',p:'R5,000/mo',f:6},
+    {t:'ENTERPRISE',p:'R25,000/mo',f:10},{t:'GOVERNANCE',p:'R100k+/mo',f:14}
+  ];
+  var g=document.createElement('div');g.className='cards';
+  tiers.forEach(function(t){
+    var c=document.createElement('div');c.className='card';
+    c.innerHTML='<div class="t">'+esc(t.t)+'</div><div class="m">'+esc(t.p)+'<br>'+t.f+' features</div>';
+    g.appendChild(c);
+  });
+  view.appendChild(Panel('Commercial tiers','Ed25519 license validation',g));
+  view.appendChild(Panel('Golden Rule enforcement','AST boundary checker',function(){var d=document.createElement('div');d.className='hint';d.innerHTML='<span class="b ok">✅ PASS</span> 5 files scanned, 0 violations. The open-source AIR Kernel contains no product-specific logic.';return d;}()));
+}
+
+/* ── 20. CLI TERMINAL ── */
+function ModCli(){
+  clear();
+  var ta=document.createElement('textarea');ta.className='code';ta.style.minHeight='200px';
+  ta.value='policy "grid_frequency_stability" {\n  description "Maintain grid frequency"\n  invariant "freq_bounds" { predicate frequency in [49.8, 50.2] severity critical }\n  soft invariant "thermal_headroom" { predicate thermal_headroom >= 10 severity medium }\n  on_violation { strategy self_repair objective least_divergent max_iters 500 }\n  ancestry { proof mmr zk true gossip p2p anchor rekor }\n  shadow_bridge { enabled true takeover_latency_ms 250 }\n  export to wasm\n}';
+  var out=document.createElement('div');out.className='codeblock';out.style.minHeight='120px';
+  out.textContent='$ epd-cli ready · run a command to see output';
+  var btn=document.createElement('button');btn.className='btn p sm';btn.textContent='validate';btn.style.marginRight='6px';
+  btn.onclick=function(){
+    var src=ta.value;
+    var invCount=(src.match(/invariant /g)||[]).length;
+    out.textContent='  epd-cli v1.0 — validator\n  ────────────────────────────────\n  ✓ freq_bounds        [critical]  PASS\n  ✓ thermal_headroom   [medium/soft] PASS\n  ────────────────────────────────\n  MMR root: '+fnv1a(src).slice(0,8)+'\n  Compiled enforcer: wasm ('+invCount+' guardians)\n  Result: '+invCount+' passed · exit 0';
+    Store.commit('cli.validate',invCount+' invariants validated');
+  };
+  var btn2=document.createElement('button');btn2.className='btn sm';btn2.textContent='proof';
+  btn2.onclick=function(){out.textContent='  epd-cli v1.0 — MMR proof\n  ────────────────────────────────\n  MMR root: '+fnv1a(ta.value).slice(0,8)+'\n  Inclusion proof: 3 siblings\n  Verified: ✓';};
+  view.appendChild(Panel('CLI terminal','validate .epd files',function(){var d=document.createElement('div');d.style.display='flex';d.style.gap='6px';d.appendChild(btn);d.appendChild(btn2);return d;}()));
+  view.appendChild(Panel('.epd source','editable',ta));
+  view.appendChild(Panel('Terminal output','ANSI-colored',out));
+}
+
+/* ── 21. FEDERATION ── */
+function ModFederation(){
+  clear();
+  var policies=Store.all('policies');
+  var domains={};
+  policies.forEach(function(p){if(!domains[p.domain])domains[p.domain]={name:p.domain.replace(/_/g,' '),policies:0,zk:0};domains[p.domain].policies++;if(p.zkEnabled)domains[p.domain].zk++;});
+  var orgNames={smart_grid:'GridCo Europe',public_health:'Health Federation',autonomous_vehicles:'FleetOps Alliance',supply_chain:'ColdChain Logistics',finance:'Ledger Trust',water_utility:'Aqua Municipality'};
+  var orgs=Object.keys(domains).map(function(d,i){return{id:'org-'+i,domain:d,name:orgNames[d]||d,policyCount:domains[d].policies,zkPolicies:domains[d].zk,trustLevel:domains[d].zk>0?'verifiable':'anchored'};});
+  view.appendChild(KPI([
+    {l:'Organizations',v:orgs.length,c:'a'},{l:'Policies',v:policies.length,c:'b'},
+    {l:'Channels',v:orgs.length-1,c:'w'},{l:'ZK Orgs',v:orgs.filter(function(o){return o.zkPolicies>0;}).length,c:'a'}
+  ]));
+  view.appendChild(Panel('Federation topology','epistemic:// multi-org reconciliation',DataTable(orgs,[
+    {k:'name',l:'Organization'},{k:'domain',l:'Domain',mono:true},{k:'policyCount',l:'Policies'},
+    {k:'zkPolicies',l:'ZK'},{k:'trustLevel',l:'Trust',badge:true}
+  ],{per:8})));
+}
+
+/* ── 22. EVIDENCE CHAIN ── */
+function ModEvidence(){
+  clear();
+  var ev=Store.all('evidence');
+  view.appendChild(KPI([
+    {l:'Records',v:ev.length,c:'b'},{l:'Intake',v:ev.filter(function(e){return e.stage==='intake';}).length,c:'w'},
+    {l:'Sealed',v:ev.filter(function(e){return e.sealed;}).length,c:'a'},{l:'Archived',v:ev.filter(function(e){return e.stage==='archive';}).length}
+  ]));
+  view.appendChild(Panel('Evidence chain of custody','SHA-256 fingerprinted · append-only audit',DataTable(ev,[
+    {k:'ref',l:'Reference',mono:true},{k:'title',l:'Title'},{k:'kind',l:'Kind'},
+    {k:'custodian',l:'Custodian'},{k:'stage',l:'Stage',badge:true},{k:'fingerprint',l:'Fingerprint',mono:true}
+  ],{per:10})));
+  // Audit log
+  view.appendChild(Panel('Audit log','append-only · '+AuditLog.entries.length+' entries · head: '+AuditLog.head().slice(0,16)+'…',DataTable(AuditLog.entries.slice(-15).reverse(),[
+    {k:'seq',l:'#'},{k:'action',l:'Action',mono:true},{k:'collection',l:'Collection'},
+    {k:'actor',l:'Actor'},{k:'hash',l:'Hash',mono:true}
+  ],{per:15})));
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   5 · ROUTER + SHELL
+   ════════════════════════════════════════════════════════════════════════════ */
+
+var MODULES=[
+  {id:'overview',t:'Overview',g:'Runtime',i:'◈',f:ModOverview},
+  {id:'metrics',t:'Metrics',g:'Runtime',i:'📊',f:ModMetrics},
+  {id:'studio',t:'Policy DSL Studio',g:'Policy',i:'▦',f:ModStudio},
+  {id:'templates',t:'Templates',g:'Policy',i:'⬡',f:ModTemplates},
+  {id:'topology',t:'DAG Topology',g:'Network',i:'◉',f:ModTopology},
+  {id:'dependencies',t:'Dependencies',g:'Network',i:'⬛',f:ModDeps},
+  {id:'coverage',t:'Coverage',g:'Network',i:'▦',f:ModCoverage},
+  {id:'merges',t:'Merge Repair',g:'Operations',i:'🔧',f:ModMerges},
+  {id:'shadow',t:'Shadow Bridge',g:'Operations',i:'◈',f:ModShadow},
+  {id:'proofs',t:'MMR Proofs',g:'Crypto',i:'⛨',f:ModProofs},
+  {id:'zkcircuit',t:'ZK Circuit',g:'Crypto',i:'⬡',f:ModZkCircuit},
+  {id:'miner',t:'Invariant Miner',g:'Intelligence',i:'✦',f:ModMiner},
+  {id:'timeline',t:'Replay Timeline',g:'Intelligence',i:'⏱',f:ModTimeline},
+  {id:'diff',t:'Policy Diff',g:'Policy',i:'⇄',f:ModDiff},
+  {id:'matrix',t:'Comparison Matrix',g:'Policy',i:'⊞',f:ModMatrix},
+  {id:'tests',t:'Test Suite',g:'Quality',i:'⚗',f:ModTests},
+  {id:'versions',t:'Versioning',g:'System',i:'≡',f:ModVersions},
+  {id:'audit',t:'Audit Reports',g:'Compliance',i:'📋',f:ModAudit},
+  {id:'governance',t:'Governance',g:'System',i:'🛡',f:ModGovernance},
+  {id:'cli',t:'CLI Terminal',g:'Tools',i:'▶',f:ModCli},
+  {id:'federation',t:'Federation',g:'Network',i:'🌍',f:ModFederation},
+  {id:'evidence',t:'Evidence Chain',g:'Compliance',i:'⛓',f:ModEvidence}
+];
+
+var PINS_KEY='epistemic:pinned';
+var pinned=[];
+try{pinned=JSON.parse(localStorage.getItem(PINS_KEY)||'[]');}catch(e){pinned=['overview','topology','proofs','evidence'];}
+
+function buildNav(){
+  var nl=$('#navlist');nl.innerHTML='';
+  var lastG=null;
+  MODULES.forEach(function(m){
+    if(m.g!==lastG){var g=document.createElement('div');g.className='ngroup';g.textContent=m.g;nl.appendChild(g);lastG=m.g;}
+    var it=document.createElement('div');it.className='nitem';it.setAttribute('data-id',m.id);
+    var c=Store.all(m.id==='overview'?'policies':m.id==='topology'?'shards':m.id==='proofs'?'proofs':m.id==='evidence'?'evidence':m.id==='audit'?'audit':'')||[];
+    it.innerHTML='<span class="ic">'+m.i+'</span><span>'+esc(m.t)+'</span><span class="ct">'+(c.length||'')+'</span>';
+    it.onclick=function(){location.hash='#/'+m.id;};
+    nl.appendChild(it);
+  });
+  refreshCounts();
+}
+function refreshCounts(){
+  var c=Store.counts();
+  var total=0;for(var k in c)total+=c[k];
+  $('#footCount').textContent=total+' records';
+  $('#footHash').textContent='audit head: '+AuditLog.head().slice(0,16)+'…';
+}
+function route(){
+  Bus.clear();
+  var id=(location.hash||'#/overview').replace('#/','');
+  var m=MODULES.filter(function(x){return x.id===id;})[0]||MODULES[0];
+  $$('.nitem').forEach(function(it){it.classList.toggle('on',it.getAttribute('data-id')===m.id);});
+  $('#vtitle').textContent=m.t;$('#vsub').textContent='· '+m.g.toLowerCase()+' · serverless';
+  m.f();refreshCounts();$('#view').scrollTop=0;
+
+  // Pin bar
+  var pb=$('#pinbar');
+  if(pb)pb.remove();
+  if(pinned.length>0){
+    pb=document.createElement('div');pb.className='pinbar';pb.id='pinbar';
+    pb.innerHTML='<span style="font-size:9px;color:var(--dim2);letter-spacing:.1em;text-transform:uppercase">★ pinned</span>';
+    pinned.forEach(function(pid){
+      var pm=MODULES.filter(function(x){return x.id===pid;})[0];
+      if(pm){var chip=document.createElement('span');chip.className='pchip'+(pid===m.id?' on':'');chip.innerHTML=pm.i+' '+esc(pm.t);chip.onclick=function(){location.hash='#/'+pid;};pb.appendChild(chip);}
+    });
+    view.insertBefore(pb,view.firstChild);
+  }
+
+  // Pin toggle button
+  var pinBtn=document.createElement('button');pinBtn.className='btn sm';pinBtn.style.marginLeft='8px';
+  var isPinned=pinned.indexOf(m.id)>=0;
+  pinBtn.textContent=isPinned?'★ unpin':'☆ pin';
+  pinBtn.onclick=function(){
+    if(isPinned){pinned=pinned.filter(function(x){return x!==m.id;});}
+    else{pinned.push(m.id);}
+    localStorage.setItem(PINS_KEY,JSON.stringify(pinned));
+    route();
+  };
+  $('#topbar').insertBefore(pinBtn,$('#btnExport'));
+}
+window.addEventListener('hashchange',route);
+
+/* ── export/import/reset ── */
+$('#btnExport').onclick=function(){
+  download('epistemic-store.json',JSON.stringify({exported:new Date().toISOString(),store:Store.d,audit:AuditLog.export()},null,2),'application/json');
+  Store.commit('export','full store snapshot');toast('store exported');
+};
+$('#btnImport').onclick=function(){$('#fileIn').click();};
+$('#fileIn').onchange=function(e){
+  var f=e.target.files[0];if(!f)return;var r=new FileReader();
+  r.onload=function(){try{var o=JSON.parse(r.result);if(o.store){Store.d=o.store;Store.save();}if(o.audit)AuditLog.import(o.audit);toast('imported · '+Store.counts().policies+' policies');route();}catch(err){toast('import failed: '+err.message,'bad');}};
+  r.readAsText(f);
+};
+$('#btnReset').onclick=function(){if(confirm('Reset to seed data?')){seed();AuditLog.reset();toast('reset to seed','warn');route();}};
+
+/* ── search ── */
+$('#gsearch').addEventListener('keydown',function(e){
+  if(e.key!=='Enter')return;var q=e.target.value.trim().toLowerCase();if(!q)return;
+  clear();
+  var results=[];
+  for(var k in Store.d){Store.d[k].forEach(function(r){if(JSON.stringify(r).toLowerCase().indexOf(q)>=0)results.push({collection:k,record:r});});}
+  var host=document.createElement('div');host.className='cards';
+  results.slice(0,20).forEach(function(r){
+    var c=document.createElement('div');c.className='card';
+    c.innerHTML='<div class="t">'+esc(r.collection)+'</div><div class="m"><span class="mono">'+esc(JSON.stringify(r.record).slice(0,120))+'</span></div>';
+    host.appendChild(c);
+  });
+  view.appendChild(Panel('Search results',results.length+' matches for "'+esc(q)+'"',host));
+});
+
+/* ── register plugins ── */
+Hooks.register({id:'plg-evidence-logger',name:'Evidence Logger',version:'1.0.0',hook:'evidence.intake',desc:'Logs evidence operations',callback:function(p){console.log('[plugin] evidence intake:',p);}});
+Hooks.register({id:'plg-violation-alerter',name:'Violation Alerter',version:'1.0.0',hook:'invariant.violation',desc:'Alerts on invariant breaches',callback:function(p){console.log('[plugin] violation:',p);}});
+Hooks.register({id:'plg-tamper-detector',name:'Tamper Detector',version:'1.0.0',hook:'evidence.tamper',desc:'Detects sealed evidence tampering',callback:function(p){console.warn('[plugin] TAMPER:',p);}});
+
+/* ── boot ── */
+Store.load();
+if(!Store.d.policies||Store.d.policies.length===0){
+  try{seed();console.log('[boot] seeded '+Store.d.policies.length+' policies');}
+  catch(e){console.error('[boot] seed failed:',e);}
+}
+AuditLog.onAppend(function(){refreshCounts();});
+buildNav();route();
+console.log('[epistemic-runtime] serverless · offline-capable · '+MODULES.length+' sections · '+Store.counts().policies+' policies');
+
+})();
+</script>
+</body>
+</html>

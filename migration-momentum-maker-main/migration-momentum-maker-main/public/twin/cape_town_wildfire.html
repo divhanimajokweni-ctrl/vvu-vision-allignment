@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Municipal Twin — Cape Town Wildfire</title>
+    <style>
+      :root {
+        --bg: #07090d;
+        --panel: rgba(10, 14, 20, 0.92);
+        --line: rgba(127, 149, 165, 0.22);
+        --ink: #d8e0e8;
+        --dim: #7f95a5;
+        --amber: #f2b84b;
+        --ember: #ff8a3d;
+        --red: #e5484d;
+        --teal: #2ea8a0;
+        --lime: #c8ff00;
+        --green: #7a8a6e;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          10px/1.45 "SF Mono",
+          Menlo,
+          Consolas,
+          monospace;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      header#hud-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        z-index: 3;
+      }
+      .hud-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+        color: #fff;
+        white-space: nowrap;
+      }
+      .hud-title small {
+        display: block;
+        font-weight: 400;
+        font-size: 8px;
+        letter-spacing: 1.2px;
+        color: var(--dim);
+      }
+      #fsm-chips {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        cursor: pointer;
+        user-select: none;
+        padding: 4px 8px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        font-size: 8.5px;
+        letter-spacing: 1.2px;
+        color: var(--dim);
+        background: rgba(255, 255, 255, 0.02);
+        transition: all 0.15s;
+      }
+      .chip:hover {
+        border-color: var(--dim);
+      }
+      .chip[aria-current="true"] {
+        color: #000;
+        font-weight: 700;
+      }
+      .chip.legal {
+        outline: 1px dashed rgba(242, 184, 75, 0.5);
+        outline-offset: 1px;
+      }
+      .chip.deny {
+        color: var(--red);
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+      .hud-right {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .hud-honesty {
+        font-size: 8px;
+        letter-spacing: 1.4px;
+        color: var(--amber);
+        border: 1px solid rgba(242, 184, 75, 0.4);
+        padding: 3px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+      #hud-mid {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+        position: relative;
+      }
+      nav#hud-left {
+        width: 148px;
+        flex: none;
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-y: auto;
+        z-index: 2;
+      }
+      .nav-cap {
+        font-size: 7.5px;
+        letter-spacing: 1.6px;
+        color: var(--dim);
+        margin: 6px 0 2px;
+      }
+      .lay {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 5px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .lay:hover {
+        border-color: var(--line);
+      }
+      .lay input {
+        display: none;
+      }
+      .lay .sw {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 1px solid var(--dim);
+        flex: none;
+      }
+      .lay.on .sw {
+        background: var(--amber);
+        border-color: var(--amber);
+        box-shadow: 0 0 6px rgba(242, 184, 75, 0.7);
+      }
+      .lay .nm {
+        font-size: 8.5px;
+        letter-spacing: 0.8px;
+        color: var(--ink);
+        flex: 1;
+      }
+      .lay .tag {
+        font-size: 6.5px;
+        letter-spacing: 0.6px;
+        color: var(--dim);
+        text-align: right;
+      }
+      .lay:not(.on) .nm {
+        color: var(--dim);
+      }
+      #legend {
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+        font-size: 7px;
+        color: var(--dim);
+        line-height: 1.8;
+      }
+      #legend b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      main#stage {
+        flex: 1;
+        position: relative;
+        min-width: 0;
+      }
+      canvas#iso {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      #clock {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        text-align: right;
+        font-size: 8px;
+        color: var(--dim);
+        letter-spacing: 1px;
+        line-height: 1.7;
+        z-index: 1;
+        text-shadow: 0 1px 2px #000;
+      }
+      #clock b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      #fsm-note {
+        position: absolute;
+        left: 10px;
+        top: 8px;
+        font-size: 8px;
+        color: var(--dim);
+        letter-spacing: 0.8px;
+        max-width: 46%;
+        z-index: 1;
+        text-shadow: 0 1px 2px #000;
+      }
+      footer#hud-bottom {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 6px 12px;
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+        z-index: 3;
+      }
+      .worm-label {
+        font-size: 8px;
+        letter-spacing: 1.8px;
+        color: var(--lime);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .worm-cell {
+        font-size: 8px;
+        letter-spacing: 1px;
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .worm-cell b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      .worm-cell .h {
+        color: var(--teal);
+      }
+      .worm-tier {
+        margin-left: auto;
+        font-size: 8px;
+        letter-spacing: 1.2px;
+        color: var(--amber);
+        border: 1px solid rgba(242, 184, 75, 0.4);
+        border-radius: 4px;
+        padding: 2px 6px;
+        white-space: nowrap;
+      }
+      #worm-last {
+        font-size: 8px;
+        color: var(--dim);
+        letter-spacing: 0.5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+        min-width: 120px;
+      }
+      @media (max-width: 720px) {
+        nav#hud-left {
+          width: 118px;
+          padding: 6px;
+        }
+        .hud-title small {
+          display: none;
+        }
+        .hud-honesty {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header id="hud-top">
+      <div class="hud-title">
+        MUNICIPAL TWIN — CAPE TOWN WILDFIRE<small
+          >WINTER POOLS · PENINSULA SCENARIO · SEED 20260921</small
+        >
+      </div>
+      <div id="fsm-chips" role="tablist" aria-label="Incident state machine"></div>
+      <div class="hud-right">
+        <span class="hud-honesty">SEED DATA · NOT LIVE</span>
+        <span class="hud-honesty" style="color: var(--dim); border-color: var(--line)"
+          >T2 · SEED_UNVERIFIED</span
+        >
+      </div>
+    </header>
+    <div id="hud-mid">
+      <nav id="hud-left" aria-label="Map layers">
+        <div class="nav-cap">LAYERS · 8</div>
+        <div id="layer-list"></div>
+        <div id="legend">
+          <b>PROJECTION</b> ISOMETRIC 44×36<br />
+          <b>WIND</b> SE · SPREAD SIMULATED<br />
+          <b>MESH</b> CONSENTED NODES ONLY<br />
+          <b>EVIDENCE</b> PAGE-LOCAL JOURNAL
+        </div>
+      </nav>
+      <main id="stage">
+        <canvas
+          id="iso"
+          role="img"
+          aria-label="Isometric map of the Cape Peninsula showing simulated wildfire layers"
+        ></canvas>
+        <div id="fsm-note">SCENARIO · NOORDHOEK PEAK IGNITION · SOUTHERN FOHNS WIND REGIME</div>
+        <div id="clock">
+          SCENARIO <b id="clk-t">T+00:00</b><br />CLOCK <b id="clk-w">--:--:--</b><br />WIND
+          <b id="clk-v">SE 32 KPH</b>
+        </div>
+      </main>
+    </div>
+    <footer id="hud-bottom">
+      <span class="worm-label">WORM JOURNAL</span>
+      <span class="worm-cell"><b id="worm-count">0</b> ENTRIES</span>
+      <span class="worm-cell">HEAD <span class="h" id="worm-head">········</span></span>
+      <span id="worm-last">—</span>
+      <span class="worm-tier" id="worm-tier">T2 · SEED_UNVERIFIED</span>
+    </footer>
+    <script>
+      "use strict";
+      /* ── seeded PRNG (deterministic scenario — same seed, same map) ────────── */
+      function mulberry32(a) {
+        return function () {
+          a |= 0;
+          a = (a + 0x6d2b79f5) | 0;
+          var t = Math.imul(a ^ (a >>> 15), 1 | a);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      var SEED = 20260921,
+        rand = mulberry32(SEED);
+      /* ── grid + isometric geometry ─────────────────────────────────────────── */
+      var GW = 44,
+        GH = 36,
+        iso = { ox: 0, oy: 0, tw: 0, th: 0 };
+      function project(c, r, z) {
+        return { x: iso.ox + (c - r) * iso.tw * 0.5, y: iso.oy + (c + r) * iso.th * 0.5 - z };
+      }
+      /* ── terrain: peninsula spine from Table Mountain (NE) to Cape Point (SW) ── */
+      var H = [],
+        FIRE = [],
+        i,
+        r,
+        c;
+      var sx1 = 36,
+        sy1 = 4,
+        sx2 = 6,
+        sy2 = 33,
+        dx = sx2 - sx1,
+        dy = sy2 - sy1,
+        len = Math.hypot(dx, dy);
+      for (r = 0; r < GH; r++) {
+        H[r] = [];
+        FIRE[r] = [];
+        for (c = 0; c < GW; c++) {
+          var px = c - sx1,
+            py = r - sy1,
+            t = Math.max(0, Math.min(1, (px * dx + py * dy) / (len * len)));
+          var lx = sx1 + dx * t,
+            ly = sy1 + dy * t,
+            d = Math.hypot(c - lx, r - ly);
+          var wob = 3.4 + Math.sin(t * 9.1 + (SEED % 7)) * 1.6 + Math.sin(t * 21.3) * 0.9;
+          var h = 0;
+          if (d < wob) {
+            h = (1 - d / wob) * 7.4 + rand() * 1.3;
+            if (Math.hypot(c - 34, r - 7) < 4.6) h += 3.2; /* Table Mountain plateau */
+            if (Math.hypot(c - 30, r - 20) < 2.4) h -= 2.6; /* Constantia gap        */
+            if (Math.hypot(c - 16, r - 14) < 2.1) h -= 3.1; /* Hout Bay notch        */
+            h = Math.max(0.4, Math.min(9.5, h));
+          }
+          H[r][c] = h;
+          FIRE[r][c] = 0;
+        }
+      }
+      /* landmarks (seed data — honest, not live feeds) */
+      var EVAC = [
+        { n: "NOORDHOEK", c: 24, r: 26, rad: 6 },
+        { n: "HOUT BAY", c: 16, r: 14, rad: 5 },
+        { n: "SCARBOROUGH", c: 10, r: 30, rad: 4 },
+      ];
+      var ASSETS = [
+        { n: "SCHOOL", c: 25, r: 27 },
+        { n: "CLINIC", c: 17, r: 15 },
+        { n: "RESERVOIR", c: 30, r: 10 },
+        { n: "NURSERY", c: 23, r: 22 },
+        { n: "FIRE STN", c: 28, r: 13 },
+      ];
+      var MESH = [
+        { id: "WP-CL-01", n: "CO-OP LEAD", c: 26, r: 26, on: true },
+        { id: "WP-FO-02", n: "FIRE OFFICER", c: 21, r: 22, on: true },
+        { id: "WP-ML-03", n: "CITY LIAISON", c: 30, r: 12, on: false },
+        { id: "WP-FN-04", n: "HOUT BAY", c: 15, r: 16, on: false },
+        { id: "WP-FN-05", n: "CONSTANTIA", c: 33, r: 15, on: false },
+        { id: "WP-FN-06", n: "TOKAI", c: 35, r: 21, on: false },
+        { id: "WP-FN-07", n: "SCARBOROUGH", c: 9, r: 31, on: false },
+      ];
+      var IGN = { c: 24, r: 23 };
+      /* ── layers ────────────────────────────────────────────────────────────── */
+      var LAYERS = [
+        { k: "fire", n: "FIRE POLYGON", t: "SIMULATED" },
+        { k: "wind", n: "WIND FIELD", t: "SIMULATED" },
+        { k: "smoke", n: "SMOKE PLUME", t: "SIMULATED" },
+        { k: "evac", n: "EVACUATION ZONES", t: "SEED PLAN" },
+        { k: "mesh", n: "MESH DENSITY", t: "CONSENT-ONLY" },
+        { k: "assets", n: "ASSETS AT RISK", t: "SEED" },
+        { k: "env", n: "ENVIRONMENTAL", t: "SIMULATED" },
+        { k: "evidence", n: "EVIDENCE CHAIN", t: "T2 LOCAL" },
+      ];
+      var ON = { fire: 1, wind: 1, smoke: 1, evac: 1, mesh: 1, assets: 1, env: 1, evidence: 1 };
+      var layEl = document.getElementById("layer-list");
+      LAYERS.forEach(function (L) {
+        var d = document.createElement("label");
+        d.className = "lay" + (ON[L.k] ? " on" : "");
+        d.innerHTML =
+          '<input type="checkbox" ' +
+          (ON[L.k] ? "checked" : "") +
+          ' aria-label="' +
+          L.n +
+          '"><span class="sw"></span><span class="nm">' +
+          L.n +
+          '</span><span class="tag">' +
+          L.t +
+          "</span>";
+        d.querySelector("input").addEventListener("change", function (e) {
+          ON[L.k] = e.target.checked;
+          d.classList.toggle("on", ON[L.k]);
+        });
+        layEl.appendChild(d);
+      });
+      /* ── FSM ───────────────────────────────────────────────────────────────── */
+      var STATES = ["NORMAL", "WATCH", "DECLARED", "ESCALATED", "STAND-DOWN"];
+      var LEGAL = {
+        NORMAL: ["WATCH"],
+        WATCH: ["DECLARED", "NORMAL"],
+        DECLARED: ["ESCALATED", "WATCH"],
+        ESCALATED: ["DECLARED", "STAND-DOWN"],
+        "STAND-DOWN": ["NORMAL"],
+      };
+      var COLOR = {
+        NORMAL: "#7a8a6e",
+        WATCH: "#f2b84b",
+        DECLARED: "#ff8a3d",
+        ESCALATED: "#e5484d",
+        "STAND-DOWN": "#2ea8a0",
+      };
+      var fsm = "NORMAL";
+      var chips = document.getElementById("fsm-chips");
+      STATES.forEach(function (s) {
+        var b = document.createElement("button");
+        b.className = "chip";
+        b.textContent = s;
+        b.dataset.s = s;
+        b.type = "button";
+        b.setAttribute("role", "tab");
+        b.addEventListener("click", function () {
+          attempt(s);
+        });
+        chips.appendChild(b);
+      });
+      /* ── in-page WORM journal (T2 · resets on reload — never presented as more) ── */
+      var J = [],
+        JHASHALGO = "SHA-256";
+      function fnv(q) {
+        var h = 0x811c9dc5;
+        for (var i2 = 0; i2 < q.length; i2++) {
+          h ^= q.charCodeAt(i2);
+          h = Math.imul(h, 0x01000193) >>> 0;
+        }
+        return (
+          ("0000000" + h.toString(16)).slice(-8) +
+          ("0000000" + (h >>> 7).toString(16)).slice(-8) +
+          ("0000000" + (h ^ 0x9e37).toString(16)).slice(-8) +
+          "2ea8a0"
+        );
+      }
+      function sha(text, cb) {
+        if (crypto && crypto.subtle) {
+          crypto.subtle
+            .digest("SHA-256", new TextEncoder().encode(text))
+            .then(function (b) {
+              var s = "";
+              new Uint8Array(b).forEach(function (x) {
+                s += ("0" + x.toString(16)).slice(-2);
+              });
+              cb(s, "SHA-256");
+            })
+            .catch(function () {
+              cb(fnv(text), "FNV1A·FALLBACK");
+            });
+        } else cb(fnv(text), "FNV1A·FALLBACK");
+      }
+      function journal(kind, detail) {
+        var prev = J.length
+          ? J[J.length - 1].hash
+          : "0000000000000000000000000000000000000000000000000000000000000000";
+        var at = new Date().toISOString();
+        var entry = {
+          seq: J.length + 1,
+          at: at,
+          kind: kind,
+          detail: detail,
+          prev: prev,
+          hash: null,
+          algo: null,
+        };
+        J.push(entry);
+        sha(prev + "|" + entry.seq + "|" + at + "|" + kind + "|" + detail, function (h, algo) {
+          entry.hash = h;
+          entry.algo = algo;
+          paintWorm();
+        });
+        paintWorm();
+        return entry;
+      }
+      function paintWorm() {
+        document.getElementById("worm-count").textContent = J.length;
+        var last = J[J.length - 1];
+        document.getElementById("worm-head").textContent =
+          last && last.hash ? last.hash.slice(0, 8) : "········";
+        document.getElementById("worm-last").textContent = last
+          ? "#" + last.seq + " " + last.kind + " · " + last.detail
+          : "—";
+        document.getElementById("worm-tier").textContent =
+          "T2 · SEED_UNVERIFIED · " + (last && last.algo ? last.algo : JHASHALGO);
+      }
+      journal("GENESIS", "CAPE TOWN WILDFIRE · SEED SCENARIO 20260921 · PAGE-LOCAL CHAIN");
+      journal("fsm.seed", "INITIAL STATE NORMAL");
+      function attempt(to) {
+        if (to === fsm) {
+          return;
+        }
+        var legal = LEGAL[fsm].indexOf(to) >= 0;
+        var chip = chips.querySelector('[data-s="' + to + '"]');
+        if (!legal) {
+          chip.style.borderColor = "#e5484d";
+          setTimeout(function () {
+            chip.style.borderColor = "";
+          }, 450);
+          journal("fsm.reject", "REJECTED " + fsm + "→" + to + " · ILLEGAL");
+          return;
+        }
+        var from = fsm;
+        fsm = to;
+        journal("wildfire.state.transition", from + "→" + to + " · SCENARIO OPERATOR");
+        onFsm();
+        paintChips();
+      }
+      function paintChips() {
+        STATES.forEach(function (s) {
+          var b = chips.querySelector('[data-s="' + s + '"]');
+          var cur = s === fsm;
+          b.setAttribute("aria-current", cur ? "true" : "false");
+          b.style.background = cur ? COLOR[s] : "rgba(255,255,255,.02)";
+          b.style.color = cur ? "#000" : "";
+          b.style.borderColor = cur ? COLOR[s] : "";
+          b.classList.toggle("legal", !cur && LEGAL[fsm].indexOf(s) >= 0);
+          b.classList.toggle("deny", !cur && LEGAL[fsm].indexOf(s) < 0);
+        });
+      }
+      /* ── scenario per state ────────────────────────────────────────────────── */
+      var WINDP = { NORMAL: 0.32, WATCH: 0.46, DECLARED: 0.66, ESCALATED: 0.88, "STAND-DOWN": 0.4 };
+      var wd = { x: -0.86, y: -0.52 };
+      function ignite() {
+        for (var rr = 0; rr < GH; rr++) for (var cc = 0; cc < GW; cc++) FIRE[rr][cc] = 0;
+        smoke.length = 0;
+        if (fsm === "WATCH") {
+          FIRE[IGN.r][IGN.c] = 0.35;
+        } else if (fsm === "DECLARED") {
+          seedFire(IGN.c, IGN.r, 3.2, 1);
+        } else if (fsm === "ESCALATED") {
+          seedFire(IGN.c, IGN.r, 5.4, 1);
+          seedFire(IGN.c - 6, IGN.r - 4, 2.2, 0.8);
+          seedFire(IGN.c + 3, IGN.r - 7, 1.8, 0.7);
+        } else if (fsm === "STAND-DOWN") {
+          seedFire(IGN.c, IGN.r, 4.6, 0.35);
+        }
+      }
+      function seedFire(c0, r0, rad, v) {
+        for (var rr = 0; rr < GH; rr++)
+          for (var cc = 0; cc < GW; cc++) {
+            if (H[rr][cc] > 0) {
+              var d = Math.hypot(cc - c0, rr - r0);
+              if (d < rad) FIRE[rr][cc] = Math.max(FIRE[rr][cc], v * (1 - d / rad));
+            }
+          }
+      }
+      function onFsm() {
+        ignite();
+        document.getElementById("clk-v").textContent =
+          "SE " + Math.round(28 + WINDP[fsm] * 36) + " KPH";
+        document.getElementById("fsm-note").textContent =
+          "SCENARIO · " +
+          (fsm === "NORMAL"
+            ? "BASELINE · NO IGNITION"
+            : fsm === "WATCH"
+              ? "SMOKE SIGHTED · NOORDHOEK PEAK · WATCH CYCLE 15 MIN"
+              : fsm === "DECLARED"
+                ? "ACTIVE FIRE · EVAC ZONES ARMED · MESH CONSENTS REQUIRED"
+                : fsm === "ESCALATED"
+                  ? "RUNNING FIRE · SPOT FIRES · FULL EVAC + ASSET TRIAGE"
+                  : "CONTAINMENT RING · MOP-UP · STAND-DOWN 30 MIN CYCLE");
+      }
+      /* fire spread tick (simulated) */
+      setInterval(function () {
+        if (fsm === "DECLARED" || fsm === "ESCALATED") {
+          var grow = fsm === "ESCALATED" ? 1.9 : 1.05,
+            N = [];
+          for (var rr = 1; rr < GH - 1; rr++)
+            for (var cc = 1; cc < GW - 1; cc++) {
+              if (FIRE[rr][cc] > 0.05 && H[rr][cc] > 0) {
+                var n = rr - Math.round(wd.y * 2 * rand() * grow),
+                  m = cc - Math.round(wd.x * 2 * rand() * grow);
+                n = Math.max(0, Math.min(GH - 1, n));
+                m = Math.max(0, Math.min(GW - 1, m));
+                if (H[n][m] > 0 && rand() < 0.34 * grow) N.push([n, m, FIRE[rr][cc] * 0.82]);
+              }
+            }
+          N.forEach(function (a) {
+            FIRE[a[0]][a[1]] = Math.max(FIRE[a[0]][a[1]], a[2]);
+          });
+        }
+        if (fsm === "STAND-DOWN") {
+          for (var r2 = 0; r2 < GH; r2++) for (var c2 = 0; c2 < GW; c2++) FIRE[r2][c2] *= 0.965;
+        }
+      }, 2000);
+      /* ── particles ─────────────────────────────────────────────────────────── */
+      var wind = [],
+        smoke = [];
+      for (i = 0; i < 44; i++) wind.push({ x: rand(), y: rand(), s: 0.5 + rand() });
+      function stepParticles(dt) {
+        var w = WINDP[fsm];
+        wind.forEach(function (p) {
+          p.x += wd.x * w * dt * 0.09;
+          p.y += wd.y * w * dt * 0.09;
+          if (p.x < -0.05 || p.y < -0.05 || p.x > 1.05 || p.y > 1.05) {
+            p.x = rand() * 0.3 + 0.75;
+            p.y = rand() * 0.3 + 0.75;
+          }
+        });
+        if (ON.smoke && fsm !== "NORMAL") {
+          for (var rr = 0; rr < GH; rr += 1)
+            for (var cc = 0; cc < GW; cc += 1) {
+              if (FIRE[rr][cc] > 0.3 && rand() < 0.05) {
+                var P = project(cc, rr, H[rr][cc] * 3);
+                smoke.push({
+                  x: P.x,
+                  y: P.y,
+                  a: 0.4,
+                  vx: (0.4 + rand()) * 18,
+                  vy: -(14 + rand() * 10),
+                  life: 1,
+                });
+              }
+            }
+        }
+        for (var j = smoke.length - 1; j >= 0; j--) {
+          var q = smoke[j];
+          q.x += q.vx * dt * w + wd.x * 26 * dt * w;
+          q.y += q.vy * dt;
+          q.life -= dt * 0.14;
+          if (q.life <= 0) smoke.splice(j, 1);
+        }
+        if (smoke.length > 210) smoke.splice(0, smoke.length - 210);
+      }
+      /* ── canvas ────────────────────────────────────────────────────────────── */
+      var cv = document.getElementById("iso"),
+        cx = cv.getContext("2d");
+      function fit() {
+        var w = cv.clientWidth,
+          h = cv.clientHeight,
+          dpr = Math.min(2, window.devicePixelRatio || 1);
+        cv.width = w * dpr;
+        cv.height = h * dpr;
+        cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        iso.tw = Math.max(
+          6,
+          Math.min((w * 0.62) / ((GW + GH) / 2.4), (h - 36) / ((GH * 1.5) / 2)) / 1.55,
+        );
+        iso.th = iso.tw * 0.5;
+        iso.ox = w * 0.34 + (w * 0.66 - (iso.tw * (GW + GH)) / 2) / 2 + (iso.tw * GH) / 2;
+        iso.oy = 14 + iso.th * 3;
+      }
+      window.addEventListener("resize", fit);
+      function hsl(h, s, l) {
+        return "hsl(" + h + "," + s + "%," + l + "%)";
+      }
+      function drawTerrain() {
+        var seaG = cx.createLinearGradient(0, 0, cv.clientWidth, cv.clientHeight);
+        seaG.addColorStop(0, "#08131a");
+        seaG.addColorStop(1, "#0a1e24");
+        cx.fillStyle = seaG;
+        cx.fillRect(0, 0, cv.clientWidth, cv.clientHeight);
+        cx.strokeStyle = "rgba(46,168,160,.08)";
+        cx.lineWidth = 1;
+        for (var k = 0; k < 26; k++) {
+          var gx = rand() * cv.clientWidth,
+            gy = rand() * cv.clientHeight;
+          cx.beginPath();
+          cx.moveTo(gx, gy);
+          cx.lineTo(gx + 14, gy);
+          cx.stroke();
+        }
+        var envT = ON.env
+          ? fsm === "ESCALATED"
+            ? 14
+            : fsm === "DECLARED"
+              ? 9
+              : fsm === "WATCH"
+                ? 5
+                : 0
+          : 0;
+        for (var r2 = GH - 1; r2 >= 0; r2--)
+          for (var c2 = GW - 1; c2 >= 0; c2--) {
+            var hgt = H[r2][c2];
+            if (hgt <= 0) continue;
+            var P = project(c2, r2, hgt * 3),
+              Pb = project(c2, r2, 0);
+            var hue = 96 - envT - hgt * 7,
+              sat = 16 + hgt * 3.2,
+              lum = 9 + hgt * 2.6;
+            cx.beginPath();
+            cx.moveTo(P.x - iso.tw / 2, P.y);
+            cx.lineTo(P.x, P.y - iso.th / 2);
+            cx.lineTo(P.x + iso.tw / 2, P.y);
+            cx.lineTo(P.x, P.y + iso.th / 2);
+            cx.closePath();
+            cx.fillStyle = hsl(hue, sat, lum);
+            cx.fill();
+            if (hgt > 1.2) {
+              cx.strokeStyle = "rgba(0,0,0,.22)";
+              cx.lineWidth = 0.5;
+              cx.stroke();
+            }
+            cx.beginPath();
+            cx.moveTo(P.x - iso.tw / 2, P.y);
+            cx.lineTo(Pb.x - iso.tw / 2, Pb.y);
+            cx.lineTo(Pb.x, Pb.y + iso.th / 2);
+            cx.lineTo(P.x, P.y + iso.th / 2);
+            cx.closePath();
+            cx.fillStyle = hsl(hue, sat, Math.max(4, lum - 4.5));
+            cx.fill();
+          }
+      }
+      function drawFire(t) {
+        if (!ON.fire) return;
+        for (var r2 = 0; r2 < GH; r2++)
+          for (var c2 = 0; c2 < GW; c2++) {
+            var f = FIRE[r2][c2];
+            if (f <= 0.04) continue;
+            var P = project(c2, r2, H[r2][c2] * 3);
+            var flick = 0.75 + 0.25 * Math.sin(t / 120 + c2 * 3 + r2 * 5);
+            var rad = iso.tw * 0.62 * f * flick;
+            var g = cx.createRadialGradient(P.x, P.y - 2, 0, P.x, P.y - 2, Math.max(1.5, rad * 2));
+            g.addColorStop(0, "rgba(255,220,120," + 0.85 * f + ")");
+            g.addColorStop(0.45, "rgba(255,110,40," + 0.6 * f + ")");
+            g.addColorStop(1, "rgba(180,40,20,0)");
+            cx.fillStyle = g;
+            cx.beginPath();
+            cx.arc(P.x, P.y - 2, Math.max(1.5, rad * 2), 0, 7);
+            cx.fill();
+          }
+        if (fsm === "STAND-DOWN") {
+          cx.strokeStyle = "rgba(46,168,160,.75)";
+          cx.lineWidth = 1.4;
+          cx.setLineDash([5, 4]);
+          cx.beginPath();
+          for (var a = 0; a <= 40; a++) {
+            var th = (a / 40) * 6.283;
+            var rr = IGN.r + Math.sin(th) * 4.4,
+              cc = IGN.c + Math.cos(th) * 5.8;
+            var P2 = project(cc, rr, 0);
+            a ? cx.lineTo(P2.x, P2.y) : cx.moveTo(P2.x, P2.y);
+          }
+          cx.closePath();
+          cx.stroke();
+          cx.setLineDash([]);
+          cx.fillStyle = "rgba(46,168,160,.9)";
+          cx.font = "7px monospace";
+          cx.textAlign = "center";
+          var pl = project(IGN.c, IGN.r, 0);
+          cx.fillText("CONTAINMENT 82%", pl.x, pl.y + 14);
+        }
+      }
+      function drawWind(t) {
+        if (!ON.wind) return;
+        cx.strokeStyle = "rgba(242,184,75,.34)";
+        cx.lineWidth = 1;
+        var w = WINDP[fsm];
+        wind.forEach(function (p) {
+          var x = p.x * cv.clientWidth,
+            y = p.y * cv.clientHeight,
+            L = 12 + 22 * w;
+          cx.beginPath();
+          cx.moveTo(x, y);
+          cx.lineTo(x - wd.x * L, y - wd.y * L);
+          cx.stroke();
+          var hx = x - wd.x * L,
+            hy = y - wd.y * L;
+          cx.fillStyle = "rgba(242,184,75,.5)";
+          cx.fillRect(hx - 0.8, hy - 0.8, 1.6, 1.6);
+        });
+      }
+      function drawSmoke() {
+        if (!ON.smoke) return;
+        smoke.forEach(function (q) {
+          cx.fillStyle = "rgba(200,205,214," + 0.3 * q.life + ")";
+          cx.beginPath();
+          cx.arc(q.x, q.y, 2.4 + (1 - q.life) * 11, 0, 7);
+          cx.fill();
+        });
+      }
+      function drawEvac(t) {
+        if (!ON.evac) return;
+        var arm = fsm === "DECLARED" || fsm === "ESCALATED";
+        EVAC.forEach(function (z) {
+          var P = project(z.c, z.r, 0);
+          var pulse = arm ? 0.55 + 0.45 * Math.sin(t / 300) : 0.35;
+          cx.strokeStyle =
+            fsm === "NORMAL" ? "rgba(127,149,165,.4)" : "rgba(255,138,61," + pulse + ")";
+          cx.lineWidth = arm ? 1.6 : 1;
+          cx.setLineDash([4, 3]);
+          cx.beginPath();
+          cx.ellipse(P.x, P.y, z.rad * iso.tw * 0.9, z.rad * iso.th * 0.9, 0, 0, 7);
+          cx.stroke();
+          cx.setLineDash([]);
+          cx.fillStyle = arm ? "rgba(255,138,61,.95)" : "rgba(127,149,165,.7)";
+          cx.font = "7.5px monospace";
+          cx.textAlign = "center";
+          cx.fillText(z.n, P.x, P.y - z.rad * iso.th * 0.9 - 3);
+        });
+      }
+      function drawAssets() {
+        if (!ON.assets) return;
+        ASSETS.forEach(function (a) {
+          var P = project(a.c, a.r, H[a.r][a.c] * 3);
+          cx.save();
+          cx.translate(P.x, P.y - 6);
+          cx.rotate(Math.PI / 4);
+          cx.fillStyle = "#f2b84b";
+          cx.strokeStyle = "#07090d";
+          cx.lineWidth = 1;
+          cx.fillRect(-2.6, -2.6, 5.2, 5.2);
+          cx.strokeRect(-2.6, -2.6, 5.2, 5.2);
+          cx.restore();
+          cx.fillStyle = "rgba(242,184,75,.85)";
+          cx.font = "6.5px monospace";
+          cx.textAlign = "center";
+          cx.fillText(a.n, P.x, P.y - 11);
+        });
+      }
+      function drawMesh(t) {
+        if (!ON.mesh) return;
+        MESH.forEach(function (m) {
+          if (!m.on) return; /* absent without consent — never dimmed */
+          var P = project(m.c, m.r, H[m.r][m.c] * 3);
+          var pulse = 0.6 + 0.4 * Math.sin(t / 500 + P.x);
+          cx.strokeStyle = "rgba(200,255,0," + 0.55 * pulse + ")";
+          cx.lineWidth = 1;
+          cx.beginPath();
+          cx.arc(P.x, P.y - 4, 6 + 2 * pulse, 0, 7);
+          cx.stroke();
+          cx.fillStyle = "#c8ff00";
+          cx.beginPath();
+          cx.arc(P.x, P.y - 4, 2.2, 0, 7);
+          cx.fill();
+          cx.fillStyle = "rgba(200,255,0,.8)";
+          cx.font = "6px monospace";
+          cx.textAlign = "center";
+          cx.fillText(m.id, P.x, P.y + 8);
+        });
+      }
+      function drawEvidence(t) {
+        if (!ON.evidence) return;
+        var y = cv.clientHeight - 16,
+          shown = Math.min(J.length, 26);
+        cx.strokeStyle = "rgba(46,168,160,.5)";
+        cx.lineWidth = 1;
+        cx.beginPath();
+        for (var k2 = 0; k2 < shown; k2++) {
+          var x = 14 + k2 * ((cv.clientWidth - 28) / Math.max(1, shown - 1));
+          k2 ? cx.lineTo(x, y) : cx.moveTo(x, y);
+        }
+        cx.stroke();
+        for (var k = 0; k < shown; k++) {
+          var x2 = 14 + k * ((cv.clientWidth - 28) / Math.max(1, shown - 1));
+          var last = k === shown - 1,
+            pulse = last ? 0.5 + 0.5 * Math.sin(t / 280) : 0;
+          cx.fillStyle = last
+            ? "rgba(200,255,0," + (0.6 + 0.4 * pulse) + ")"
+            : "rgba(46,168,160,.85)";
+          cx.beginPath();
+          cx.arc(x2, y, last ? 3.2 : 1.8, 0, 7);
+          cx.fill();
+        }
+        cx.fillStyle = "rgba(46,168,160,.75)";
+        cx.font = "6.5px monospace";
+        cx.textAlign = "left";
+        cx.fillText(
+          "EVIDENCE CHAIN · " +
+            J.length +
+            " ENTRIES · HEAD " +
+            ((J[J.length - 1] || {}).hash || "").slice(0, 8),
+          14,
+          y - 8,
+        );
+      }
+      /* ── main loop ─────────────────────────────────────────────────────────── */
+      var t0 = Date.now(),
+        last = performance.now();
+      function frame(t) {
+        var dt = Math.min(0.1, (t - last) / 1000);
+        last = t;
+        cx.clearRect(0, 0, cv.clientWidth, cv.clientHeight);
+        drawTerrain();
+        drawEvac(t);
+        drawFire(t);
+        drawSmoke();
+        drawWind(t);
+        drawAssets();
+        drawMesh(t);
+        drawEvidence(t);
+        stepParticles(dt);
+        var el = Math.floor((Date.now() - t0) / 1000);
+        document.getElementById("clk-t").textContent =
+          "T+" + ("0" + Math.floor(el / 60)).slice(-2) + ":" + ("0" + (el % 60)).slice(-2);
+        document.getElementById("clk-w").textContent = new Date().toLocaleTimeString("en-ZA");
+        requestAnimationFrame(frame);
+      }
+      fit();
+      ignite();
+      onFsm();
+      paintChips();
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

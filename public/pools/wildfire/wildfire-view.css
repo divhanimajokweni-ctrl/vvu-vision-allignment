@@ -1,0 +1,220 @@
+/* ==========================================================================
+   pools/wildfire/wildfire-view.css — WILDFIRE EMERGENCY VIEW styles.
+   ==========================================================================
+   Role (8-file contract, file 2): view-scoped styles for the emergency
+   context ONLY. Imports pools.css (the family foundation) and adds what a
+   declared-event surface needs:
+
+     · the single hazard banner (ONE banner · ONE declared state · ONE
+       colour — no stacked alerts, ever)
+     · evacuation route / zone rendering hints
+     · the mesh + co-op pool status panels
+     · the operator state console (arm → confirm)
+     · the consent ledger
+     · the 8-panel overlay grid + layer bar + legend + evidence rail
+     · the offline / SW chips
+   ========================================================================== */
+
+@import url('../pools.css');
+
+/* ---- page skeleton -------------------------------------------------------- */
+
+#wf-scene { position: absolute; inset: 0; }
+
+#wf-banner {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: linear-gradient(180deg, rgba(5,10,18,0.96), rgba(5,10,18,0.78));
+  border-bottom: 1px solid var(--pools-border);
+  font-size: var(--pools-fs-label);
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+
+#wf-banner-state {
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+#wf-banner-state::before {
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+#wf-banner-state[data-state="NORMAL"]    { color: var(--pools-green); }
+#wf-banner-state[data-state="WATCH"]      { color: var(--pools-amber); }
+#wf-banner-state[data-state="DECLARED"]  { color: var(--pools-red);   animation: wf-pulse 1.6s infinite; }
+#wf-banner-state[data-state="ESCALATED"] { color: #ff2f1a;             animation: wf-pulse 0.9s infinite; }
+#wf-banner-state[data-state="STAND_DOWN"]{ color: var(--pools-sage); }
+
+@keyframes wf-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+#wf-banner-note { color: var(--pools-ink-dim); letter-spacing: 1px; }
+#wf-banner-meta { margin-left: auto; color: var(--pools-ink-dim); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ---- the 8-panel overlay grid --------------------------------------------- */
+
+#wf-panels {
+  position: absolute;
+  top: 62px; left: 16px;
+  z-index: 10;
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100% - 62px - 96px - 56px);
+  overflow-y: auto;
+  display: grid;
+  gap: var(--pools-gap);
+  padding-bottom: 4px;
+}
+#wf-panels::-webkit-scrollbar { width: 8px; }
+#wf-panels::-webkit-scrollbar-thumb { background: var(--pools-border); border-radius: 4px; }
+
+#wf-panels .pools-panel { width: 100%; }
+
+/* evidence panel fills the panel width; journal tail scrolls */
+#wf-journal-tail {
+  max-height: 132px;
+  overflow-y: auto;
+  font-size: var(--pools-fs-evidence);
+  line-height: 1.9;
+  color: var(--pools-ink-dim);
+  border-top: 1px solid var(--pools-border);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+#wf-journal-tail .jev b { color: var(--pools-amber); }
+
+/* operator console (arm → confirm, no accidental declarations) */
+#wf-console { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+#wf-console-note { margin-top: 6px; }
+
+/* consent ledger */
+#wf-consent-ledger { font-size: var(--pools-fs-evidence); line-height: 1.9; }
+.wf-consent-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  border-left: 2px solid var(--pools-green);
+  padding-left: 7px;
+  margin-bottom: 5px;
+}
+.wf-consent-row[data-consent="revoked"]  { border-left-color: var(--pools-red);    opacity: 0.75; }
+.wf-consent-row[data-consent="absent"]   { border-left-color: var(--pools-ink-faint); }
+.wf-consent-row[data-consent="expired"]  { border-left-color: var(--pools-amber); }
+.wf-consent-row .who  { color: var(--pools-ink); }
+.wf-consent-row[data-consent="revoked"] .who { text-decoration: line-through; color: var(--pools-ink-dim); }
+.wf-consent-row .meta { color: var(--pools-ink-faint); grid-column: 1 / -1; }
+.wf-consent-row .status { color: var(--pools-green); }
+.wf-consent-row[data-consent="revoked"]  .status { color: var(--pools-red); }
+.wf-consent-row[data-consent="absent"]   .status { color: var(--pools-ink-faint); }
+.wf-consent-row[data-consent="expired"]  .status { color: var(--pools-amber); }
+
+/* ---- layer bar (honest label per layer) ------------------------------------ */
+
+#wf-toggle-layer {
+  position: absolute;
+  left: 16px; bottom: 56px;
+  display: flex; gap: 6px; flex-wrap: wrap;
+  max-width: min(58%, 640px);
+  z-index: 10;
+}
+#wf-toggle-layer button {
+  background: rgba(5,10,18,0.85);
+  border: 1px solid var(--pools-border);
+  color: var(--pools-ink-dim);
+  font-family: inherit; font-size: var(--pools-fs-evidence);
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 6px 9px; border-radius: 6px;
+  cursor: pointer; transition: all 0.15s;
+  min-height: 34px;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+#wf-toggle-layer button .src { opacity: 0.65; font-size: 8px; }
+#wf-toggle-layer button.on { color: var(--pools-amber); border-color: var(--pools-amber); background: rgba(242,184,75,0.08); }
+#wf-toggle-layer button:focus-visible { outline: 2px solid var(--pools-amber); outline-offset: 2px; }
+
+/* ---- legend ----------------------------------------------------------------- */
+
+#wf-legend {
+  position: absolute; right: 16px; bottom: 56px;
+  background: var(--pools-bg-panel);
+  border: 1px solid var(--pools-border);
+  border-radius: var(--pools-radius);
+  padding: 10px 12px;
+  font-size: var(--pools-fs-evidence);
+  line-height: 1.8;
+  z-index: 10;
+}
+#wf-legend div { display: flex; align-items: center; gap: 8px; }
+#wf-legend .swatch {
+  display: inline-block; width: 10px; height: 10px;
+  border-radius: 2px; flex-shrink: 0;
+}
+
+/* ---- the evidence rail (9pt · never above the fold · never larger) --------- */
+
+#wf-evidence-rail {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 8px 16px;
+  background: var(--pools-bg-raised);
+  border-top: 1px solid var(--pools-border);
+  z-index: 15;
+  font-size: var(--pools-fs-evidence);          /* 9px. the ceiling. */
+  letter-spacing: 1px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+#wf-evidence-rail .lede { color: var(--pools-ink-dim); }
+#wf-evidence-rail .head { color: var(--pools-amber); }
+#wf-evidence-rail .verify {
+  color: var(--pools-blue);
+  background: none;
+  border: none;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 0;
+}
+#wf-evidence-rail .verify:focus-visible { outline: 2px solid var(--pools-blue); }
+#wf-evidence-rail #wf-ev-verify-result { color: var(--pools-green); }
+#wf-evidence-rail #wf-ev-verify-result[data-ok="0"] { color: var(--pools-red); }
+
+/* ---- mobile (390 × 844 first) ------------------------------------------------ */
+
+@media (max-width: 719px) {
+  #wf-panels {
+    left: 8px; right: 8px;
+    width: auto;
+    top: 96px;
+    max-height: calc(100% - 96px - 96px - 56px);
+  }
+  #wf-panels .pools-panel { padding: 8px 10px; }
+  /* panels collapse to summaries; the map stays the hero */
+  #wf-panels .pools-panel .panel-body { display: none; }
+  #wf-panels .pools-panel[open] .panel-body { display: block; }
+  #wf-panels .pools-panel summary { cursor: pointer; list-style: none; }
+  #wf-panels .pools-panel summary::-webkit-details-marker { display: none; }
+  #wf-panels .pools-panel summary::after { content: ' ▸'; color: var(--pools-ink-faint); }
+  #wf-panels .pools-panel[open] summary::after { content: ' ▾'; }
+  #wf-legend { display: none; }
+  #wf-toggle-layer { max-width: calc(100vw - 16px); }
+  #wf-banner { padding: 8px 10px; }
+  #wf-banner-meta { display: none; }
+}
+
+@media (min-width: 720px) {
+  #wf-panels .pools-panel summary { cursor: default; }
+  #wf-panels .pools-panel summary::after { content: ''; }
+}

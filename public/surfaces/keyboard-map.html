@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#000">
+<title>VVU · Keyboard Map</title>
+<style>
+:root{
+  --bg:#000;--panel:#0b0b0b;--line:#1e1e1e;--line2:#2a2a2a;
+  --txt:#e6e6e6;--dim:#8a8a8a;--dim2:#4a4a4a;
+  --lime:#d0f020;--green:#7fe83a;--bad:#e85060;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;padding:14px;min-height:100dvh}
+.sheet{max-width:640px;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 18px}
+h1{font-size:13px;letter-spacing:.24em;color:var(--lime);text-transform:uppercase;font-weight:800;margin:0 0 18px}
+h2{font-size:11px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;font-weight:600;margin:22px 0 10px}
+h2:first-of-type{margin-top:0}
+.row{display:grid;grid-template-columns:130px 1fr;gap:14px;padding:7px 0;font-size:13px;align-items:baseline}
+.row .k{color:var(--lime);font-weight:700}
+.row .v{color:var(--txt)}
+.row .v .em{color:var(--dim)}
+.reserved{margin-top:6px;padding:7px 0;color:var(--bad);font-size:12px;letter-spacing:.04em}
+@media(max-width:520px){
+  .row{grid-template-columns:110px 1fr;gap:10px;font-size:12px}
+  .row .k{font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <h1>Keyboard Map</h1>
+
+  <h2>Tabs — the ten fixed surfaces</h2>
+  <div class="row"><span class="k">Ctrl+1</span><span class="v">#/ive — ive</span></div>
+  <div class="row"><span class="k">Ctrl+2</span><span class="v">#/evidence — evidence</span></div>
+  <div class="row"><span class="k">Ctrl+3</span><span class="v">#/terminal — terminal</span></div>
+  <div class="row"><span class="k">Ctrl+4</span><span class="v">#/mission — mission control</span></div>
+  <div class="row"><span class="k">Ctrl+5</span><span class="v">#/twin — spatial twin</span></div>
+  <div class="row"><span class="k">Ctrl+6</span><span class="v">#/watchdog — watchdog</span></div>
+  <div class="row"><span class="k">Ctrl+7</span><span class="v">#/receipts — receipts</span></div>
+  <div class="row"><span class="k">Ctrl+8</span><span class="v">#/pools — ubuntu pools</span></div>
+  <div class="row"><span class="k">Ctrl+9</span><span class="v">#/bridges — bridges</span></div>
+  <div class="row"><span class="k">Ctrl+0</span><span class="v">#/settings — settings</span></div>
+
+  <h2>Actions — verbs on the current surface</h2>
+  <div class="row"><span class="k">Ctrl+A</span><span class="v">opens the two-gate handshake</span></div>
+  <div class="row"><span class="k">Ctrl+B</span><span class="v">binds a new device</span></div>
+  <div class="row"><span class="k">Ctrl+C</span><span class="v">copies the current selection</span></div>
+  <div class="row"><span class="k">Ctrl+D</span><span class="v">opens the declare-state dialog</span></div>
+  <div class="row"><span class="k">Ctrl+E</span><span class="v">exports as a signed artifact</span></div>
+  <div class="row"><span class="k">Ctrl+F</span><span class="v">opens search</span></div>
+  <div class="row"><span class="k">Ctrl+G</span><span class="v">opens the two-gate status</span></div>
+  <div class="row"><span class="k">Ctrl+H</span><span class="v">hides this panel</span></div>
+  <div class="row"><span class="k">Ctrl+I</span><span class="v">inspects the selected element</span></div>
+  <div class="row"><span class="k">Ctrl+J</span><span class="v">jumps to the journal entry</span></div>
+  <div class="row"><span class="k">Ctrl+K</span><span class="v">opens the command palette</span></div>
+  <div class="row"><span class="k">Ctrl+L</span><span class="v">locks this surface</span></div>
+  <div class="row"><span class="k">Ctrl+M</span><span class="v">marks the event noteworthy</span></div>
+  <div class="row"><span class="k">Ctrl+N</span><span class="v">attaches a note to the event ·</span></div>
+  <div class="reserved">BROWSER-RESERVED ON DESKTOP TABS</div>
+  <div class="row"><span class="k">Ctrl+O</span><span class="v">opens the item in a new pane</span></div>
+  <div class="row"><span class="k">Ctrl+P</span><span class="v">pin this panel</span></div>
+</div>
+</body>
+</html>

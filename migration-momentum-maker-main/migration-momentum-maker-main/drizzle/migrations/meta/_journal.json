@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793554781271,
+      "tag": "0000_vvu_schema_from_prisma",
+      "breakpoints": true
+    }
+  ]
+}

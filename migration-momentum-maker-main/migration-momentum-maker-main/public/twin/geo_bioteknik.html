@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Digital Twin — Geo-Bioteknik Spatial Intelligence</title>
+    <style>
+      :root {
+        --bg: #06080c;
+        --panel: rgba(8, 11, 16, 0.92);
+        --line: rgba(80, 90, 110, 0.22);
+        --ink: #d8e0e8;
+        --dim: #7f95a5;
+        --amber: #f2b84b;
+        --ember: #ff8a3d;
+        --red: #e5484d;
+        --teal: #2ea8a0;
+        --lime: #c8ff00;
+        --green: #7a8a6e;
+        --bio: #52d49a;
+        --dna: #3fb6ff;
+        --pulse: #ff5ec4;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          10px/1.45 "SF Mono",
+          Menlo,
+          Consolas,
+          monospace;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      header#hud-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        z-index: 3;
+      }
+      .hud-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+        color: #fff;
+        white-space: nowrap;
+      }
+      .hud-title small {
+        display: block;
+        font-weight: 400;
+        font-size: 8px;
+        letter-spacing: 1.2px;
+        color: var(--dim);
+      }
+      .hud-right {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .hud-honesty {
+        font-size: 8px;
+        letter-spacing: 1.4px;
+        color: var(--bio);
+        border: 1px solid rgba(82, 212, 154, 0.4);
+        padding: 3px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+      .hud-honesty.amber {
+        color: var(--amber);
+        border-color: rgba(242, 184, 75, 0.4);
+      }
+      #hud-mid {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+        position: relative;
+      }
+      nav#hud-left {
+        width: 148px;
+        flex: none;
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-y: auto;
+        z-index: 2;
+      }
+      .nav-cap {
+        font-size: 7.5px;
+        letter-spacing: 1.6px;
+        color: var(--dim);
+        margin: 6px 0 2px;
+      }
+      .lay {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 5px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .lay:hover {
+        border-color: var(--line);
+      }
+      .lay .sw {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 1px solid var(--dim);
+        flex: none;
+      }
+      .lay.on .sw {
+        background: var(--bio);
+        border-color: var(--bio);
+        box-shadow: 0 0 6px rgba(82, 212, 154, 0.7);
+      }
+      .lay .nm {
+        font-size: 8.5px;
+        letter-spacing: 0.8px;
+        color: var(--ink);
+        flex: 1;
+      }
+      .lay .tag {
+        font-size: 6.5px;
+        letter-spacing: 0.6px;
+        color: var(--dim);
+        text-align: right;
+      }
+      .lay:not(.on) .nm {
+        color: var(--dim);
+      }
+      #legend {
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+        font-size: 7px;
+        color: var(--dim);
+        line-height: 1.8;
+      }
+      #legend b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      main#stage {
+        flex: 1;
+        position: relative;
+        min-width: 0;
+        background: #040810;
+      }
+      canvas#bio {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      #clock {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        text-align: right;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 1px;
+        line-height: 1.7;
+        z-index: 1;
+        text-shadow: 0 1px 2px #000;
+        background: rgba(8, 11, 16, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+      }
+      #clock b {
+        color: var(--bio);
+        font-weight: 400;
+      }
+      #tile-info {
+        position: absolute;
+        left: 10px;
+        top: 8px;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 0.8px;
+        z-index: 1;
+        text-shadow: 0 1px 2px #000;
+        background: rgba(8, 11, 16, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        line-height: 1.7;
+      }
+      #tile-info b {
+        color: var(--bio);
+        font-weight: 400;
+      }
+      #engine-readout {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 0.8px;
+        z-index: 1;
+        background: rgba(8, 11, 16, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        line-height: 1.7;
+        max-width: 280px;
+      }
+      #engine-readout b {
+        color: var(--bio);
+        font-weight: 400;
+      }
+      #engine-readout .pulse {
+        color: var(--pulse);
+      }
+      footer#hud-bottom {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 6px 12px;
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+        z-index: 3;
+      }
+      .worm-label {
+        font-size: 8px;
+        letter-spacing: 1.8px;
+        color: var(--lime);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .worm-cell {
+        font-size: 8px;
+        letter-spacing: 1px;
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .worm-cell b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      .worm-cell .h {
+        color: var(--teal);
+      }
+      .worm-tier {
+        margin-left: auto;
+        font-size: 8px;
+        letter-spacing: 1.2px;
+        color: var(--bio);
+        border: 1px solid rgba(82, 212, 154, 0.4);
+        border-radius: 4px;
+        padding: 2px 6px;
+        white-space: nowrap;
+      }
+      #worm-last {
+        font-size: 8px;
+        color: var(--dim);
+        letter-spacing: 0.5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+        min-width: 120px;
+      }
+      @media (max-width: 720px) {
+        nav#hud-left {
+          width: 118px;
+          padding: 6px;
+        }
+        .hud-title small {
+          display: none;
+        }
+        .hud-honesty {
+          display: none;
+        }
+        #engine-readout {
+          max-width: 200px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header id="hud-top">
+      <div class="hud-title">
+        GEO-BIOTEKNIK · SPATIAL INTELLIGENCE<small
+          >VVB ENGINE · GENOMIC TERRAIN · LIVING-MESH INFERENCE · ZONE BIO-PROFILE</small
+        >
+      </div>
+      <div class="hud-right">
+        <span class="hud-honesty">ENGINE · v2.7 (VVB)</span>
+        <span class="hud-honesty amber">SEED DATA · NOT LIVE</span>
+      </div>
+    </header>
+    <div id="hud-mid">
+      <nav id="hud-left">
+        <div class="nav-cap">ENGINE LAYERS</div>
+        <div class="lay on" data-layer="terrain">
+          <span class="sw" style="background: #2a4a3a"></span><span class="nm">BIO-TERRAIN</span
+          ><span class="tag">DEM</span>
+        </div>
+        <div class="lay on" data-layer="mesh">
+          <span class="sw" style="background: var(--bio)"></span><span class="nm">LIVING MESH</span
+          ><span class="tag">214</span>
+        </div>
+        <div class="lay on" data-layer="inference">
+          <span class="sw" style="background: var(--pulse)"></span><span class="nm">INFERENCE</span
+          ><span class="tag">7</span>
+        </div>
+        <div class="lay on" data-layer="vectors">
+          <span class="sw" style="background: var(--amber)"></span
+          ><span class="nm">BIO-VECTORS</span><span class="tag">SE</span>
+        </div>
+        <div class="lay" data-layer="dna">
+          <span class="sw" style="background: var(--dna)"></span><span class="nm">DNA-LAYER</span
+          ><span class="tag">SEQ</span>
+        </div>
+        <div class="lay" data-layer="heat">
+          <span class="sw" style="background: var(--ember)"></span><span class="nm">BIO-HEAT</span
+          ><span class="tag">μ</span>
+        </div>
+        <div class="nav-cap">INFERENCE</div>
+        <div class="lay on" data-layer="consequence">
+          <span class="sw" style="background: var(--lime)"></span><span class="nm">CONSEQUENCE</span
+          ><span class="tag">MAP</span>
+        </div>
+        <div class="lay" data-layer="anomaly">
+          <span class="sw" style="background: var(--red)"></span><span class="nm">ANOMALY</span
+          ><span class="tag">0</span>
+        </div>
+        <div id="legend">
+          <b>SECTOR 4 · GQEBERHA</b><br />
+          ENGINE: <b>VVB-SI 2.7</b><br />
+          MESH: <b>214 living nodes</b><br />
+          INFERENCE: <b>7 active</b><br />
+          © Geo-Bioteknik · VVU<br />
+          <b>WORM</b> 1f8c5d22… · T2
+        </div>
+      </nav>
+      <main id="stage">
+        <canvas id="bio"></canvas>
+        <div id="tile-info">
+          ENGINE: <b>GEO-BIOTEKNIK · SI 2.7</b><br />
+          CORE: <b>genomic-terrain</b><br />
+          INFERENCE: <b>consequence-map</b>
+        </div>
+        <div id="clock">
+          <span id="clk-time">--:--:--</span><br />
+          <b>SEED</b> 20260921 · Z+02:00<br />
+          <b>FRAME</b> <span id="clk-frame">0</span>
+        </div>
+        <div id="engine-readout">
+          <b>VVB-SI · INFERENCE STREAM</b><br />
+          <span class="pulse">▌</span> <span id="bio-frame">b1d2 · entropy 0.42</span><br />
+          <b>μ</b> <span id="bio-mu">0.31</span> · <b>σ</b> <span id="bio-sigma">0.18</span><br />
+          <b>NODES</b> 214 · <b>EDGES</b> 412<br />
+          <b>BIO-HEAT</b> <span id="bio-heat">0.47</span> · <b>ANOMALY</b> 0
+        </div>
+      </main>
+    </div>
+    <footer id="hud-bottom">
+      <span class="worm-label">WORM · GEO_BIOTEKNIK_SI</span>
+      <span class="worm-cell">SEAL <b class="h">1f8c5d22</b></span>
+      <span class="worm-cell">TIER <b>T2 · SEED_UNVERIFIED</b></span>
+      <span class="worm-cell">ENGINE <b>VVB-SI 2.7</b></span>
+      <span class="worm-cell">NODES <b>214</b></span>
+      <span id="worm-last"
+        >SCENARIO_OPEN · GEO_BIOTEKNIK_SI · engine=vvb_si_2_7 · mesh=living ·
+        inference=consequence_map · seed=20260921</span
+      >
+      <span class="worm-tier">GEO_BIOTEKNIK_SI · READY</span>
+    </footer>
+    <script>
+      (function () {
+        var frame = 0;
+        var clkTime = document.getElementById("clk-time");
+        var clkFrame = document.getElementById("clk-frame");
+        var bioFrame = document.getElementById("bio-frame");
+        var bioMu = document.getElementById("bio-mu");
+        var bioSigma = document.getElementById("bio-sigma");
+        var bioHeat = document.getElementById("bio-heat");
+        function tick() {
+          var d = new Date();
+          clkTime.textContent = d.toTimeString().slice(0, 8);
+          clkFrame.textContent = frame;
+          if (frame % 6 === 0) {
+            var mu = (0.25 + Math.random() * 0.4).toFixed(2);
+            var sigma = (0.12 + Math.random() * 0.2).toFixed(2);
+            var heat = (0.4 + Math.random() * 0.3).toFixed(2);
+            var entropy = (0.35 + Math.random() * 0.25).toFixed(2);
+            bioMu.textContent = mu;
+            bioSigma.textContent = sigma;
+            bioHeat.textContent = heat;
+            bioFrame.textContent = "b" + (1000 + frame).toString(16) + " · entropy " + entropy;
+          }
+          frame++;
+        }
+        setInterval(tick, 1000);
+        tick();
+        // ── The Geo-Bioteknik Spatial Intelligence engine renderer ──
+        // A self-contained canvas renderer that fuses: (1) a procedural
+        // bio-terrain (DEM-like ridges + valleys), (2) a living mesh of 214
+        // nodes that drift + pulse, (3) inference rays that fire from active
+        // consequence nodes, (4) bio-vectors (SE drift), (5) the consequence
+        // map (a 6-ring ripple from each inference source).
+        var canvas = document.getElementById("bio");
+        var ctx = canvas.getContext("2d");
+        var W, H;
+        function resize() {
+          W = canvas.width = canvas.clientWidth * devicePixelRatio;
+          H = canvas.height = canvas.clientHeight * devicePixelRatio;
+          ctx.scale(devicePixelRatio, devicePixelRatio);
+        }
+        window.addEventListener("resize", resize);
+        resize();
+        // seed mesh
+        var nodes = [];
+        var seed = 42;
+        function rnd() {
+          seed = (seed * 9301 + 49297) % 233280;
+          return seed / 233280;
+        }
+        for (var i = 0; i < 214; i++) {
+          nodes.push({
+            x: rnd() * canvas.clientWidth,
+            y: rnd() * canvas.clientHeight,
+            vx: (rnd() - 0.5) * 0.3,
+            vy: (rnd() - 0.5) * 0.3,
+            pulse: rnd() * Math.PI * 2,
+            size: 1.5 + rnd() * 2,
+            inference: rnd() < 0.033,
+          });
+        }
+        // inference sources (7 active)
+        var inferenceSrc = [];
+        for (var j = 0; j < 7; j++) {
+          inferenceSrc.push({
+            x: 50 + rnd() * (canvas.clientWidth - 100),
+            y: 50 + rnd() * (canvas.clientHeight - 100),
+            angle: rnd() * Math.PI * 2,
+            pulse: rnd() * Math.PI * 2,
+          });
+        }
+        var ripples = [];
+        var lastRipple = 0;
+        function draw(t) {
+          var w = canvas.clientWidth,
+            h = canvas.clientHeight;
+          // bio-terrain background — soft gradient + ridge lines
+          ctx.fillStyle = "#040810";
+          ctx.fillRect(0, 0, w, h);
+          var grad = ctx.createRadialGradient(
+            w * 0.5,
+            h * 0.5,
+            0,
+            w * 0.5,
+            h * 0.5,
+            Math.max(w, h) * 0.7,
+          );
+          grad.addColorStop(0, "rgba(40,80,60,0.18)");
+          grad.addColorStop(0.5, "rgba(20,40,30,0.08)");
+          grad.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, w, h);
+          // ridge lines (procedural DEM-like)
+          ctx.strokeStyle = "rgba(82,212,154,0.08)";
+          ctx.lineWidth = 1;
+          for (var r = 0; r < 8; r++) {
+            ctx.beginPath();
+            for (var x = 0; x <= w; x += 12) {
+              var y =
+                h * 0.5 +
+                Math.sin(x * 0.008 + r * 0.7 + t * 0.0002) * 40 +
+                Math.sin(x * 0.02 + t * 0.0001) * 15 +
+                r * 30 -
+                100;
+              if (x === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          }
+          // living mesh — drift + draw edges
+          nodes.forEach(function (n) {
+            n.x += n.vx;
+            n.y += n.vy;
+            if (n.x < 0 || n.x > w) n.vx *= -1;
+            if (n.y < 0 || n.y > h) n.vy *= -1;
+            n.pulse += 0.04;
+          });
+          // edges — short-range links (Voronoi-ish)
+          ctx.strokeStyle = "rgba(82,212,154,0.15)";
+          ctx.lineWidth = 0.5;
+          for (var a = 0; a < nodes.length; a++) {
+            for (var b = a + 1; b < nodes.length; b++) {
+              var dx = nodes[a].x - nodes[b].x,
+                dy = nodes[a].y - nodes[b].y;
+              var d2 = dx * dx + dy * dy;
+              if (d2 < 60 * 60) {
+                ctx.globalAlpha = (1 - Math.sqrt(d2) / 60) * 0.4;
+                ctx.beginPath();
+                ctx.moveTo(nodes[a].x, nodes[a].y);
+                ctx.lineTo(nodes[b].x, nodes[b].y);
+                ctx.stroke();
+              }
+            }
+          }
+          ctx.globalAlpha = 1;
+          // nodes
+          nodes.forEach(function (n) {
+            var p = Math.sin(n.pulse) * 0.5 + 0.5;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, n.size + p * 0.8, 0, Math.PI * 2);
+            if (n.inference) {
+              ctx.fillStyle = "rgba(255,94,196," + (0.7 + p * 0.3) + ")";
+              ctx.shadowColor = "#ff5ec4";
+              ctx.shadowBlur = 12;
+            } else {
+              ctx.fillStyle = "rgba(82,212,154," + (0.5 + p * 0.4) + ")";
+              ctx.shadowColor = "#52d49a";
+              ctx.shadowBlur = 4;
+            }
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          });
+          // inference sources — spinning rings + rays
+          inferenceSrc.forEach(function (s, i) {
+            s.angle += 0.01;
+            s.pulse += 0.05;
+            var p = Math.sin(s.pulse) * 0.5 + 0.5;
+            // ring
+            ctx.strokeStyle = "rgba(255,94,196," + (0.6 + p * 0.4) + ")";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, 16 + p * 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, 28 + p * 6, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(255,94,196," + (0.2 + p * 0.2) + ")";
+            ctx.stroke();
+            // rays — fan of inference vectors
+            for (var k = 0; k < 6; k++) {
+              var a = s.angle + (k * Math.PI) / 3;
+              ctx.strokeStyle = "rgba(255,94,196," + (0.4 + p * 0.3) + ")";
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(s.x, s.y);
+              ctx.lineTo(s.x + Math.cos(a) * 60, s.y + Math.sin(a) * 60);
+              ctx.stroke();
+            }
+            // core
+            ctx.fillStyle = "rgba(255,94,196,1)";
+            ctx.shadowColor = "#ff5ec4";
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, 3 + p * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          });
+          // consequence ripples — emit periodically from inference sources
+          if (t - lastRipple > 800) {
+            lastRipple = t;
+            inferenceSrc.forEach(function (s) {
+              ripples.push({ x: s.x, y: s.y, r: 8, life: 1 });
+            });
+          }
+          ripples = ripples.filter(function (rp) {
+            rp.r += 1.5;
+            rp.life -= 0.012;
+            if (rp.life <= 0) return false;
+            ctx.strokeStyle = "rgba(200,255,0," + rp.life * 0.5 + ")";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+            ctx.stroke();
+            return true;
+          });
+          // bio-vectors — SE drift arrows
+          ctx.strokeStyle = "rgba(242,184,75,0.4)";
+          ctx.lineWidth = 1;
+          for (var v = 0; v < 5; v++) {
+            var vx = w * 0.1 + v * 60,
+              vy = h * 0.2 + ((t * 0.02 + v * 40) % h);
+            ctx.beginPath();
+            ctx.moveTo(vx, vy);
+            ctx.lineTo(vx + 18, vy + 12);
+            ctx.moveTo(vx + 18, vy + 12);
+            ctx.lineTo(vx + 12, vy + 8);
+            ctx.moveTo(vx + 18, vy + 12);
+            ctx.lineTo(vx + 14, vy + 16);
+            ctx.stroke();
+          }
+          requestAnimationFrame(draw);
+        }
+        requestAnimationFrame(draw);
+        // Layer toggles
+        document.querySelectorAll(".lay").forEach(function (el) {
+          el.addEventListener("click", function () {
+            el.classList.toggle("on");
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

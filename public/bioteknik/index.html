@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BIOTEKNIK — Universal Avatar Compiler · Path A Pipeline Proof · v4</title>
+<style>
+  :root{
+    --bg:#07090d; --panel:rgba(10,15,22,.86); --line:#1c2635;
+    --txt:#c9d6e4; --dim:#7d8ca0; --cyan:#3fd8c7; --green:#35d07f;
+    --amber:#e6b450; --red:#ff5c5c; --blue:#5ca7ff;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%; overflow:hidden}
+  body{background:var(--bg); color:var(--txt);
+    font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    display:flex; flex-direction:column}
+  /* Embedded-in-Flutter-PlatformView mode: the shell owns the chrome, so the
+     inner page is a flex column with no fixed offsets. Standalone mode keeps
+     the original full-window chrome via the .standalone class. */
+  body.standalone #stage{position:absolute; left:332px; right:0; top:58px; bottom:34px}
+  body.standalone #topbar{position:fixed; top:0; left:0; right:0; height:52px; z-index:20}
+  body.standalone #hud{position:fixed; left:0; top:58px; bottom:34px; width:322px; z-index:15}
+  body.standalone #foot{position:fixed; left:0; right:0; bottom:0; height:34px; z-index:20}
+  body:not(.standalone){padding:0}
+  body:not(.standalone) #topbar{position:relative; flex:0 0 auto}
+  body:not(.standalone) #hud{position:relative; flex:1 1 auto; width:auto; max-height:44vh;
+    border-right:none; border-top:1px solid var(--line)}
+  body:not(.standalone) #foot{position:relative; flex:0 0 auto}
+  #stage{position:relative; flex:1 1 auto; min-height:0; overflow:hidden}
+  #stage canvas{display:block; width:100%; height:100%}
+  /* top bar */
+  #topbar{display:flex; align-items:center; gap:10px; padding:0 14px;
+    background:linear-gradient(180deg, rgba(7,9,13,.97), rgba(7,9,13,.82));
+    border-bottom:1px solid var(--line); overflow-x:auto; white-space:nowrap}
+  .brand{font-weight:700; letter-spacing:.08em; color:#e8f2fb}
+  .brand small{color:var(--cyan); font-weight:400; margin-left:8px}
+  .badge{padding:3px 9px; border:1px solid var(--line); border-radius:3px;
+    font-size:10.5px; letter-spacing:.04em; flex:0 0 auto}
+  .b-proven{color:#8ff2c0; border-color:#1f5c3c; background:rgba(53,208,127,.10)}
+  .b-loading{color:#a8cdf5; border-color:#2b4a6b; background:rgba(92,167,255,.10); animation:pulse 1.2s infinite}
+  .b-blocked{color:#ffb1b1; border-color:#6e2a2a; background:rgba(255,92,92,.12)}
+  .b-amber{color:#f0d194; border-color:#5c4a20; background:rgba(230,180,80,.10)}
+  .b-neutral{color:var(--dim)}
+  @keyframes pulse{50%{opacity:.55}}
+  /* HUD */
+  #hud{position:fixed; left:0; top:58px; bottom:34px; width:322px; z-index:15;
+    background:var(--panel); border-right:1px solid var(--line);
+    overflow-y:auto; padding:12px 14px 20px}
+  h2{font-size:11px; letter-spacing:.14em; color:var(--cyan); margin:14px 0 6px;
+    border-bottom:1px solid var(--line); padding-bottom:4px}
+  h2:first-child{margin-top:0}
+  .kv{display:flex; justify-content:space-between; gap:8px; padding:2px 0; font-size:11px}
+  .kv b{color:#e8f2fb; font-weight:600; text-align:right}
+  .note{color:var(--dim); font-size:10.5px; margin-top:4px}
+  .warn{color:var(--amber)}
+  .vitals{display:flex; gap:10px; margin:6px 0 2px}
+  .vital{flex:1; border:1px solid var(--line); border-radius:4px; padding:6px 8px; text-align:center}
+  .vital .num{font-size:20px; color:#e8f2fb; font-weight:700}
+  .vital .lbl{font-size:9.5px; color:var(--dim); letter-spacing:.08em}
+  .simtag{display:inline-block; margin-top:3px; font-size:9px; color:var(--amber);
+    border:1px solid #5c4a20; border-radius:2px; padding:1px 5px; letter-spacing:.06em}
+  #ecg{width:100%; height:56px; display:block; margin-top:8px;
+    border:1px solid var(--line); border-radius:4px; background:#05070a}
+  /* buttons */
+  .row{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+  button{flex:1 1 auto; background:#0d141d; color:var(--txt);
+    border:1px solid #2a3848; border-radius:4px; padding:7px 8px; font:inherit; font-size:10.5px;
+    cursor:pointer; letter-spacing:.03em}
+  button:hover{border-color:var(--cyan); color:#eafffb}
+  button.primary{border-color:#1f5c4c; background:rgba(63,216,199,.08)}
+  button.danger{border-color:#5c2a2a; color:#ffb1b1}
+  button.on{border-color:var(--green); color:#a9f2cd; background:rgba(53,208,127,.10)}
+  button.off{opacity:.55}
+  /* footer */
+  #foot{position:fixed; left:0; right:0; bottom:0; height:34px; z-index:20;
+    display:flex; align-items:center; gap:14px; padding:0 14px;
+    background:rgba(7,9,13,.95); border-top:1px solid var(--line);
+    font-size:10px; color:var(--dim); white-space:nowrap; overflow:hidden}
+  #foot .law{color:#8ff2c0}
+  #log{margin-left:auto; display:flex; gap:10px; overflow:hidden}
+  #log span{opacity:.85}
+  #log span:first-child{opacity:1; color:#9fb3c8}
+  .err-detail{margin-top:6px; padding:7px 9px; border:1px solid #6e2a2a; border-radius:4px;
+    background:rgba(255,92,92,.07); color:#ffb1b1; font-size:10.5px; word-break:break-all; display:none}
+  /* Mobile fallback for the embedded shell: collapse the HUD into a bottom sheet. */
+  @media (max-width:820px){
+    body:not(.standalone) #hud{max-height:44vh}
+  }
+</style>
+</head>
+<body class="standalone" id="vvu-bioteknik-root">
+<div id="stage"></div>
+
+<header id="topbar">
+  <div class="brand">BIOTEKNIK // UNIVERSAL AVATAR COMPILER<small>PATH A PIPELINE PROOF · v4</small></div>
+  <div class="badge b-loading" id="b-asset">ASSET: LOADING…</div>
+  <div class="badge b-amber" id="b-tele">TELEMETRY: SIMULATED</div>
+  <div class="badge b-amber" id="b-synth" title="callPhotogrammetryAPI() = setTimeout stub returning a hardcoded URL (audit F10)">SYNTHESIS: ABSENT (stub)</div>
+  <div class="badge b-neutral" id="b-render">RENDERER: init…</div>
+</header>
+
+<aside id="hud">
+  <h2>UNIVERSAL USER PROFILE</h2>
+  <div class="kv"><span>identity.name</span><b>"DEMO" — fixture</b></div>
+  <div class="kv"><span>visualSources</span><b>0 — socials not linked (F12)</b></div>
+  <div class="kv"><span>device.imei</span><b>NOT COLLECTED (F11)</b></div>
+  <div class="kv"><span>device.gpuTier</span><b id="gpu-tier">detecting…</b></div>
+  <div class="kv"><span>biometrics</span><b>SIMULATED engine</b></div>
+  <div class="note warn">Web sandbox cannot read IMEI; social scraping has no endpoints (BLOCKED_MISSING_INPUT). Schema fields shown to expose what the compiler would need — nothing here is asserted as real.</div>
+
+  <h2>VITALS — TELEMETRY BINDING</h2>
+  <div class="vitals">
+    <div class="vital"><div class="num" id="v-hr">--</div><div class="lbl">HR BPM</div><div class="simtag">SIMULATED</div></div>
+    <div class="vital"><div class="num" id="v-bp">--/--</div><div class="lbl">BP mmHg</div><div class="simtag">SIMULATED</div></div>
+    <div class="vital"><div class="num" id="v-hyd">--</div><div class="lbl">HYDRATION</div><div class="simtag">SIMULATED</div></div>
+  </div>
+  <canvas id="ecg" width="560" height="112"></canvas>
+
+  <h2>SYNTHESIS &amp; ASSET PIPELINE</h2>
+  <div class="note" id="asset-detail">Source: GLTFLoader + sourced texture maps. See badge for the live proven claim.</div>
+  <div class="err-detail" id="err-detail"></div>
+  <div class="row">
+    <button class="primary" id="b-load-head">RELOAD HEAD SCAN</button>
+    <button id="b-load-alt">LOAD ALT ASSET</button>
+  </div>
+  <div class="row">
+    <button class="danger" id="b-fail">RUN FAIL-CLOSED TEST (404)</button>
+  </div>
+  <div class="note">Fail-closed test loads a deliberately missing URL. Per the <b>No-Primitives Law</b> there is zero fallback geometry in this build — the viewport stays empty and says why.</div>
+
+  <h2>MATERIAL — A/B EVIDENCE</h2>
+  <div class="row">
+    <button class="on" id="b-mode-scan">SCAN MAPS (photoreal)</button>
+    <button class="off" id="b-mode-compiler">COMPILER RECIPE (as-written)</button>
+  </div>
+  <div class="note" id="mode-note">SCAN MAPS: albedo + 4K tangent normal maps bound onto MeshPhysicalMaterial, with the compiler's transmission/attenuation/clearcoat layer applied <b>on top</b> (maps preserved).</div>
+
+  <h2>TELEMETRY CONTROLS</h2>
+  <div class="row">
+    <button id="b-spike">INJECT SPIKE SAMPLE (SIMULATED)</button>
+  </div>
+  <div class="note">Injects HR&gt;100 into the simulated stream to demonstrate the compiler's bindLiveTelemetry() flush path on the rendered material.</div>
+
+  <h2>STATE LOG — SESSION-SCOPED</h2>
+  <div class="note">In-memory only, clears on reload. NOT a WORM ledger.</div>
+  <div id="hud-log" class="note" style="margin-top:4px"></div>
+</aside>
+
+<footer id="foot">
+  <span class="law">NO PRIMITIVES LAW ENFORCED — zero fallback geometry in this build</span>
+  <span>TELEMETRY: SIMULATED · ASSET: see badge (PROVEN is per-claim only)</span>
+  <div id="log"></div>
+</footer>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ================= provenance (all URLs probed HTTP 200 + CORS * on 2026-10-26) ========= */
+const HEAD = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/LeePerrySmith/';
+const ASSETS = {
+  head: {
+    label: 'LeePerrySmith.glb (photoreal head scan)',
+    glb: HEAD + 'LeePerrySmith.glb', bytes: 404976,
+    maps: [
+      { slot:'map',       url: HEAD + 'Map-COL.jpg', srgb:true },
+      { slot:'normalMap', url: HEAD + 'Infinite-Level_02_Tangent_SmoothUV.jpg', srgb:false }
+    ],
+    license: 'Head scan: (c) Infinite Realities, CC-BY (via three.js examples). Formal license review OPEN.'
+  },
+  helmet: {
+    label: 'DamagedHelmet.glb (Khronos PBR fixture)',
+    glb: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Assets@main/Models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
+    bytes: 3773916, maps: [],
+    license: 'CC-BY 4.0 — Khronos glTF Sample Assets'
+  },
+  bad: {
+    label: 'fail-closed test asset (deliberate 404)',
+    glb: HEAD + 'RUN_FAIL_CLOSED_TEST__404.glb', bytes: 0, maps: [], license: 'n/a'
+  }
+};
+
+/* ================= epistemic UI ======================================================== */
+const $ = id => document.getElementById(id);
+const bAsset=$('b-asset'), bRender=$('b-render'), errBox=$('err-detail'), assetDetail=$('asset-detail');
+const logRing=[]; const FLUSHED_AT_TOP=6;
+function log(msg){
+  const t=new Date().toISOString().slice(11,19);
+  logRing.unshift(t+'  '+msg);
+  if(logRing.length>40) logRing.pop();
+  $('log').innerHTML = logRing.slice(0,3).map(s=>'<span>'+s+'</span>').join('');
+  $('hud-log').innerHTML = logRing.slice(0,FLUSHED_AT_TOP).map(s=>'&gt; '+s).join('<br>');
+}
+function setAsset(state, detail){
+  errBox.style.display='none';
+  if(state==='LOADING'){ bAsset.className='badge b-loading'; bAsset.textContent='ASSET: LOADING… '+detail; }
+  if(state==='PROVEN'){ bAsset.className='badge b-proven'; bAsset.textContent='ASSET PROVEN — '+detail; }
+  if(state==='BLOCKED'){
+    bAsset.className='badge b-blocked'; bAsset.textContent='BLOCKED_MISSING_ASSET';
+    errBox.style.display='block'; errBox.textContent='DETAIL: '+detail;
+  }
+}
+
+/* ================= three core ========================================================== */
+const stage=$('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.12;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+stage.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x07090d);
+const camera=new THREE.PerspectiveCamera(40, 1, 0.01, 200);
+camera.position.set(0.6, 0.25, 12);
+const controls=new OrbitControls(camera, renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.08;
+
+try{
+  const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
+  const pmrem=new THREE.PMREMGenerator(renderer);
+  scene.environment=pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  log('ENV: RoomEnvironment IBL bound');
+}catch(e){ log('ENV: IBL unavailable — lights only ('+(e.message||e)+')'); }
+
+const key=new THREE.DirectionalLight(0xfff1e0, 2.6); key.position.set(2.6, 1.9, 3.2); scene.add(key);
+const rim=new THREE.DirectionalLight(0xbcd4ff, 1.1); rim.position.set(-3.0, 2.2, -2.6); scene.add(rim);
+scene.add(new THREE.AmbientLight(0x223344, 0.55));
+
+const root=new THREE.Group(); scene.add(root);
+const gltfLoader=new GLTFLoader();
+const texLoader=new THREE.TextureLoader();
+texLoader.setCrossOrigin('anonymous');
+const maxAniso=renderer.capabilities.getMaxAnisotropy();
+
+let gpu='masked';
+try{
+  const gl=renderer.getContext();
+  const dbg=gl.getExtension('WEBGL_debug_renderer_info');
+  if(dbg) gpu=gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL);
+}catch(e){}
+bRender.textContent='RENDERER: three r160 · '+(renderer.capabilities.isWebGL2?'WebGL2':'WebGL1')+' · '+String(gpu).slice(0,34);
+const glTier=(/swift|soft|llvmpipe/i.test(String(gpu)))?'LOW':'HIGH';
+$('gpu-tier').textContent=glTier+' (auto)';
+
+/* ================= sizing (ResizeObserver — closes the v1 race class) ================== */
+  function fit(){
+    const w=stage.clientWidth, h=stage.clientHeight;
+    if(w>0&&h>0){ renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+  }
+  new ResizeObserver(fit).observe(stage); fit();
+
+  /* When embedded inside Flutter's HtmlElementView the host may swap the iframe
+     dimensions before the module script runs. Re-fit on a microtask and again
+     after the first frame so the canvas never renders at 0x0. */
+  requestAnimationFrame(()=>{ setTimeout(fit, 60); });
+  document.addEventListener('vvu-fit', fit);
+
+/* ================= materials =========================================================== */
+/* Sovereign's UniversalAvatarCompiler.createPhotorealSkinMaterial() — VERBATIM recipe.   */
+/* As written it carries NO maps → audit F9: assigning it discards the GLB's PBR maps.    */
+function compilerMaterial(){
+  return new THREE.MeshPhysicalMaterial({
+    color:0xffffff, roughness:0.4, metalness:0.05,
+    transmission:0.2, thickness:1.5,
+    attenuationColor:new THREE.Color(0xff0000), attenuationDistance:0.5,
+    clearcoat:0.6, clearcoatRoughness:0.1,
+    normalScale:new THREE.Vector2(1.2,1.2)
+  });
+}
+/* Scan material: sourced maps preserved; compiler's SSS/wetness layer applied on top.    */
+function scanMaterial(tex){
+  return new THREE.MeshPhysicalMaterial({
+    color:0xffffff,
+    map: tex.map || null,
+    normalMap: tex.normalMap || null,
+    normalScale:new THREE.Vector2(1.0,1.0),
+    roughness:0.52, metalness:0.0,
+    clearcoat:0.12, clearcoatRoughness:0.5,
+    transmission:0.08, thickness:1.0,
+    attenuationColor:new THREE.Color(0xff6a55), attenuationDistance:0.9
+  });
+}
+
+/* ================= subject lifecycle =================================================== */
+let subject={ meshList:[], baseMats:[], tris:0, key:null };
+let mode='scan'; let compilerMat=null;
+
+function disposeSubject(){
+  if(subject.group){
+    root.remove(subject.group);
+    subject.group.traverse(o=>{
+      if(o.isMesh){
+        o.geometry.dispose();
+        (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{
+          if(!m) return;
+          for(const k in m){ const v=m[k]; if(v&&v.isTexture) v.dispose(); }
+          m.dispose();
+        });
+      }
+    });
+  }
+  if(compilerMat){ compilerMat.dispose(); compilerMat=null; }
+  subject={ meshList:[], baseMats:[], tris:0, key:null, group:null };
+}
+
+function frameCamera(obj){
+  const box=new THREE.Box3().setFromObject(obj);
+  const size=box.getSize(new THREE.Vector3());
+  const center=box.getCenter(new THREE.Vector3());
+  const maxDim=Math.max(size.x,size.y,size.z)||1;
+  const fov=camera.fov*Math.PI/180;
+  const dist=(maxDim/2)/Math.tan(fov/2)*1.35;
+  camera.near=dist/100; camera.far=dist*100; camera.updateProjectionMatrix();
+  camera.position.set(center.x+dist*0.22, center.y+dist*0.10, center.z+dist);
+  controls.target.copy(center); controls.update();
+}
+
+function loadAsset(keyName){
+  const A=ASSETS[keyName];
+  disposeSubject();
+  setAsset('LOADING', A.label);
+  log('LOAD → '+A.label);
+  const texJobs=A.maps.map(md=>new Promise(res=>{
+    texLoader.load(md.url, t=>{
+      t.colorSpace = md.srgb? THREE.SRGBColorSpace : THREE.NoColorSpace;
+      t.anisotropy=maxAniso; res([md.slot,t]);
+    }, undefined, ()=>{ log('WARN: map failed ('+md.slot+') — continuing without'); res([md.slot,null]); });
+  }));
+  Promise.all(texJobs).then(entries=>{
+    const tex=Object.fromEntries(entries);
+    const onErr=e=>{
+      const msg=(e&&e.message)?e.message:String(e);
+      setAsset('BLOCKED', msg+' — requested: '+A.glb);
+      log('BLOCKED_MISSING_ASSET — no fallback rendered (No-Primitives Law)');
+    };
+    gltfLoader.load(A.glb, gltf=>{
+      const group=gltf.scene; let tris=0, meshes=0; const baseMats=[];
+      group.traverse(o=>{
+        if(o.isMesh){
+          meshes++;
+          const g=o.geometry;
+          tris += (g.index? g.index.count : (g.attributes.position?g.attributes.position.count:0))/3;
+          if(A.maps.length){ o.material=scanMaterial(tex); }
+          baseMats.push(o.material);
+        }
+      });
+      root.add(group);
+      subject={ group, meshList:[], baseMats, tris:Math.round(tris), key:keyName, meshes };
+      subject.meshList=[]; group.traverse(o=>{ if(o.isMesh) subject.meshList.push(o); });
+      setMode(mode, true);
+      frameCamera(group);
+      const bound=[...new Set(baseMats.flatMap(m=>m?['map','normalMap','roughnessMap','metalnessMap','aoMap','emissiveMap'].filter(k=>m[k]):[]))];
+      setAsset('PROVEN', A.label+' · '+(A.bytes/1024).toFixed(0)+' KB · '+subject.tris.toLocaleString()+' tris · '+meshes+' mesh · maps: '+(bound.join('+')||'none (geometry-only)'));
+      log('ASSET PROVEN — '+subject.tris.toLocaleString()+' tris, maps: '+(bound.join('+')||'none'));
+      assetDetail.innerHTML='Provenance: '+A.label+'<br>License: '+A.license;
+      bindTelemetry();
+    }, undefined, onErr);
+  });
+}
+
+/* mode toggle: 'scan' (maps preserved) vs 'compiler' (as-written recipe → F9 demo) */
+function setMode(m, silent){
+  mode=m;
+  $('b-mode-scan').classList.toggle('on', m==='scan');  $('b-mode-scan').classList.toggle('off', m!=='scan');
+  $('b-mode-compiler').classList.toggle('on', m==='compiler'); $('b-mode-compiler').classList.toggle('off', m!=='compiler');
+  if(!subject.meshList.length){ if(!silent) log('MODE '+m+' — no subject loaded'); return; }
+  if(m==='compiler'){
+    if(!compilerMat) compilerMat=compilerMaterial();
+    subject.meshList.forEach(o=>o.material=compilerMat);
+    if(!silent) log('MODE → COMPILER RECIPE (as-written): maps discarded — F9 demonstrated');
+    $('mode-note').innerHTML='<span class="warn">F9 DEMO — the as-written recipe carries no map/normalMap slots; assigning it replaced the sourced 4K maps. Photoreal asset now renders as featureless wax. This is what UniversalAvatarCompiler.ts would do to every asset it loads.</span>';
+  }else{
+    subject.meshList.forEach((o,i)=>o.material=subject.baseMats[i]);
+    if(!silent) log('MODE → SCAN MAPS: albedo + normal restored, telemetry layer on top');
+    $('mode-note').innerHTML='SCAN MAPS: albedo + 4K tangent normal maps bound onto MeshPhysicalMaterial, with the compiler\'s transmission/attenuation/clearcoat layer applied <b>on top</b> (maps preserved).';
+  }
+  bindTelemetry();
+}
+
+/* ================= telemetry (SIMULATED engine + compiler bindLiveTelemetry port) ====== */
+let hr=73, hyd=0.82, flushed=false, sweaty=false;
+function bindTelemetry(){
+  const mats = mode==='compiler' ? (compilerMat?[compilerMat]:[]) : subject.baseMats.filter(Boolean);
+  mats.forEach(m=>{
+    if(!m.isMeshPhysicalMaterial) return;
+    if(hr>100){ m.attenuationColor.setHex(0xff2222); m.attenuationDistance=0.25; }
+    else      { m.attenuationColor.setHex(0xff6a55); m.attenuationDistance=0.9;  }
+    if(hyd<0.5){ m.clearcoat=1.0;  m.clearcoatRoughness=0.05; }
+    else       { m.clearcoat=0.12; m.clearcoatRoughness=0.5;  }
+  });
+}
+function tickTelemetry(forceHr){
+  if(forceHr) hr=forceHr;
+  else hr=Math.max(45, Math.min(148, hr+Math.round((Math.random()-0.48)*14)));
+  hyd=Math.max(0.2, Math.min(1.0, hyd+(Math.random()-0.5)*0.07));
+  $('v-hr').textContent=hr;
+  $('v-bp').textContent=Math.round(106+hr*0.26+Math.random()*5)+'/'+Math.round(62+hr*0.13+Math.random()*4);
+  $('v-hyd').textContent=hyd.toFixed(2);
+  if(hr>100&&!flushed){ flushed=true; log('TELEMETRY BIND — HR '+hr+'>100 → attenuation 0.9→0.25 (SIMULATED flush)'); }
+  if(hr<=100) flushed=false;
+  if(hyd<0.5&&!sweaty){ sweaty=true; log('TELEMETRY BIND — hydration '+hyd.toFixed(2)+'<0.50 → clearcoat 1.0/0.05 (SIMULATED sweat)'); }
+  if(hyd>=0.5) sweaty=false;
+  bindTelemetry();
+}
+setInterval(()=>tickTelemetry(), 2000); tickTelemetry();
+
+/* ================= ECG (phosphor sweep) ================================================ */
+const ecg=$('ecg'), ectx=ecg.getContext('2d');
+let sweepX=0, beatPhase=0;
+function pulseWave(p){
+  if(p<0.06) return -Math.sin(p/0.06*Math.PI)*0.12;
+  if(p<0.10) return 0;
+  if(p<0.16) return Math.sin((p-0.10)/0.06*Math.PI)*0.18;
+  if(p<0.22) return 0;
+  if(p<0.26) return -((p-0.22)/0.04)*1.0;
+  if(p<0.30) return -1.0+((p-0.26)/0.04)*2.2;
+  if(p<0.34) return 1.2-((p-0.30)/0.04)*1.9;
+  if(p<0.38) return -0.7+((p-0.34)/0.04)*0.7;
+  if(p<0.55) return Math.sin((p-0.38)/0.17*Math.PI)*0.28;
+  return 0;
+}
+function drawECG(){
+  const w=ecg.width, h=ecg.height;
+  ectx.fillStyle='rgba(5,7,10,0.16)'; ectx.fillRect(0,0,w,h);
+  const pxPerSec=hr/60*150;
+  sweepX=(sweepX+pxPerSec/60)%w;
+  beatPhase=(beatPhase + (hr/60)/60)%1;
+  const y=h*0.62 - pulseWave(beatPhase)*h*0.5;
+  ectx.strokeStyle='#3fd8c7'; ectx.lineWidth=2; ectx.beginPath();
+  ectx.moveTo(sweepX-2, ectx._lastY===undefined?y:ectx._lastY); ectx.lineTo(sweepX,y); ectx.stroke();
+  ectx._lastY=y;
+  if(sweepX<2) ectx._lastY=undefined;
+  requestAnimationFrame(drawECG);
+}
+drawECG();
+
+/* ================= wiring ============================================================== */
+$('b-load-head').onclick =()=>loadAsset('head');
+$('b-load-alt').onclick  =()=>loadAsset('helmet');
+$('b-fail').onclick      =()=>loadAsset('bad');
+$('b-mode-scan').onclick =()=>setMode('scan');
+$('b-mode-compiler').onclick=()=>setMode('compiler');
+$('b-spike').onclick     =()=>{ log('SPIKE SAMPLE INJECTED (SIMULATED) — HR set 128'); tickTelemetry(128); };
+
+log('BOOT — Universal Avatar Compiler v4 · Path A pipeline proof');
+log('LAW: No-Primitives enforced — zero fallback geometry in build');
+loadAsset('head');
+
+/* ================= loop ================================================================ */
+renderer.setAnimationLoop(()=>{ controls.update(); renderer.render(scene,camera); });
+</script>
+</body>
+</html>

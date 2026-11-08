@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- public/icons/source.svg — the single SVG source for every PWA raster
+       icon (R54). Hex = the VVU trust shell; lime #c8ff00 on estate black
+       #060806; sage #8fb35a edge rails. All glyphs live inside the maskable
+       safe zone: farthest glyph point from centre = 178.9px (hex corner
+       (416,336): √(160²+80²)) < 204.8px (40% of 512) — so this source
+       serves BOTH purpose:"any" and purpose:"maskable" without padding. -->
+  <rect width="512" height="512" fill="#060806"/>
+  <path d="M96 176 L256 96 L416 176 L416 336 L256 416 L96 336 Z"
+        fill="none" stroke="#c8ff00" stroke-width="20" stroke-linejoin="round"/>
+  <circle cx="256" cy="256" r="52" fill="#c8ff00"/>
+  <path d="M256 96 L256 204 M256 308 L256 416" fill="none" stroke="#c8ff00" stroke-width="14"/>
+  <path d="M96 176 L204 232 M308 280 L416 336" fill="none" stroke="#8fb35a" stroke-width="10"/>
+</svg>

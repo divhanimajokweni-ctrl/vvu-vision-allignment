@@ -1,0 +1,152 @@
+# build-android.yml — VVU Trust field-node debug APK (fail-closed)
+#
+# Plan reference: active/PLAN_ANDROID_WORKFLOW_AMENDMENT.md (APPROVED 2026-09-22)
+#
+# Gates, in order:
+#   1. Validate every required project path BEFORE any cache or build activity.
+#   2. Stamp runtime identity — a failing stamp fails the workflow.
+#   3. Stage the engine ONLY after asserting every required directory exists,
+#      and prove runner/vvu_runner.py reached the Kivy staging tree.
+#   4. Buildozer failure fails the workflow (bash -euo pipefail throughout).
+#   5. Validate bin/*.apk BEFORE upload; upload uses if-no-files-found: error.
+#
+# Trigger policy: manual dispatch ONLY. No push/tag trigger and no deploy step
+# exists in this file, so no CI run, tag, or deployment can occur until source
+# execution and independent validation have passed (amendment AC 7).
+#
+# Runner pin: ubuntu-22.04, NOT ubuntu-latest. The Buildozer dependency set
+# (libncurses5-dev / libncursesw5-dev) is not installable on Ubuntu 24.04.
+# Re-verify 22.04 availability at implementation time if this file is revived.
+
+name: build-android
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read # structurally cannot push, tag, or deploy
+
+defaults:
+  run:
+    shell: bash # GitHub runs this as `bash --noprofile --norc -eo pipefail {0}`
+
+jobs:
+  android-debug-apk:
+    name: Android debug APK (fail-closed)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Gate 1: required project paths — before cache and build activity ──
+      # A missing buildozer.spec must fail here, before actions/cache runs,
+      # so hashFiles() can never turn an absent spec into a usable cache key.
+      - name: Validate required project paths
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          [ -f vvu-trust/android/kivy/buildozer.spec ]      || fail "missing vvu-trust/android/kivy/buildozer.spec"
+          [ -f vvu-trust/android/kivy/main.py ]             || fail "missing vvu-trust/android/kivy/main.py"
+          [ -f vvu-trust/build/windows/embed_runtime_hash.py ] || fail "missing vvu-trust/build/windows/embed_runtime_hash.py"
+          [ -f vvu-trust/runner/vvu_runner.py ]             || fail "missing vvu-trust/runner/vvu_runner.py"
+          for d in runner harness installer services chains; do
+            [ -d "vvu-trust/$d" ] || fail "missing required engine directory: vvu-trust/$d"
+          done
+          echo "all required project paths present"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Buildozer dependency set
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev \
+            libssl-dev automake ccache p7zip-full
+          python -m pip install --upgrade pip
+          pip install buildozer cython
+          command -v buildozer || { echo "::error::buildozer not on PATH after pip install"; exit 1; }
+          buildozer --help > /dev/null
+
+      # ── Cache: Buildozer SDK/NDK state + Gradle state ──
+      # The cache key hashes buildozer.spec. Gate 1 has already proven the
+      # spec exists, so this key is always computed from a real spec — a
+      # missing spec can never yield a usable cache key (it fails first).
+      - name: Cache Buildozer and Gradle state
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer
+            ~/.gradle
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('vvu-trust/android/kivy/buildozer.spec') }}
+
+      # ── Gate 2: runtime identity stamping — failure fails the workflow ──
+      - name: Stamp runtime identity (fail-closed)
+        run: |
+          set -euo pipefail
+          python vvu-trust/build/windows/embed_runtime_hash.py
+          [ -f vvu-trust/chains/runtime.json ] || { echo "::error::embed_runtime_hash.py did not write chains/runtime.json"; exit 1; }
+          echo "runtime identity stamped"
+
+      # ── Gate 3: stage engine only after asserting every directory exists ──
+      - name: Stage engine into Kivy staging tree (fail-closed)
+        run: |
+          set -euo pipefail
+          root=vvu-trust
+          stage="$root/android/kivy/vvu-trust"
+          for d in runner harness installer services chains; do
+            [ -d "$root/$d" ] || { echo "::error::required engine directory missing: $root/$d"; exit 1; }
+          done
+          rm -rf "$stage"
+          mkdir -p "$stage"
+          for d in runner harness installer services chains; do
+            cp -a "$root/$d" "$stage/"
+            echo "staged $d"
+          done
+          # prove the runner entrypoint reached the tree Buildozer bundles
+          [ -f "$stage/runner/vvu_runner.py" ] || { echo "::error::runner/vvu_runner.py did not reach the Kivy staging tree"; exit 1; }
+          echo "staging proven: $stage/runner/vvu_runner.py"
+
+      # ── Gate 4: Buildozer — non-zero exit fails the workflow ──
+      - name: Build debug APK with Buildozer
+        run: |
+          set -euo pipefail
+          cd vvu-trust/android/kivy
+          buildozer android debug
+
+      # ── Gate 5: validate APK output BEFORE any upload ──
+      - name: Validate APK output (fail-closed)
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          apks=(vvu-trust/android/kivy/bin/*.apk)
+          [ "${#apks[@]}" -gt 0 ] || { echo "::error::buildozer finished but produced no bin/*.apk"; exit 1; }
+          for apk in "${apks[@]}"; do
+            [ -s "$apk" ] || { echo "::error::produced APK is empty: $apk"; exit 1; }
+          done
+          sha256sum "${apks[@]}"
+          ls -lh "${apks[@]}"
+          {
+            echo "### VVU Trust Android debug APK"
+            sha256sum "${apks[@]}"
+            ls -lh "${apks[@]}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vvutrust-android-debug-apk
+          path: vvu-trust/android/kivy/bin/*.apk
+          if-no-files-found: error
+          retention-days: 14

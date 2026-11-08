@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Venture Vision Ubuntu - Pinned Rail</title>
+<style>
+:root{--bg:#071018;--panel:#0a1520;--line:#214050;--cyan:#00e5ff;--mint:#00ffcc;--gold:#ffaa00;--red:#ff3b3b;--text:#e8f1f6;--muted:#91a6b5}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif}
+.rail{width:340px;position:sticky;top:0;height:100dvh;overflow-y:auto;padding:12px;display:grid;gap:12px;background:var(--bg);border-right:1px solid var(--line);transition:transform .25s ease}
+.rail::-webkit-scrollbar{width:4px} .rail::-webkit-scrollbar-thumb{background:#214050;border-radius:4px}
+.head{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#0a1520}
+.head b{font-size:11px;letter-spacing:1.5px;color:var(--cyan)}
+.pin{font-size:10px;border:1px solid var(--mint);color:var(--mint);background:rgba(0,255,204,.08);padding:4px 8px;border-radius:6px;cursor:pointer}
+.card{border:1px solid var(--line);border-radius:12px;padding:12px;background:#0a1520e6;backdrop-filter:blur(8px)}
+.card .top{display:flex;justify-content:space-between;align-items:flex-start}
+.badge{font-size:9px;padding:3px 7px;border-radius:6px;border:1px solid var(--gold);color:var(--gold);background:rgba(255,170,0,.08);font-weight:700;letter-spacing:1px}
+.status{font-size:10px;color:var(--mint);display:flex;gap:6px;align-items:center;margin:10px 0}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint)}
+.layers{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0}
+.layers div{border:1px solid #29414f;background:#0c1a25;border-radius:8px;padding:6px 2px;text-align:center;font-size:9px;color:var(--cyan)}
+.layers div b{display:block;font-size:12px;color:#fff}
+.layers div.on{border-color:var(--mint);color:var(--mint)}
+.warn{margin-top:10px;padding:8px;border:1px solid var(--gold);border-radius:8px;background:#1a1300;color:var(--gold);font-size:10px;text-align:center;letter-spacing:1px}
+.row{display:flex;justify-content:space-between;font-size:11px;padding:6px 0;border-bottom:1px solid #15202a}
+.row:last-child{border:0}
+.crit{color:var(--red);font-weight:800}
+.collapse{cursor:pointer;user-select:none}
+
+/* VVU OPERATOR PATCH (workspace Task 27, disclosed):
+   1) REAL collapse — the user asked for "the 📌 pin toggle to collapse on
+      mobile so the map goes full-screen"; the original toggle only shifted
+      the rail 10px. Unpinned, the rail now slides off-screen and leaves a
+      slim reopen tab; everything else is the user's file verbatim.
+   2) LIVE FEED — values are polled from /api/gis/status + /api/yolo/status
+      (same endpoints as the VVU app, 5 s poll). Offline the documented spec
+      fallbacks stay and the feed line says COLD — never faked as live. */
+.rail.hide{transform:translateX(-100%)}
+.railtab{position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:99;writing-mode:vertical-rl;letter-spacing:.22em;font-size:9px;font-weight:700;padding:16px 7px;border:1px solid rgba(0,255,204,.5);border-left:0;border-radius:0 8px 8px 0;background:#0a1520;color:var(--mint);cursor:pointer;display:none}
+.feed{font-size:9px;letter-spacing:.14em;text-align:center;color:var(--muted);border:1px dashed #214050;border-radius:6px;padding:5px}
+.feed.live{color:var(--mint);border-color:rgba(0,255,204,.4)}
+.feed.cold{color:var(--gold);border-color:rgba(255,170,0,.4)}
+@media (max-width:480px){.rail{width:min(340px,92vw)}}
+</style>
+</head>
+<body>
+<div class="rail" id="rail">
+
+  <div class="head">
+    <b>VENTURE VISION UBUNTU</b>
+    <button class="pin" id="pinBtn">📌 PINNED</button>
+  </div>
+
+  <div class="feed" id="feed">FEED: —</div>
+
+  <!-- SYS.02 -->
+  <div class="card" id="sys02">
+    <div class="top">
+      <div><div style="font-size:11px;color:var(--muted)">SYS.02 · GIS SPATIA</div><div style="font-size:16px;font-weight:800;color:var(--cyan)">CITY TWIN</div></div>
+      <span class="badge">CITY TWIN</span>
+    </div>
+    <div class="status"><span class="dot"></span> STATUS: MAP_SYNC &nbsp; <span style="margin-left:auto;color:var(--muted)">99.9%</span></div>
+    <div style="font-size:11px;color:var(--text)">S33°57'38" E25°36'07"<br><span style="color:var(--muted);font-size:9px">PE PILOT · QGEBERHA CORE<br>S26°08'13" E27°55'16" JHB CORRIDOR · SECONDARY</span></div>
+    <div style="font-size:9px;color:var(--muted);margin-top:8px;letter-spacing:1px">LAYER STACK</div>
+    <div class="layers">
+      <div><b>L1</b>INFRA</div><div><b>L2</b>FLOW</div><div><b>L3</b>POWER</div><div class="on"><b>L4</b>YOLO</div><div style="border-color:var(--gold);color:var(--gold)"><b>L5</b>THREAT</div>
+    </div>
+    <div class="status" style="border-top:1px solid #15202a;padding-top:8px"><span class="dot"></span> BENCH ENGINE <span style="margin-left:auto;color:var(--muted)">ONLINE</span></div>
+    <div class="warn">● TELEMETRY LINK DOWN · RECONNECTING</div>
+  </div>
+
+  <!-- SYS.03 -->
+  <div class="card" id="sys03" style="border-color:var(--gold);box-shadow:0 0 18px rgba(255,170,0,.15)">
+    <div class="top">
+      <div><div style="font-size:11px;color:var(--muted)">SYS.03 · YOLO EDGE AI</div><div style="font-size:16px;font-weight:800;color:var(--gold)">[ACTIVE]</div></div>
+      <span class="badge" style="border-color:var(--mint);color:var(--mint)">EDGE-GQ</span>
+    </div>
+    <div class="status"><span class="dot"></span> STATUS: DETECTION_ON</div>
+    <div class="row"><span>OBJECTS TRACKED</span><span>25R</span></div>
+    <div class="row"><span>ALERTS</span><span class="crit">14 CRITICAL</span></div>
+    <div class="row"><span>MODEL</span><span>V8_NANO</span></div>
+    <div class="row"><span>CONFIDENCE</span><span style="color:var(--mint)">>95%</span></div>
+    <div class="row"><span>PROCESS_TIME</span><span>22MS</span></div>
+    <div class="warn" style="background:#2a1a00">THREAT_LEVEL: ELEVATED</div>
+    <div class="status"><span class="dot"></span> ENGINE [ONLINE]</div>
+  </div>
+
+  <div style="font-size:9px;color:#666;text-align:center;padding:8px">STEADY_STATE_LOCKED · VERIFICATION LAYER · PROOFBRIDGE<br>computed gates · stubbed gates flagged · strong = suspicious</div>
+</div>
+
+<button class="railtab" id="railTab">📍 RAIL</button>
+
+<script>
+const btn=document.getElementById('pinBtn'), rail=document.getElementById('rail'), tab=document.getElementById('railTab'), feed=document.getElementById('feed');
+let pinned=true;
+
+/* VVU OPERATOR PATCH (Task 27) — real collapse: unpinned slides the rail
+   off-screen (map/game area goes full-width) and leaves the 📍 reopen tab. */
+function setPin(p){
+  pinned=p;
+  rail.classList.toggle('hide',!p);
+  tab.style.display=p?'none':'block';
+  btn.textContent=p?'📌 PINNED':'📍 UNPIN';
+}
+btn.onclick=()=>setPin(!pinned);
+tab.onclick=()=>setPin(true);
+
+// collapse on header click
+document.getElementById('sys02').querySelector('.top').onclick=()=>{
+  document.getElementById('sys02').classList.toggle('collapsed');
+  const el=document.querySelector('#sys02 .layers'); el.style.display= el.style.display==='none'?'grid':'none';
+};
+
+/* VVU OPERATOR PATCH (Task 27) — LIVE FEED: poll the VVU app endpoints
+   (same-origin when served from the workspace). Offline → the documented
+   spec fallbacks stay + FEED: COLD (never faked as live). */
+(async function liveFeed(){
+  const s02=document.getElementById('sys02');
+  const s03=document.getElementById('sys03');
+  async function pull(){
+    let live=false, gis=null, yolo=null;
+    try{
+      const [rg,ry]=await Promise.all([fetch('/api/gis/status'),fetch('/api/yolo/status')]);
+      if(rg.ok&&ry.ok){ gis=await rg.json(); yolo=await ry.json(); live=true; }
+    }catch(e){/* offline — spec fallbacks */}
+    if(live){
+      feed.textContent='FEED: LIVE · '+ (gis.update_rt||'LIVE');
+      feed.className='feed live';
+      const sts=s02.querySelectorAll('.status');
+      sts[0].innerHTML='<span class="dot"></span> STATUS: '+(gis.map_sync?'MAP_SYNC':'DRIFT')+' &nbsp; <span style="margin-left:auto;color:var(--muted)">'+(gis.accuracy!=null?gis.accuracy.toFixed(1):'99.9')+'%</span>';
+      sts[1].innerHTML='<span class="dot"></span> BENCH ENGINE <span style="margin-left:auto;color:'+(gis.engine==='ONLINE'?'var(--mint)':'var(--gold)')+'">'+(gis.engine||'ONLINE')+'</span>';
+      const rows=s03.querySelectorAll('.row');
+      rows[0].children[1].textContent=(yolo.tracked!=null?yolo.tracked:25)+'R';
+      rows[1].children[1].textContent=(yolo.alerts!=null?yolo.alerts:14)+' CRITICAL';
+      rows[2].children[1].textContent=yolo.model||'V8_NANO';
+      rows[3].children[1].textContent='>'+(yolo.confidence!=null?Math.round(yolo.confidence*100):95)+'%';
+      rows[4].children[1].textContent=(yolo.process_time_ms!=null?yolo.process_time_ms:22)+'MS';
+      s03.querySelector('.warn').textContent='THREAT_LEVEL: '+(yolo.threat||'ELEVATED');
+    }else{
+      feed.textContent='FEED: COLD · spec fallback values';
+      feed.className='feed cold';
+    }
+  }
+  await pull();
+  setInterval(pull,5000);
+})();
+</script>
+</body>
+</html>

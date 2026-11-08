@@ -1,0 +1,108 @@
+{
+  "source": {
+    "kind": "code archive",
+    "artifact": "user-uploads://vvu-estate-kate.zip",
+    "project": "vvu-estate",
+    "stack": "Next.js 16 (App Router, single-route dashboard, hash routing), React 19, Tailwind 4, shadcn, Prisma + SQLite/Turso, socket.io-client, three.js, recharts, next-intl, next-auth (dependency only, no usage found)"
+  },
+  "scale": {
+    "loc": "~130k lines (82k src/components, 34k src/lib, 10k src/app/api, 6.6k src/server, 7.3k src/skylantern)",
+    "workspaces": "~30 hash-routed workspaces on one page (10 fixed surfaces + ~20 projections)",
+    "api_routes": 124,
+    "schema_tables": 46,
+    "mini_services": 5
+  },
+  "ledger": [
+    {
+      "capability": "application code",
+      "source": "Next.js single-page dashboard, src/app/page.tsx + ~30 workspace component trees",
+      "outcome": "migrate",
+      "status": "verified",
+      "next_action": ""
+    },
+    {
+      "capability": "database schema",
+      "source": "prisma/schema.prisma (SQLite provider, 46 tables, 885 lines)",
+      "outcome": "migrate",
+      "status": "verified",
+      "next_action": ""
+    },
+    {
+      "capability": "records",
+      "source": "SQLite/Turso database \u2014 no export attached",
+      "outcome": "migrate",
+      "status": "pending",
+      "next_action": "User must attach a per-table CSV/JSON export of the SQLite database; feeds currently run simulated data"
+    },
+    {
+      "capability": "auth identities",
+      "source": "next-auth in dependencies but no getServerSession/signIn usage found in source",
+      "outcome": "none",
+      "status": "not-migrated",
+      "next_action": "Source had no used auth (next-auth dependency only); Lovable Cloud auth ready when the app needs accounts"
+    },
+    {
+      "capability": "authorization",
+      "source": "No route protection / role checks found",
+      "outcome": "none",
+      "status": "not-migrated",
+      "next_action": "Source had no used auth (next-auth dependency only); Lovable Cloud auth ready when the app needs accounts"
+    },
+    {
+      "capability": "static assets",
+      "source": "public/ (twin surfaces HTML, models, icons, PWA manifest, vvu-trust surfaces, pools)",
+      "outcome": "migrate",
+      "status": "verified",
+      "next_action": ""
+    },
+    {
+      "capability": "external providers",
+      "source": "Resend (outreach email), Anthropic/Mistral/Fireworks keys (via z-ai-web-dev-sdk / apinator), anchor/ledger endpoints, VVU_SYNC_KEY, governance keypair",
+      "outcome": "preserve",
+      "status": "pending",
+      "next_action": "Resend key must be requested through the secure secret form before outreach dry-run->send verification"
+    },
+    {
+      "capability": "mini-services",
+      "source": "5 standalone Bun + socket.io services (telemetry :3003, vault-bridge :3004, field-onboard :3005, wildfire-mesh :3006, mesh-demo :3007)",
+      "outcome": "recreate",
+      "status": "pending",
+      "next_action": "Telemetry/bridge/field/CI recreated as in-app feeds; integrity/watchdog/dashboard-service feeds simulated; Wildfire-mesh and Mesh-demo still stubs; Resend email requires a secret when outreach sends go live"
+    },
+    {
+      "capability": "nested IVE sub-app",
+      "source": "src/ive (separate Next app: home, surfaces, pricing, about, proof, contact, who)",
+      "outcome": "decide",
+      "status": "verified",
+      "next_action": "Proof and contact pages remain timer placeholders pending real verification artifacts"
+    },
+    {
+      "capability": "public endpoints",
+      "source": "All /api/* are the app's own surface; no external callbacks/webhooks detected",
+      "outcome": "recreate",
+      "status": "verified",
+      "next_action": "124 API routes recreated as simulated in-app feeds; external webhook/cron callers would need re-registration"
+    },
+    {
+      "capability": "schedules",
+      "source": "src/instrumentation.ts + SafeGrid reconciler / proximity watchdog env-driven loops",
+      "outcome": "recreate",
+      "status": "pending",
+      "next_action": "Port in-process loops into server-side request-driven logic where needed"
+    },
+    {
+      "capability": "cutover",
+      "source": "Self-hosted Docker/compose deployment; no external domain in scope",
+      "outcome": "none",
+      "status": "verified",
+      "next_action": "None"
+    },
+    {
+      "capability": "verification",
+      "source": "-",
+      "outcome": "verify",
+      "status": "pending",
+      "next_action": "Core ten workspaces load error-free; most interaction paths still need manual pilot validation"
+    }
+  ]
+}

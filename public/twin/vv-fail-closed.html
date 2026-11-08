@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VVU · Fail-Closed Architecture</title>
+<style>
+    :root {
+        --bg-core: #050807;
+        --bg-panel: #0b0f0a;
+        --border-subtle: rgba(107, 138, 64, 0.25);
+        --border-strong: rgba(200, 255, 0, 0.5);
+        --text-main: #c9d4bd;
+        --text-muted: #7a8a6e;
+        --accent-lime: #c8ff00;
+        --fail-red: #e5484d;
+        --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; overflow: hidden; background: var(--bg-core); color: var(--text-main); font-family: var(--font-mono); }
+    
+    /* Water Ripple Canvas */
+    #ripple-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
+
+    /* App Layout */
+    #app { display: flex; flex-direction: column; height: 100dvh; }
+
+    /* Top Bar */
+    #top-bar { 
+        height: 48px; display: flex; align-items: center; justify-content: space-between; 
+        padding: 0 16px; background: var(--bg-panel); border-bottom: 1px solid var(--border-subtle); 
+        z-index: 100; flex-shrink: 0;
+    }
+    .nav-logo { font-weight: 900; color: var(--accent-lime); font-size: 12px; letter-spacing: 0.15em; }
+    .status-badge { 
+        font-size: 9px; font-weight: 700; padding: 4px 8px; border-radius: 3px;
+        border: 1px solid var(--accent-lime); color: var(--accent-lime);
+        display: flex; align-items: center; gap: 6px; letter-spacing: 0.1em;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-lime); box-shadow: 0 0 8px var(--accent-lime); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* Viewport Area */
+    #viewport { flex: 1; position: relative; overflow: hidden; background: #000; }
+    #viewport canvas { width: 100%; height: 100%; display: block; }
+
+    /* The Digital Turn Off Overlay */
+    #fail-overlay { 
+        position: absolute; inset: 0; z-index: 50; display: none; flex-direction: column; 
+        align-items: center; justify-content: center; background: rgba(5, 8, 7, 0.9); 
+        backdrop-filter: blur(8px); pointer-events: none;
+    }
+    #fail-overlay.active { display: flex; animation: fadeIn 0.4s ease-out; }
+    .fail-title { color: var(--fail-red); font-size: 22px; font-weight: 900; letter-spacing: 0.2em; margin-bottom: 8px; text-shadow: 0 0 20px rgba(229, 72, 77, 0.4); }
+    .fail-sub { color: var(--fail-red); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; }
+
+    /* HUD Overlay (Bottom Left) */
+    #hud { 
+        position: absolute; top: 16px; left: 16px; z-index: 10; 
+        background: rgba(11, 15, 10, 0.85); border: 1px solid var(--border-subtle); 
+        padding: 10px 12px; border-radius: 4px; backdrop-filter: blur(4px);
+    }
+    .hud-row { display: flex; justify-content: space-between; gap: 16px; font-size: 10px; margin-bottom: 4px; }
+    .hud-row:last-child { margin-bottom: 0; }
+    .hud-key { color: var(--text-muted); }
+    .hud-val { color: var(--accent-lime); font-weight: 700; }
+
+    /* Controls */
+    #controls { 
+        position: absolute; bottom: 16px; right: 16px; z-index: 10; 
+        display: flex; flex-direction: column; gap: 8px; 
+    }
+    .ctrl-btn { 
+        background: rgba(11, 15, 10, 0.85); border: 1px solid var(--border-subtle); 
+        color: var(--text-main); padding: 12px 16px; border-radius: 4px; font-family: var(--font-mono);
+        font-size: 10px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; 
+        backdrop-filter: blur(4px); transition: all 0.2s;
+    }
+    .ctrl-btn:active { transform: scale(0.96); }
+    .ctrl-btn.kill { border-color: var(--fail-red); color: var(--fail-red); }
+    .ctrl-btn.revive { border-color: var(--accent-lime); color: var(--accent-lime); }
+
+    /* WORM Terminal */
+    #worm-terminal { 
+        height: 140px; background: #0d0d0d; border-top: 1px solid #333; 
+        padding: 10px 12px; overflow-y: auto; font-size: 10px; line-height: 1.6; 
+        flex-shrink: 0; display: flex; flex-direction: column;
+    }
+    .worm-line { color: #44ff44; border-bottom: 1px solid rgba(68, 255, 68, 0.1); padding-bottom: 2px; margin-bottom: 2px; }
+    .worm-line.absent { color: var(--fail-red); border-color: rgba(229, 72, 77, 0.2); font-weight: 700; }
+    .worm-line.anchor { color: #f3e38a; border-color: rgba(243, 227, 138, 0.2); margin-top: 4px; }
+    .worm-time { color: #5a6a50; margin-right: 8px; }
+
+    /* Loading State */
+    #loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--accent-lime); font-size: 11px; letter-spacing: 0.15em; z-index: 5; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<canvas id="ripple-canvas"></canvas>
+
+<div id="app">
+    <!-- Top Bar -->
+    <header id="top-bar">
+        <div class="nav-logo">VVU · KARIEGA</div>
+        <div class="status-badge" id="sys-status">
+            <div class="status-dot"></div> LIVE_TELEMETRY
+        </div>
+    </header>
+
+    <!-- Viewport -->
+    <div id="viewport">
+        <div id="loading">INITIALIZING TWIN...</div>
+        
+        <!-- The Digital Turn Off Overlay -->
+        <div id="fail-overlay">
+            <div class="fail-title">SYSTEM OFFLINE</div>
+            <div class="fail-sub">SENSOR_ABSENT · NO_PRIMITIVES_ENFORCED</div>
+        </div>
+
+        <!-- HUD -->
+        <div id="hud">
+            <div class="hud-row"><span class="hud-key">ASSET</span><span class="hud-val" id="hud-asset">ISUZU_DMAX</span></div>
+            <div class="hud-row"><span class="hud-key">TORQUE</span><span class="hud-val" id="hud-torque">--- Nm</span></div>
+            <div class="hud-row"><span class="hud-key">CHAIN</span><span class="hud-val" id="hud-chain">a3f8c21e</span></div>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls">
+            <button class="ctrl-btn kill" onclick="killSensor()">KILL SENSOR</button>
+            <button class="ctrl-btn revive" onclick="reviveSensor()">REVIVE</button>
+        </div>
+    </div>
+
+    <!-- WORM Terminal -->
+    <div id="worm-terminal"></div>
+</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+    import * as THREE from 'three'
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+
+    // ==========================================
+    // 1. THE WATER RIPPLE ENGINE
+    // ==========================================
+    const rCanvas = document.getElementById('ripple-canvas');
+    const rCtx = rCanvas.getContext('2d');
+    let rW, rH;
+    function resizeRipple() { rW = rCanvas.width = window.innerWidth; rH = rCanvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeRipple);
+    resizeRipple();
+
+    const ripples = [];
+    window.addEventListener('pointerdown', (e) => {
+        for (let i = 0; i < 3; i++) {
+            ripples.push({
+                x: e.clientX, y: e.clientY, radius: i * 5,
+                maxRadius: 50 + Math.random() * 80, opacity: 1, speed: 2 + Math.random() * 2,
+                color: i % 2 === 0 ? '46, 168, 160' : '200, 255, 0' 
+            });
+        }
+    });
+
+    function drawRipples() {
+        rCtx.clearRect(0, 0, rW, rH);
+        for (let i = ripples.length - 1; i >= 0; i--) {
+            const r = ripples[i];
+            r.radius += r.speed;
+            r.opacity -= 0.02;
+            if (r.opacity > 0) {
+                rCtx.beginPath();
+                rCtx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+                rCtx.strokeStyle = `rgba(${r.color}, ${r.opacity})`;
+                rCtx.lineWidth = 1.5;
+                rCtx.stroke();
+                rCtx.shadowBlur = 8;
+                rCtx.shadowColor = `rgba(${r.color}, ${r.opacity})`;
+                rCtx.stroke();
+                rCtx.shadowBlur = 0;
+            } else { ripples.splice(i, 1); }
+        }
+        requestAnimationFrame(drawRipples);
+    }
+    drawRipples();
+
+    // ==========================================
+    // 2. WORM LEDGER & TERMINAL
+    // ==========================================
+    const terminal = document.getElementById('worm-terminal');
+    let wormSeq = 0;
+    let chainHead = '0'.repeat(64);
+
+    function emitWORM(station, metric, value, isAbsent = false) {
+        wormSeq++;
+        const time = new Date().toISOString().split('T')[1].slice(0,8);
+        const hash = Math.random().toString(16).slice(2, 10);
+        chainHead = hash;
+        
+        document.getElementById('hud-chain').textContent = chainHead;
+
+        const line = document.createElement('div');
+        line.className = `worm-line ${isAbsent ? 'absent' : ''}`;
+        line.innerHTML = `<span class="worm-time">${time}</span>[${station}] ${metric}=${value} <span style="float:right;">∎${hash}</span>`;
+        terminal.appendChild(line);
+        terminal.scrollTop = terminal.scrollHeight;
+        
+        while (terminal.children.length > 30) terminal.removeChild(terminal.firstChild);
+    }
+
+    // ==========================================
+    // 3. THREE.JS SCENE SETUP
+    // ==========================================
+    const viewport = document.getElementById('viewport');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050807);
+    scene.fog = new THREE.Fog(0x050807, 20, 60);
+
+    const camera = new THREE.PerspectiveCamera(45, viewport.clientWidth / viewport.clientHeight, 0.1, 100);
+    camera.position.set(8, 4, 12);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 1, 0);
+    controls.maxPolarAngle = Math.PI / 2 - 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    const keyLight = new THREE.DirectionalLight(0xfff1e0, 2.5);
+    keyLight.position.set(10, 20, 10);
+    keyLight.castShadow = true;
+    scene.add(keyLight);
+    const rimLight = new THREE.DirectionalLight(0xc8ff00, 1.5);
+    rimLight.position.set(-10, 5, -10);
+    scene.add(rimLight);
+
+    // Floor
+    const grid = new THREE.GridHelper(50, 50, 0x6b8a40, 0x1c2a22);
+    grid.position.y = 0.01;
+    scene.add(grid);
+    
+    const floorGeo = new THREE.PlaneGeometry(50, 50);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x050807, roughness: 0.9 });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // ==========================================
+    // 4. THE GLB ASSET (NO PRIMITIVES LAW)
+    // ==========================================
+    let assetLoaded = false;
+    let assetMesh = null;
+    const loader = new GLTFLoader();
+
+    loader.load(
+        './isuzu-dmax.glb', 
+        (gltf) => {
+            assetMesh = gltf.scene;
+            const box = new THREE.Box3().setFromObject(assetMesh);
+            const size = box.getSize(new THREE.Vector3());
+            const scale = 4.5 / Math.max(size.x, size.y, size.z);
+            assetMesh.scale.setScalar(scale);
+            
+            assetMesh.position.x -= box.getCenter(new THREE.Vector3()).x * scale;
+            assetMesh.position.y -= box.min.y * scale;
+            assetMesh.position.z -= box.getCenter(new THREE.Vector3()).z * scale;
+            
+            assetMesh.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+            scene.add(assetMesh);
+            
+            assetLoaded = true;
+            document.getElementById('loading').style.display = 'none';
+            emitWORM('SYSTEM', 'ASSET_BOUND', 'isuzu-dmax.glb');
+        },
+        undefined,
+        (err) => {
+            // FAIL CLOSED: ASSET MISSING
+            document.getElementById('loading').textContent = 'ASSET_MISSING · NO PRIMITIVES LAW';
+            document.getElementById('loading').style.color = 'var(--fail-red)';
+            emitWORM('SYSTEM', 'ASSET_MISSING', 'isuzu-dmax.glb', true);
+        }
+    );
+
+    // ==========================================
+    // 5. THE 15-SECOND CIRCUIT BREAKER
+    // ==========================================
+    let isSensorAlive = true;
+    let lastEmit = Date.now();
+    const windowMs = 15000;
+
+    window.killSensor = function() {
+        isSensorAlive = false;
+        emitWORM('SENSOR', 'MANUAL_OVERRIDE', 'KILL_SIGNAL');
+    };
+
+    window.reviveSensor = function() {
+        isSensorAlive = true;
+        lastEmit = Date.now();
+        emitWORM('SENSOR', 'RESET', 'BREAKER_CLOSED');
+        document.getElementById('fail-overlay').classList.remove('active');
+        if (assetMesh) assetMesh.visible = true;
+        document.getElementById('sys-status').innerHTML = '<div class="status-dot"></div> LIVE_TELEMETRY';
+        document.getElementById('sys-status').style.borderColor = 'var(--accent-lime)';
+        document.getElementById('sys-status').style.color = 'var(--accent-lime)';
+    };
+
+    setInterval(() => {
+        if (!isSensorAlive) return;
+
+        if (Date.now() - lastEmit > windowMs) {
+            // TRIP BREAKER
+            document.getElementById('fail-overlay').classList.add('active');
+            document.getElementById('sys-status').innerHTML = '<div class="status-dot" style="background:var(--fail-red); box-shadow:0 0 8px var(--fail-red)"></div> FAIL_CLOSED';
+            document.getElementById('sys-status').style.borderColor = 'var(--fail-red)';
+            document.getElementById('sys-status').style.color = 'var(--fail-red)';
+            
+            // Apply No-Primitives Law (Grey out / Empty) — hide asset, keep labeled overlay
+            if (assetMesh) assetMesh.visible = false; 
+            
+            emitWORM('CORE', 'SENSOR_ABSENT', 'FAIL_CLOSED', true);
+            isSensorAlive = false; // Stop interval loop
+            
+        } else {
+            // LIVE TELEMETRY
+            const metrics = ['TORQUE', 'ALIGNMENT', 'TEMP', 'PRESSURE'];
+            const m = metrics[Math.floor(Math.random() * metrics.length)];
+            const v = (100 + Math.random() * 50).toFixed(1);
+            
+            emitWORM('PLANT_01', m, v);
+            document.getElementById('hud-torque').textContent = m === 'TORQUE' ? v + ' Nm' : '--- Nm';
+            lastEmit = Date.now();
+        }
+    }, 3000);
+
+    // ==========================================
+    // 6. ANIMATION LOOP
+    // ==========================================
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = viewport.clientWidth / viewport.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+    });
+
+    // Initial WORM anchor
+    setTimeout(() => {
+        emitWORM('ANCHOR', 'KARIEGA_POLO_LINE', 'SUNDAY_WORLD_2026');
+        emitWORM('ANCHOR', 'ISUZU_STRUANDALE', 'R30M_UPGRADE');
+    }, 500);
+</script>
+</body>
+</html>

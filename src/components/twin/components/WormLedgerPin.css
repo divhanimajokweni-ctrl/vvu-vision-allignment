@@ -1,0 +1,60 @@
+/* src/components/twin/components/WormLedgerPin.css — the WORM pin.
+   Amber when the ledger strip is VISIBLE (default, Option 1); slate-grey
+   when hidden so the operator's eye is drawn to the absence. */
+
+.twin-worm-pin {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(242, 184, 75, 0.35);
+  background: rgba(5, 10, 18, 0.85);
+  color: #f2b84b;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
+  min-height: 26px;
+}
+
+.twin-worm-pin:hover {
+  border-color: rgba(242, 184, 75, 0.75);
+  background: rgba(20, 28, 40, 0.9);
+}
+
+.twin-worm-pin:active {
+  transform: scale(0.97);
+}
+
+.twin-worm-pin:focus-visible {
+  outline: 2px solid rgba(242, 184, 75, 0.6);
+  outline-offset: 1px;
+}
+
+.twin-worm-pin-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px rgba(242, 184, 75, 0.8);
+}
+
+/* hidden state — grey, no glow: absence must be visible as absence */
+.twin-worm-pin[data-visible="0"] {
+  color: #7f95a5;
+  border-color: #2a3a48;
+  background: rgba(5, 10, 18, 0.85);
+}
+
+.twin-worm-pin[data-visible="0"] .twin-worm-pin-dot {
+  box-shadow: none;
+  opacity: 0.55;
+}

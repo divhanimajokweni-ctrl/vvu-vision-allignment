@@ -1,0 +1,26 @@
+{
+  "environment": "forge",
+  "verification": "DECLARED from reading the uploaded single-file build; not yet executed by Fire against a running instance",
+  "offline_capability": {
+    "primary_function_offline": true,
+    "degraded_functions": [
+      "validation harness surfaces that need :3004 (absent)"
+    ],
+    "local_persistence": "localStorage key forge.vvu.v1 (~5 MB per origin, synchronous, unreachable from Workers); interop artefacts in IndexedDB vvu.<env>.interop"
+  },
+  "dependency_unavailability": {
+    "distinguishes_unavailable_from_negative": true,
+    "unavailable_status": "BLOCKED",
+    "behaviour": "Forge has no runtime dependency; an absent surface is a route stub labelled TO BE BUILT, never a failed result."
+  },
+  "recovery": {
+    "unfinished_work_preserved": true,
+    "interrupted_operations_recorded": true,
+    "resume_safety": "Store reloaded from localStorage; drafts retained; no partial export is ever written."
+  },
+  "portability": {
+    "export_path_exists": true,
+    "export_requires_other_environment": false,
+    "export_format": "VVU-SF-2026-001 §8 export package (via vvu-interop core buildPackage)"
+  }
+}

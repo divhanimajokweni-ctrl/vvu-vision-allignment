@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Field OS · Spreadsheet (dev-spreadsheet peer)</title>
+<style>
+  :root {
+    --bg: #070b09; --panel: #0c1512; --panel2: #0a120e;
+    --line: rgba(110, 231, 183, 0.18); --line2: rgba(110, 231, 183, 0.34);
+    --green: #6ee7b7; --green-bright: #4ade80; --green-deep: #0f3b2a;
+    --amber: #fbbf24; --red: #f87171; --gray: #9ca3af;
+    --fg: #d1fae5; --dim: #4b7a68;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; width: 100%;
+    overflow: hidden; overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%; touch-action: manipulation;
+    user-select: none; -webkit-user-select: none;
+  }
+  body {
+    position: fixed; inset: 0;
+    background: var(--bg); color: var(--fg);
+    font-family: var(--mono); font-size: 12px; line-height: 1.45;
+    display: grid; grid-template-rows: auto auto minmax(0, 1fr);
+  }
+  /* Custom scrollbar */
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: rgba(110,231,183,0.18); border-radius: 4px; }
+
+  /* Titlebar */
+  .titlebar {
+    display: grid; grid-template-columns: auto minmax(0,1fr) auto;
+    align-items: center; gap: 12px;
+    padding: 8px 14px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(110,231,183,0.06), transparent);
+    font-size: 11px;
+  }
+  .dots { display: grid; grid-auto-flow: column; gap: 6px; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; } .dot.y { background: #febc2e; } .dot.g { background: #28c840; }
+  .titlebar-app { color: var(--green); white-space: nowrap; }
+  .titlebar-app b { color: var(--green-bright); font-weight: 500; }
+  .titlebar-doc { text-align: center; color: var(--green); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .titlebar-doc b { color: var(--green-bright); font-weight: 500; }
+  .titlebar-right { display: grid; grid-auto-flow: column; gap: 14px; align-items: center; }
+
+  /* ClockBar — identical contract to production-dashboard side */
+  .clockbar {
+    display: grid; grid-auto-flow: column; gap: 10px; align-items: center;
+    font-size: 11px;
+  }
+  .clockbar .utc { color: var(--green-bright); white-space: nowrap; }
+  .clockbar .rev { color: var(--green); white-space: nowrap; }
+  .clockbar .by {
+    color: var(--amber); font-size: 10px; letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .clockbar .by.production-dashboard { color: var(--green); }
+  .clockbar .unreachable { color: var(--amber); white-space: nowrap; }
+  .advance-btn {
+    background: none; border: 1px solid var(--green); border-radius: 3px;
+    color: var(--green-bright); padding: 3px 10px;
+    font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+    cursor: pointer; font-family: inherit;
+  }
+  .advance-btn:hover { background: rgba(15,59,42,0.4); }
+  .advance-btn:disabled { opacity: 0.5; cursor: wait; }
+
+  /* Sub-header: manifest status + pull clock */
+  .subbar {
+    display: grid; grid-template-columns: auto minmax(0,1fr) auto auto;
+    align-items: center; gap: 12px;
+    padding: 6px 14px; border-bottom: 1px solid var(--line);
+    background: var(--panel2); font-size: 11px;
+  }
+  .subbar .label { color: var(--dim); letter-spacing: 0.5px; text-transform: uppercase; font-size: 9px; }
+  .subbar .value { color: var(--green-bright); }
+  .subbar .value.unreachable { color: var(--red); }
+  .subbar .value.amber { color: var(--amber); }
+  .subbar button {
+    background: none; border: 1px solid var(--line2); border-radius: 3px;
+    color: var(--green); padding: 3px 10px;
+    font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+    cursor: pointer; font-family: inherit;
+  }
+  .subbar button:hover { background: rgba(15,59,42,0.4); }
+
+  /* Banner */
+  .banner {
+    padding: 6px 14px; border-bottom: 1px solid var(--amber);
+    background: rgba(251,191,36,0.08); color: var(--amber);
+    font-size: 11px; letter-spacing: 0.3px; cursor: pointer;
+    display: none;
+  }
+  .banner.show { display: block; }
+
+  /* Spreadsheet body */
+  .body {
+    min-height: 0; overflow: auto; padding: 8px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid rgba(110,231,183,0.07); }
+  th {
+    color: var(--dim); font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase;
+    background: var(--panel2); position: sticky; top: 0; z-index: 1;
+  }
+  td { color: var(--fg); }
+  td.mono { color: var(--green); font-size: 10px; }
+  td.dim { color: var(--dim); }
+  td.built { color: var(--green-bright); font-weight: 500; }
+  td.planned { color: var(--amber); }
+  .badge {
+    display: inline-block; padding: 1px 6px; border-radius: 2px;
+    border: 1px solid currentColor; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .badge.stamped { color: var(--green); }
+  .badge.unstamped { color: var(--amber); }
+  .stamp-btn {
+    background: none; border: 1px solid var(--line2); border-radius: 3px;
+    color: var(--green); padding: 2px 8px;
+    font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase;
+    cursor: pointer; font-family: inherit;
+  }
+  .stamp-btn:hover { background: rgba(15,59,42,0.4); }
+  .stamp-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 16px; right: 16px;
+    padding: 10px 14px; border-radius: 4px; font-size: 11px;
+    background: var(--panel); border: 1px solid var(--line2);
+    color: var(--fg); z-index: 100;
+    opacity: 0; transition: opacity 0.2s ease;
+    pointer-events: none; max-width: 320px;
+  }
+  .toast.show { opacity: 1; }
+  .toast.success { border-color: var(--green); color: var(--green-bright); }
+  .toast.error { border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div class="titlebar">
+  <div style="display: grid; grid-auto-flow: column; gap: 10px; align-items: center;">
+    <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+    <span class="titlebar-app">Field OS · <b>Spreadsheet (dev-spreadsheet peer)</b></span>
+  </div>
+  <div class="titlebar-doc"><b>Adapter registry · stamp rows against shared clock</b></div>
+  <div class="titlebar-right">
+    <div class="clockbar" id="clockbar">
+      <span class="utc" id="clock-utc">—</span>
+      <span class="rev" id="clock-rev">REV —</span>
+      <span class="by" id="clock-by">—</span>
+      <button class="advance-btn" id="advance-btn" onclick="advanceClock()">Advance</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUBBAR: manifest status + pull clock -->
+<div class="subbar">
+  <span class="label">manifest</span>
+  <span class="value" id="manifest-status">loading…</span>
+  <button onclick="pullClock()">Pull clock</button>
+  <button onclick="reloadManifest()">Reload manifest</button>
+</div>
+
+<!-- Banner: clock advanced, rows may be behind -->
+<div class="banner" id="behind-banner" onclick="stampAllUnstamped()">
+  ▲ CLOCK ADVANCED · spreadsheet rows may be behind by <span id="behind-count">0</span> revisions. Click to stamp all unstamped rows.
+</div>
+
+<!-- BODY: the spreadsheet -->
+<div class="body">
+  <table id="sheet">
+    <thead>
+      <tr>
+        <th>id</th>
+        <th>industry</th>
+        <th>label</th>
+        <th>protocol</th>
+        <th>adapter status</th>
+        <th>clock_rev</th>
+        <th>clock_at_utc</th>
+        <th>action</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/**
+ * Spreadsheet peer environment.
+ *
+ * WRITER ID: "dev-spreadsheet"
+ *
+ * CONTRACT (matches docs/strategy/PEER-QA.md):
+ *   - §1 adapter picker reads from GET /api/vvu/manifest (single authority)
+ *   - Clock reads from GET /api/vvu/clock, refetch every 15s
+ *   - STAMP ROW button calls POST /api/vvu/clock with by:"dev-spreadsheet",
+ *     writes the returned revision + current_utc into clock_rev / clock_at_utc
+ *     columns on that row
+ *   - Rows without clock_rev show UNSTAMPED in amber — visible absence
+ *   - If manifest 503: picker shows MANIFEST UNREACHABLE, disabled
+ *   - If clock 503: header shows CLOCK UNREACHABLE, STAMP ROW disabled
+ *   - No local Date.now() for displayed times — the clock's current_utc
+ *     is the only time shown anywhere
+ */
+
+const MY_WRITER = "dev-spreadsheet";
+let manifest = null;       // { ok, adapters, counts, ... }
+let manifestOk = false;
+let clock = null;          // { ok, revision, current_utc, last_written_by, ... }
+let clockOk = false;
+let rows = [];             // local row state: [{ id, industry, label, protocol, status, clock_rev, clock_at_utc }]
+let lastSeenClockRev = null;
+let pollTimer = null;
+let manifestTimer = null;
+
+function showToast(msg, kind) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show " + (kind || "");
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => { t.className = "toast " + (kind || ""); }, 3000);
+}
+
+function formatUtc(iso) {
+  if (!iso) return "—";
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/.exec(iso);
+  if (!m) return iso;
+  return m[4] + ":" + m[5] + ":" + m[6] + " UTC";
+}
+
+async function fetchManifest() {
+  try {
+    const r = await fetch("/api/vvu/manifest", { cache: "no-store" });
+    if (!r.ok) {
+      manifestOk = false;
+      manifest = null;
+      renderManifestStatus();
+      renderRows();
+      return;
+    }
+    const j = await r.json();
+    manifestOk = !!j.ok;
+    manifest = j;
+    // Reset rows whenever manifest changes — single authority means
+    // the manifest's adapter list is what's displayed, period.
+    rows = (manifest.adapters || []).map(a => ({
+      id: a.id, industry: a.industry, label: a.label, protocol: a.protocol,
+      status: a.status, clock_rev: null, clock_at_utc: null,
+    }));
+    renderManifestStatus();
+    renderRows();
+  } catch (e) {
+    manifestOk = false;
+    manifest = null;
+    renderManifestStatus();
+    renderRows();
+  }
+}
+
+async function fetchClock() {
+  try {
+    const r = await fetch("/api/vvu/clock", { cache: "no-store" });
+    if (!r.ok) {
+      clockOk = false;
+      clock = null;
+      renderClock();
+      renderRows();  // STAMP ROW buttons need to know clock state
+      return;
+    }
+    const j = await r.json();
+    clockOk = !!j.ok;
+    clock = j;
+    if (lastSeenClockRev !== null && clockOk && clock.revision > lastSeenClockRev) {
+      // Clock advanced since we last saw it. Check if any rows are unstamped.
+      const unstamped = rows.filter(r => r.clock_rev === null).length;
+      if (unstamped > 0) {
+        const banner = document.getElementById("behind-banner");
+        document.getElementById("behind-count").textContent = clock.revision - lastSeenClockRev;
+        banner.classList.add("show");
+      }
+    }
+    if (clockOk) lastSeenClockRev = clock.revision;
+    renderClock();
+    renderRows();
+  } catch (e) {
+    clockOk = false;
+    clock = null;
+    renderClock();
+    renderRows();
+  }
+}
+
+async function advanceClock() {
+  const btn = document.getElementById("advance-btn");
+  btn.disabled = true;
+  try {
+    const r = await fetch("/api/vvu/clock", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ by: MY_WRITER }),
+      cache: "no-store",
+    });
+    const j = await r.json();
+    if (!j.ok) {
+      showToast(j.error || "clock advance failed", "error");
+      return;
+    }
+    showToast("CLOCK ADVANCED · REV " + j.revision, "success");
+    // The fetchClock on next poll will pick this up, but to feel snappy:
+    clockOk = true;
+    clock = j;
+    lastSeenClockRev = j.revision;
+    renderClock();
+    renderRows();
+  } catch (e) {
+    showToast(String(e), "error");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function stampRow(adapterId) {
+  if (!clockOk) {
+    showToast("CLOCK UNREACHABLE — cannot stamp", "error");
+    return;
+  }
+  // 1. Advance the clock (POST /api/vvu/clock with by:"dev-spreadsheet")
+  // 2. Write the returned revision + current_utc into the row
+  try {
+    const r = await fetch("/api/vvu/clock", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ by: MY_WRITER }),
+      cache: "no-store",
+    });
+    const j = await r.json();
+    if (!j.ok) {
+      showToast(j.error || "stamp failed", "error");
+      return;
+    }
+    // Find the row and stamp it
+    const row = rows.find(r => r.id === adapterId);
+    if (row) {
+      row.clock_rev = j.revision;
+      row.clock_at_utc = j.current_utc;
+    }
+    // Update the global clock view too
+    clockOk = true;
+    clock = j;
+    lastSeenClockRev = j.revision;
+    renderClock();
+    renderRows();
+    showToast("STAMPED · " + adapterId + " · REV " + j.revision + " @ " + formatUtc(j.current_utc), "success");
+  } catch (e) {
+    showToast(String(e), "error");
+  }
+}
+
+async function stampAllUnstamped() {
+  if (!clockOk) {
+    showToast("CLOCK UNREACHABLE — cannot stamp", "error");
+    return;
+  }
+  const unstamped = rows.filter(r => r.clock_rev === null);
+  if (unstamped.length === 0) {
+    showToast("no unstamped rows", "success");
+    return;
+  }
+  // Sequential stamps — each advances the clock by 1
+  for (const row of unstamped) {
+    try {
+      const r = await fetch("/api/vvu/clock", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ by: MY_WRITER }),
+        cache: "no-store",
+      });
+      const j = await r.json();
+      if (!j.ok) {
+        showToast(j.error || "batch stamp failed", "error");
+        return;
+      }
+      row.clock_rev = j.revision;
+      row.clock_at_utc = j.current_utc;
+    } catch (e) {
+      showToast(String(e), "error");
+      return;
+    }
+  }
+  clockOk = true;
+  clock = await fetch("/api/vvu/clock").then(r => r.json()).catch(() => null);
+  if (clock && clock.ok) lastSeenClockRev = clock.revision;
+  renderClock();
+  renderRows();
+  document.getElementById("behind-banner").classList.remove("show");
+  showToast("BATCH STAMPED · " + unstamped.length + " rows", "success");
+}
+
+function pullClock() {
+  fetchClock();
+}
+
+function reloadManifest() {
+  fetchManifest();
+}
+
+function renderManifestStatus() {
+  const el = document.getElementById("manifest-status");
+  if (manifestOk && manifest && manifest.counts) {
+    el.className = "value";
+    el.textContent = "OK · " + manifest.counts.built + " BUILT · " + manifest.counts.planned + " PLANNED · " + manifest.counts.total + " total · v" + (manifest.version || "?");
+  } else {
+    el.className = "value unreachable";
+    el.textContent = "▲ MANIFEST UNREACHABLE — picker disabled";
+  }
+}
+
+function renderClock() {
+  const utcEl = document.getElementById("clock-utc");
+  const revEl = document.getElementById("clock-rev");
+  const byEl = document.getElementById("clock-by");
+  const bar = document.getElementById("clockbar");
+  const btn = document.getElementById("advance-btn");
+
+  if (clockOk && clock) {
+    // Clear "unreachable" state
+    bar.innerHTML = '<span class="utc" id="clock-utc"></span>' +
+      '<span class="rev" id="clock-rev"></span>' +
+      '<span class="by" id="clock-by"></span>' +
+      '<button class="advance-btn" id="advance-btn" onclick="advanceClock()">Advance</button>';
+    document.getElementById("clock-utc").textContent = formatUtc(clock.current_utc);
+    document.getElementById("clock-rev").textContent = "REV " + clock.revision;
+    const byEl2 = document.getElementById("clock-by");
+    byEl2.textContent = clock.last_written_by || "—";
+    byEl2.className = "by " + (clock.last_written_by === "production-dashboard" ? "production-dashboard" : "");
+    document.getElementById("advance-btn").disabled = false;
+  } else {
+    bar.innerHTML = '<span class="unreachable">▲ CLOCK UNREACHABLE</span>' +
+      '<button class="advance-btn" disabled>Advance</button>';
+  }
+}
+
+function renderRows() {
+  const tbody = document.getElementById("rows");
+  if (!manifestOk) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--red);padding:24px;">' +
+      '▲ MANIFEST UNREACHABLE — no rows shown</td></tr>';
+    return;
+  }
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--dim);padding:24px;">' +
+      '(no adapters defined)</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const stamped = r.clock_rev !== null;
+    const statusClass = r.status === "BUILT" ? "built" : "planned";
+    return '<tr>' +
+      '<td class="mono">' + r.id + '</td>' +
+      '<td>' + r.industry + '</td>' +
+      '<td>' + r.label + '</td>' +
+      '<td class="dim">' + r.protocol + '</td>' +
+      '<td class="' + statusClass + '">' + r.status + '</td>' +
+      '<td>' + (stamped
+        ? '<span class="badge stamped">REV ' + r.clock_rev + '</span>'
+        : '<span class="badge unstamped">UNSTAMPED</span>') + '</td>' +
+      '<td class="mono">' + (r.clock_at_utc ? formatUtc(r.clock_at_utc) : '—') + '</td>' +
+      '<td><button class="stamp-btn" onclick="stampRow(\'' + r.id + '\')" ' + (clockOk ? '' : 'disabled') + '>Stamp</button></td>' +
+      '</tr>';
+  }).join("");
+}
+
+// Boot
+fetchManifest();
+fetchClock();
+// Refetch clock every 15s (matches useClock hook on dashboard side)
+pollTimer = setInterval(fetchClock, 15000);
+// Refetch manifest every 30s (matches useManifest hook on dashboard side)
+manifestTimer = setInterval(fetchManifest, 30000);
+</script>
+</body>
+</html>

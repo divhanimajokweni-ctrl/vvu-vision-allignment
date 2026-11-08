@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>VVU · Lab Workspace</title>
+    <style>
+      :root {
+        --bg: #0b0e10;
+        --panel: #12171a;
+        --line: #28332e;
+        --ink: #e6efe8;
+        --dim: #8a9a90;
+        --acc: #00ffcc;
+        --hot: #ff0055;
+        color-scheme: dark;
+        --f: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      @media (prefers-color-scheme: light) {
+        :root:not([data-theme="dark"]) {
+          --bg: #eef2f0;
+          --panel: #fff;
+          --line: #c5d0ca;
+          --ink: #10201a;
+          --dim: #4d5f56;
+          --acc: #007a63;
+          --hot: #c4003f;
+          color-scheme: light;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #0b0e10;
+        --panel: #12171a;
+        --line: #28332e;
+        --ink: #e6efe8;
+        --dim: #8a9a90;
+        --acc: #00ffcc;
+        --hot: #ff0055;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 13px/1.4 var(--f);
+      }
+      body {
+        overflow: hidden;
+      }
+      #app {
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+      }
+      header {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 12px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+      }
+      header b {
+        color: var(--acc);
+      }
+      #cap {
+        margin-left: auto;
+        color: var(--dim);
+        text-align: right;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #stage {
+        position: relative;
+        min-height: 0;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+      #err {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--hot);
+      }
+      #dock {
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+        display: grid;
+        gap: 6px;
+        padding: 6px 8px;
+      }
+      .row {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+      button {
+        font: inherit;
+        color: var(--ink);
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 6px 10px;
+        min-height: 40px;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      button[aria-pressed="true"] {
+        border-color: var(--acc);
+        color: var(--acc);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--acc);
+        outline-offset: 1px;
+      }
+      .lbl {
+        color: var(--dim);
+        align-self: center;
+        font-size: 11px;
+        padding: 0 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <header><b>VVU · Lab Workspace</b><span id="cap"></span></header>
+      <div id="stage">
+        <canvas id="c"></canvas>
+        <div id="err" role="alert"></div>
+      </div>
+      <div id="dock">
+        <div class="row" id="zones" role="group" aria-label="Lab spaces">
+          <span class="lbl">SPACE</span>
+        </div>
+        <div class="row" id="slidebar" role="group" aria-label="Presentation">
+          <span class="lbl">DECK</span> <button id="prev" aria-label="Previous slide">◀ Prev</button
+          ><button id="next" aria-label="Next slide">Next ▶</button
+          ><button id="auto" aria-pressed="false">Auto-play</button
+          ><button id="god" aria-pressed="false">God’s eye</button>
+        </div>
+        <div class="row" id="tools" role="group" aria-label="Spawn tools">
+          <span class="lbl">SPAWN</span>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+      (function () {
+        const $ = (id) => document.getElementById(id);
+        const fail = (t) => {
+          const e = $("err");
+          e.style.display = "flex";
+          e.textContent = t;
+        };
+        if (!window.THREE || !THREE.OrbitControls) {
+          fail("Three.js could not be loaded. Check your connection and reload.");
+          return;
+        }
+        let renderer;
+        try {
+          renderer = new THREE.WebGLRenderer({ canvas: $("c"), antialias: true });
+        } catch (e) {
+          fail("WebGL is unavailable. Enable hardware acceleration and reload.");
+          return;
+        }
+        renderer.shadowMap.enabled = true;
+        renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+
+        /* ---------- scene ---------- */
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x111111);
+        const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 200);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+        const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+        sun.position.set(5, 10, 7);
+        sun.castShadow = true;
+        scene.add(sun);
+        const floor = new THREE.Mesh(
+          new THREE.PlaneGeometry(20, 20),
+          new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8, metalness: 0.2 }),
+        );
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+        scene.add(new THREE.GridHelper(20, 20, 0x00ffcc, 0x444444));
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x222222, side: THREE.DoubleSide });
+        const back = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), wallMat);
+        back.position.set(0, 5, -10);
+        scene.add(back);
+        const left = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), wallMat);
+        left.position.set(-10, 5, 0);
+        left.rotation.y = Math.PI / 2;
+        scene.add(left);
+
+        /* ---------- lab spaces ---------- */
+        const ZONES = [
+          {
+            id: "present",
+            name: "Presentation Lab",
+            c: 0x00ffcc,
+            x: 0,
+            z: -4.5,
+            w: 12,
+            d: 5,
+            cam: [0, 4.2, 5.5],
+            tgt: [0, 3.6, -10],
+          },
+          {
+            id: "bench",
+            name: "Mechanical Bench",
+            c: 0x0066ff,
+            x: 6,
+            z: 4,
+            w: 7,
+            d: 7,
+            cam: [12, 7, 11],
+            tgt: [6, 0, 4],
+          },
+          {
+            id: "calib",
+            name: "Calibration Bay",
+            c: 0xff0055,
+            x: -5.5,
+            z: 4,
+            w: 7,
+            d: 7,
+            cam: [-12, 7, 11],
+            tgt: [-5.5, 0, 4],
+          },
+        ];
+        function label(text, color) {
+          const cv = document.createElement("canvas");
+          cv.width = 512;
+          cv.height = 96;
+          const g = cv.getContext("2d");
+          g.fillStyle = "rgba(10,14,16,.85)";
+          g.fillRect(0, 0, 512, 96);
+          g.strokeStyle = color;
+          g.lineWidth = 4;
+          g.strokeRect(2, 2, 508, 92);
+          g.fillStyle = "#fff";
+          g.font = "bold 40px sans-serif";
+          g.textAlign = "center";
+          g.textBaseline = "middle";
+          g.fillText(text, 256, 50);
+          const s = new THREE.Sprite(
+            new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true }),
+          );
+          s.scale.set(4, 0.75, 1);
+          return s;
+        }
+        let zone = ZONES[0];
+        ZONES.forEach((z) => {
+          const m = new THREE.Mesh(
+            new THREE.PlaneGeometry(z.w, z.d),
+            new THREE.MeshBasicMaterial({ color: z.c, transparent: true, opacity: 0.14 }),
+          );
+          m.rotation.x = -Math.PI / 2;
+          m.position.set(z.x, 0.01, z.z);
+          scene.add(m);
+          const e = new THREE.LineSegments(
+            new THREE.EdgesGeometry(new THREE.PlaneGeometry(z.w, z.d)),
+            new THREE.LineBasicMaterial({ color: z.c }),
+          );
+          e.rotation.x = -Math.PI / 2;
+          e.position.set(z.x, 0.02, z.z);
+          scene.add(e);
+          const l = label(z.name, "#" + z.c.toString(16).padStart(6, "0"));
+          l.position.set(z.x, 2.2, z.z - z.d / 2 + 0.2);
+          scene.add(l);
+          const b = document.createElement("button");
+          b.textContent = z.name;
+          b.dataset.z = z.id;
+          b.setAttribute("aria-pressed", "false");
+          b.onclick = () => go(z);
+          $("zones").appendChild(b);
+        });
+
+        /* desk + podium in the presentation lab */
+        const deskMat = new THREE.MeshStandardMaterial({
+          color: 0x555b60,
+          metalness: 0.5,
+          roughness: 0.5,
+        });
+        const podium = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.1, 0.8), deskMat);
+        podium.position.set(0, 0.55, -1.2);
+        podium.castShadow = true;
+        scene.add(podium);
+        const bench = new THREE.Mesh(new THREE.BoxGeometry(5, 0.9, 1.6), deskMat);
+        bench.position.set(6, 0.45, 6.2);
+        bench.castShadow = true;
+        scene.add(bench);
+        const rig = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.9, 1.2), deskMat);
+        rig.position.set(-5.5, 0.45, 6.4);
+        rig.castShadow = true;
+        scene.add(rig);
+
+        /* ---------- Ireland deck on the back wall ---------- */
+        const SLIDES = [
+          {
+            t: "Ireland",
+            s: "Éire · the Emerald Isle",
+            b: [
+              "Island in the North Atlantic, west of Great Britain",
+              "Two jurisdictions: the Republic of Ireland and Northern Ireland (UK)",
+              "Capital of the Republic: Dublin",
+            ],
+          },
+          {
+            t: "Geography",
+            s: "Land and water",
+            b: [
+              "Island area: roughly 84,000 km²",
+              "Longest river: the Shannon, about 360 km",
+              "Cliffs of Moher rise to about 214 m on the west coast",
+            ],
+          },
+          {
+            t: "People and language",
+            s: "Culture",
+            b: [
+              "Republic population: about 5.1 million (2022 census)",
+              "Irish and English are official languages in the Republic",
+              "Music, storytelling and sport (Gaelic games) anchor community life",
+            ],
+          },
+          {
+            t: "History",
+            s: "Key markers",
+            b: [
+              "Newgrange passage tomb: built around 3200 BC",
+              "Irish Free State established in 1922",
+              "Republic of Ireland declared in 1949",
+            ],
+          },
+          {
+            t: "State and economy",
+            s: "Today",
+            b: [
+              "Parliamentary democracy; the Oireachtas is the legislature",
+              "EU member since 1973; the euro is the currency",
+              "Strong in pharmaceuticals, technology and agri-food",
+            ],
+          },
+          {
+            t: "Visit",
+            s: "Highlights",
+            b: [
+              "Dublin, Galway and Cork",
+              "Wild Atlantic Way coastal route",
+              "Giant’s Causeway in Northern Ireland",
+            ],
+          },
+          {
+            t: "Summary",
+            s: "Takeaways",
+            b: ["One island, two jurisdictions", "Old heritage, open modern economy", "Questions?"],
+          },
+        ];
+        let si = 0;
+        const sc = document.createElement("canvas");
+        sc.width = 1280;
+        sc.height = 720;
+        const sg = sc.getContext("2d");
+        const stex = new THREE.CanvasTexture(sc);
+        function wrap(t, x, y, w, lh) {
+          const ws = t.split(" ");
+          let l = "";
+          for (const w1 of ws) {
+            const test = l + w1 + " ";
+            if (sg.measureText(test).width > w && l) {
+              sg.fillText(l, x, y);
+              l = w1 + " ";
+              y += lh;
+            } else l = test;
+          }
+          sg.fillText(l, x, y);
+          return y + lh;
+        }
+        function draw() {
+          const s = SLIDES[si];
+          const gr = sg.createLinearGradient(0, 0, 1280, 720);
+          gr.addColorStop(0, "#0b3d2e");
+          gr.addColorStop(1, "#0b0e10");
+          sg.fillStyle = gr;
+          sg.fillRect(0, 0, 1280, 720);
+          sg.fillStyle = "#ff883e";
+          sg.fillRect(0, 0, 1280, 14);
+          sg.fillStyle = "#fff";
+          sg.fillRect(0, 0, 640, 14);
+          sg.fillStyle = "#169b62";
+          sg.fillRect(0, 0, 427, 14);
+          sg.fillStyle = "#00ffcc";
+          sg.font = "bold 34px sans-serif";
+          sg.textBaseline = "alphabetic";
+          sg.fillText(s.s.toUpperCase(), 70, 110);
+          sg.fillStyle = "#fff";
+          sg.font = "bold 96px sans-serif";
+          sg.fillText(s.t, 70, 215);
+          sg.font = "46px sans-serif";
+          let y = 330;
+          s.b.forEach((b) => {
+            sg.fillStyle = "#00ffcc";
+            sg.fillText("•", 70, y);
+            sg.fillStyle = "#e6efe8";
+            y = wrap(b, 115, y, 1090, 62) + 22;
+          });
+          sg.fillStyle = "#8a9a90";
+          sg.font = "28px sans-serif";
+          sg.fillText(si + 1 + " / " + SLIDES.length, 70, 680);
+          stex.needsUpdate = true;
+          $("cap").textContent = "Slide " + (si + 1) + "/" + SLIDES.length + " · " + s.t;
+        }
+        const screen = new THREE.Mesh(
+          new THREE.PlaneGeometry(12, 6.75),
+          new THREE.MeshBasicMaterial({ map: stex }),
+        );
+        screen.position.set(0, 4.2, -9.9);
+        scene.add(screen);
+        const frame = new THREE.Mesh(
+          new THREE.PlaneGeometry(12.3, 7.05),
+          new THREE.MeshBasicMaterial({ color: 0x00ffcc }),
+        );
+        frame.position.set(0, 4.2, -9.95);
+        scene.add(frame);
+        function step(d) {
+          si = (si + SLIDES.length + d) % SLIDES.length;
+          draw();
+        }
+        $("prev").onclick = () => step(-1);
+        $("next").onclick = () => step(1);
+        addEventListener("keydown", (e) => {
+          if (e.key === "ArrowRight") step(1);
+          if (e.key === "ArrowLeft") step(-1);
+        });
+        let timer = null;
+        $("auto").onclick = function () {
+          const on = this.getAttribute("aria-pressed") !== "true";
+          this.setAttribute("aria-pressed", on);
+          clearInterval(timer);
+          if (on) timer = setInterval(() => step(1), 5000);
+        };
+
+        /* ---------- spawning (spawns in the active lab space) ---------- */
+        const neon = new THREE.MeshStandardMaterial({
+          color: 0x00ffcc,
+          emissive: 0x005544,
+          metalness: 0.7,
+          roughness: 0.3,
+        });
+        const grey = new THREE.MeshStandardMaterial({
+          color: 0x888888,
+          metalness: 0.9,
+          roughness: 0.4,
+        });
+        const MAKE = {
+          gear() {
+            const m = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.2, 16), neon);
+            for (let i = 0; i < 8; i++) {
+              const t = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.3), neon);
+              t.position.set(
+                Math.cos((i * Math.PI) / 4) * 0.6,
+                0,
+                Math.sin((i * Math.PI) / 4) * 0.6,
+              );
+              t.rotation.y = (-i * Math.PI) / 4;
+              m.add(t);
+            }
+            m.userData.spin = 1;
+            m.position.y = 1.1;
+            return m;
+          },
+          pipe() {
+            const m = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2, 32), grey);
+            m.rotation.z = Math.PI / 2;
+            m.position.y = 1.1;
+            return m;
+          },
+          valve() {
+            const g = new THREE.Group();
+            const a = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.15, 16, 50), neon);
+            a.rotation.x = Math.PI / 2;
+            const s = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.6), grey);
+            s.position.y = 0.4;
+            g.add(a, s);
+            g.position.y = 1.1;
+            return g;
+          },
+          crate() {
+            const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), grey);
+            m.position.y = 0.5;
+            return m;
+          },
+        };
+        const names = { gear: "⚙️ Gear", pipe: "🔧 Pipe", valve: "🚰 Valve", crate: "📦 Crate" };
+        const spun = [];
+        Object.keys(MAKE).forEach((k) => {
+          const b = document.createElement("button");
+          b.textContent = names[k];
+          b.onclick = () => {
+            const m = MAKE[k]();
+            m.position.x = zone.x + (Math.random() - 0.5) * (zone.w - 2);
+            m.position.z = zone.z + (Math.random() - 0.5) * (zone.d - 2);
+            m.traverse((o) => {
+              o.castShadow = true;
+            });
+            scene.add(m);
+            if (m.userData.spin) spun.push(m);
+          };
+          $("tools").appendChild(b);
+        });
+
+        /* ---------- camera moves ---------- */
+        let anim = null;
+        function fly(pos, tgt) {
+          anim = {
+            t: 0,
+            p0: camera.position.clone(),
+            t0: controls.target.clone(),
+            p1: new THREE.Vector3(...pos),
+            t1: new THREE.Vector3(...tgt),
+          };
+        }
+        function go(z) {
+          zone = z;
+          document
+            .querySelectorAll("#zones button")
+            .forEach((b) => b.setAttribute("aria-pressed", b.dataset.z === z.id));
+          $("god").setAttribute("aria-pressed", "false");
+          fly(z.cam, z.tgt);
+        }
+        $("god").onclick = function () {
+          const on = this.getAttribute("aria-pressed") !== "true";
+          this.setAttribute("aria-pressed", on);
+          if (on) fly([0, 17, 0.1], [0, 0, 0]);
+          else fly(zone.cam, zone.tgt);
+        };
+
+        /* ---------- loop ---------- */
+        function resize() {
+          const s = $("stage");
+          const w = s.clientWidth,
+            h = s.clientHeight;
+          renderer.setSize(w, h, false);
+          camera.aspect = w / h;
+          camera.fov = w / h < 1 ? 85 : 60;
+          camera.updateProjectionMatrix();
+        }
+        addEventListener("resize", resize);
+        function loop() {
+          requestAnimationFrame(loop);
+          if (anim) {
+            anim.t = Math.min(1, anim.t + 0.035);
+            const k = anim.t * anim.t * (3 - 2 * anim.t);
+            camera.position.lerpVectors(anim.p0, anim.p1, k);
+            controls.target.lerpVectors(anim.t0, anim.t1, k);
+            if (anim.t >= 1) anim = null;
+          }
+          spun.forEach((m) => (m.rotation.y += 0.01));
+          controls.update();
+          renderer.render(scene, camera);
+        }
+        resize();
+        draw();
+        go(ZONES[0]);
+        camera.position.set(0, 4.2, 5.5);
+        controls.target.set(0, 3.6, -10);
+        loop();
+      })();
+    </script>
+  </body>
+</html>

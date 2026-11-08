@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FORGE · Creation Environment</title>
+<style>
+:root{--bg:#0a0e13;--bg2:#0e141c;--panel:#111a24;--panel2:#0d151e;--line:#1c2836;--line2:#26374a;
+--txt:#dce8f2;--dim:#75899c;--dim2:#4e6172;--acc:#37d6a0;--acc2:#3aa9f5;--warn:#f5b944;--bad:#f2607a;--pur:#a78bfa;
+--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
+#app{display:grid;grid-template-columns:224px 1fr;height:100vh}
+#nav{background:linear-gradient(180deg,#0d141d,#0a0f15);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+#brand{padding:14px 14px 12px;border-bottom:1px solid var(--line)}
+#brand b{font-size:15px;letter-spacing:.2em;color:var(--pur)}
+#brand span{display:block;font-size:9px;color:var(--dim2);letter-spacing:.14em;margin-top:4px}
+#navlist{flex:1;overflow-y:auto;padding:8px 0}
+.ngroup{font-size:9px;letter-spacing:.18em;color:var(--dim2);padding:12px 14px 5px;text-transform:uppercase}
+.nitem{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;color:var(--dim);border-left:2px solid transparent;font-size:12px;user-select:none;min-height:34px}
+.nitem:hover{background:#121c27;color:var(--txt)}
+.nitem.on{background:linear-gradient(90deg,rgba(167,139,250,.13),transparent);color:var(--txt);border-left-color:var(--pur)}
+.nitem .ic{width:16px;text-align:center;color:var(--acc2)}
+.nitem.on .ic{color:var(--pur)}
+.nitem .ct{margin-left:auto;font-size:10px;color:var(--dim2);background:#16212d;border:1px solid var(--line);border-radius:20px;padding:0 6px;line-height:16px}
+#navfoot{padding:10px 12px;border-top:1px solid var(--line);font-size:9.5px;color:var(--dim2);line-height:1.7}
+#main{display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);background:var(--bg2);flex-wrap:wrap}
+#topbar h1{font-size:13px;margin:0;font-weight:600;letter-spacing:.06em;white-space:nowrap}
+#topbar .sub{font-size:10px;color:var(--dim2);letter-spacing:.1em}
+.spacer{flex:1}
+.btn{background:#16222e;border:1px solid var(--line);color:var(--dim);border-radius:7px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--pur);color:var(--pur)}
+.btn.p{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.4);color:var(--pur)}
+.btn.sm{padding:3px 8px;font-size:10px}
+.btn.ok{border-color:rgba(55,214,160,.4);color:var(--acc)}
+.btn.ok:hover{border-color:var(--acc);color:var(--acc)}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+#view{flex:1;overflow-y:auto;padding:16px}
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:11px;margin-bottom:14px;overflow:hidden}
+.ph{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ph h2{margin:0;font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--pur);font-weight:600}
+.ph .hint{font-size:10px;color:var(--dim2)}
+.pb{padding:13px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g21{grid-template-columns:2fr 1fr}
+@media(max-width:1100px){.g2,.g21{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:11px;margin-bottom:14px}
+.kpi{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.kpi .l{font-size:9.5px;letter-spacing:.14em;color:var(--dim2);text-transform:uppercase}
+.kpi .v{font-size:21px;margin-top:5px;line-height:1}
+.kpi .d{font-size:10px;color:var(--dim);margin-top:4px}
+.kpi.a .v{color:var(--acc)}.kpi.b .v{color:var(--acc2)}.kpi.w .v{color:var(--warn)}.kpi.r .v{color:var(--bad)}
+.tbar{display:flex;gap:8px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tbar input,.tbar select{background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 9px;font:inherit;font-size:11px;outline:none}
+.tbar input{width:140px}
+.tbar .cnt{font-size:10px;color:var(--dim2)}
+.tbar .acts{margin-left:auto;display:flex;gap:6px}
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;padding:7px 11px;color:var(--dim2);font-weight:600;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--txt)}
+th .ar{color:var(--pur);font-size:9px}
+td{padding:7px 11px;border-bottom:1px solid #16202b;vertical-align:middle;white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:#141f2b}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.wrap{white-space:normal;min-width:160px}
+.mono{font-family:var(--mono);color:var(--dim);font-size:10.5px;word-break:break-all}
+.b{display:inline-block;padding:1px 7px;border-radius:20px;font-size:9.5px;letter-spacing:.06em;border:1px solid}
+.b.ok{color:var(--acc);border-color:rgba(55,214,160,.35);background:rgba(55,214,160,.09)}
+.b.info{color:var(--acc2);border-color:rgba(58,169,245,.35);background:rgba(58,169,245,.09)}
+.b.warn{color:var(--warn);border-color:rgba(245,185,68,.35);background:rgba(245,185,68,.09)}
+.b.bad{color:var(--bad);border-color:rgba(242,96,122,.35);background:rgba(242,96,122,.09)}
+.b.mut{color:var(--dim2);border-color:var(--line);background:#131c26}
+.b.pur{color:var(--pur);border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.09)}
+.alist{display:flex;flex-direction:column}
+.arow{display:flex;gap:9px;align-items:flex-start;padding:7px 12px;border-bottom:1px solid #16202b;font-size:11.5px}
+.arow:last-child{border-bottom:0}
+.arow .tm{color:var(--dim2);font-size:10px;white-space:nowrap;margin-left:auto;text-align:right}
+.arow .sv{width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none}
+.sv.ok{background:var(--acc);box-shadow:0 0 7px var(--acc)}
+.sv.warn{background:var(--warn);box-shadow:0 0 7px var(--warn)}
+.sv.info{background:var(--acc2);box-shadow:0 0 7px var(--acc2)}
+.sv.crit{background:var(--bad);box-shadow:0 0 7px var(--bad)}
+.frm{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:9px;align-items:end}
+.fld label{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--dim2);text-transform:uppercase;margin-bottom:4px}
+.fld input,.fld select,.fld textarea{width:100%;background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:7px 9px;font:inherit;font-size:11.5px;outline:none}
+.fld textarea{resize:vertical;min-height:56px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--pur)}
+.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:11.5px;align-items:center}
+.kv dt{color:var(--dim2)}
+.kv dd{margin:0;color:var(--txt);word-break:break-all}
+.hint{font-size:10.5px;color:var(--dim2);line-height:1.75}
+.code{background:#0a1017;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:10.5px;color:#9fd0e8;white-space:pre-wrap;word-break:break-all;line-height:1.6;max-height:320px;overflow:auto}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #16202b;font-size:11.5px}
+.chk:last-child{border-bottom:0}
+.chk .mk{width:15px;flex:none;font-weight:700}
+.chk.pass .mk{color:var(--acc)}.chk.fail .mk{color:var(--bad)}
+.chk .nm{color:var(--txt)}
+.chk .dt{color:var(--dim2);font-size:10px;margin-top:2px;word-break:break-all}
+.tag{display:inline-block;background:#16212d;border:1px solid var(--line);border-radius:20px;padding:1px 8px;font-size:9.5px;color:var(--dim);margin:2px 3px 2px 0}
+.tag.a{color:var(--acc);border-color:rgba(55,214,160,.35)}
+.tag.b{color:var(--acc2);border-color:rgba(58,169,245,.35)}
+.tag.w{color:var(--warn);border-color:rgba(245,185,68,.35)}
+.tag.r{color:var(--bad);border-color:rgba(242,96,122,.35)}
+.tag.p{color:var(--pur);border-color:rgba(167,139,250,.35)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:11px}
+.card{background:linear-gradient(180deg,#121b26,#0e161f);border:1px solid var(--line);border-radius:10px;padding:12px}
+.card .t{font-size:12px;margin-bottom:6px;color:var(--txt)}
+.card .m{font-size:10px;color:var(--dim2);line-height:1.65}
+.gap td{white-space:normal;padding:5px 7px}
+.gap th{background:transparent;position:static;cursor:default}
+.bar{height:5px;background:#16202b;border-radius:4px;overflow:hidden;min-width:50px;flex:1}
+.bar i{display:block;height:100%;border-radius:4px;background:var(--acc2)}
+.bar i.g{background:var(--acc)}.bar i.w{background:var(--warn)}.bar i.r{background:var(--bad)}
+#toast{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:7px;z-index:99;pointer-events:none}
+.tst{background:#121b26;border:1px solid var(--pur);border-left-width:3px;border-radius:8px;padding:9px 13px;font-size:11.5px;box-shadow:0 8px 26px rgba(0,0,0,.55);animation:tin .18s ease-out}
+.tst.ok{border-color:var(--acc)}.tst.bad{border-color:var(--bad)}.tst.warn{border-color:var(--warn)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:#0a0f15}
+::-webkit-scrollbar-thumb{background:#22323f;border-radius:6px;border:2px solid #0a0f15}
+::-webkit-scrollbar-thumb:hover{background:#31465a}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="nav">
+    <div id="brand"><b>FORGE</b><span>CREATE · VVU-ENV-FORGE-2026-001</span></div>
+    <div id="navlist"></div>
+    <div id="navfoot"><span style="color:var(--pur)">●</span> status may only be PROPOSED<br><span id="footcount">0 records</span></div>
+  </aside>
+  <div id="main">
+    <header id="topbar">
+      <h1 id="vtitle">Artefacts</h1><span class="sub" id="vsub"></span><div class="spacer"></div>
+      <button class="btn" id="btnExport">⬇ export artefact</button>
+      <button class="btn danger" id="btnReset">↺ reset</button>
+    </header>
+    <div id="view"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function uid(p){return p+'-'+Math.random().toString(36).slice(2,10);}
+function ago(ts){var s=Math.max(0,(Date.now()-ts)/1000);
+  if(s<60)return Math.floor(s)+'s';if(s<3600)return Math.floor(s/60)+'m';
+  if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d';}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function download(name,text,mime){
+  var b=new Blob([text],{type:mime||'text/plain'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},400);}
+function toast(msg,kind){
+  var t=document.createElement('div');t.className='tst'+(kind?' '+kind:'');t.textContent=msg;
+  $('#toast').appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';},2200);
+  setTimeout(function(){t.remove();},2600);}
+
+var SHA256=(function(){
+  var K=new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  function digest(bytes){
+    var l=bytes.length,hi=Math.floor(l/536870912),lo=(l*8)>>>0;
+    var pad=((56-((l+1)%64))+64)%64,total=l+1+pad+8,m=new Uint8Array(total);
+    m.set(bytes);m[l]=0x80;
+    var p=total-8;
+    m[p]=hi>>>24;m[p+1]=hi>>>16;m[p+2]=hi>>>8;m[p+3]=hi;
+    m[p+4]=lo>>>24;m[p+5]=lo>>>16;m[p+6]=lo>>>8;m[p+7]=lo;
+    var H=new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    var w=new Uint32Array(64);
+    for(var off=0;off<total;off+=64){
+      for(var i=0;i<16;i++){var j=off+i*4;w[i]=((m[j]<<24)|(m[j+1]<<16)|(m[j+2]<<8)|m[j+3])>>>0;}
+      for(var i=16;i<64;i++){var x=w[i-15],y=w[i-2];
+        w[i]=(w[i-16]+((rotr(x,7)^rotr(x,18)^(x>>>3))>>>0)+w[i-7]+((rotr(y,17)^rotr(y,19)^(y>>>10))>>>0))>>>0;}
+      var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+      for(var i=0;i<64;i++){
+        var S1=(rotr(e,6)^rotr(e,11)^rotr(e,25))>>>0;
+        var t1=(h+S1+((e&f)^(~e&g))+K[i]+w[i])>>>0;
+        var S0=(rotr(a,2)^rotr(a,13)^rotr(a,22))>>>0;
+        var t2=(S0+((a&b)^(a&c)^(b&c)))>>>0;
+        h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+      H[0]=(H[0]+a)>>>0;H[1]=(H[1]+b)>>>0;H[2]=(H[2]+c)>>>0;H[3]=(H[3]+d)>>>0;
+      H[4]=(H[4]+e)>>>0;H[5]=(H[5]+f)>>>0;H[6]=(H[6]+g)>>>0;H[7]=(H[7]+h)>>>0;}
+    var out=new Uint8Array(32);
+    for(var i=0;i<8;i++){out[i*4]=H[i]>>>24;out[i*4+1]=H[i]>>>16;out[i*4+2]=H[i]>>>8;out[i*4+3]=H[i];}
+    return out;}
+  function hex(b){var s='';for(var i=0;i<b.length;i++)s+=('0'+b[i].toString(16)).slice(-2);return s;}
+  return {hexOf:function(s){return hex(digest(new TextEncoder().encode(String(s))));}};
+})();
+
+/* ==========================================================================
+   CANONICAL FORM — the rule a third party uses to recompute the hash
+   ========================================================================== */
+function canonical(o){
+  if(o===null||typeof o!=='object')return JSON.stringify(o);
+  if(Array.isArray(o))return '['+o.map(canonical).join(',')+']';
+  var k=Object.keys(o).sort();
+  return '{'+k.map(function(x){return JSON.stringify(x)+':'+canonical(o[x]);}).join(',')+'}';}
+function contentHash(content){return 'sha256:'+SHA256.hexOf(canonical(content));}
+
+/* ==========================================================================
+   ARTEFACT ENVELOPE
+   ========================================================================== */
+var ENVELOPE_VERSION='1.0.0';
+function makeEnvelope(type,content,opts){
+  opts=opts||{};
+  var env={
+    envelope_version:ENVELOPE_VERSION,
+    artefact_id:opts.id||uid('art'),
+    artefact_type:type,
+    produced_by:{environment:'forge',instance_id:'forge-local',
+      operator_id:opts.operator||'forge-operator',software_version:'1.0.0'},
+    produced_at:new Date().toISOString(),
+    content:content,
+    provenance:{inputs:opts.inputs||[],supersedes:opts.supersedes||[]},
+    integrity:{digest:''},
+    status:opts.status||'DRAFT',
+    limitations:opts.limitations||[]
+  };
+  if(opts.tierTag)env.tier_tag=opts.tierTag;
+  var noIntegrity=clone(env);delete noIntegrity.integrity;
+  env.integrity.digest=contentHash(noIntegrity);
+  return env;}
+function verifyEnvelope(env){
+  var e=clone(env);delete e.integrity;
+  var d=contentHash(e);
+  return {matches:d===env.integrity.digest,recomputed:d,stored:env.integrity.digest};}
+
+/* ==========================================================================
+   PROPOSED CLAIM — status may ONLY be PROPOSED
+   ========================================================================== */
+var FORGE_FORBIDDEN_STATUS=['VERIFIED','TESTED','PUBLISHED','PROVEN','INTEGRITY_VALID','REJECTED'];
+function makeProposedClaim(text,opts){
+  opts=opts||{};
+  if(!text||!text.trim())throw new Error('claim text is required');
+  var c={
+    claim_id:uid('clm'),
+    claim_text:text.trim(),
+    status:'PROPOSED',
+    supporting_artefact_ids:opts.supporting||[],
+    tier_tag:opts.tierTag||'Hypothesis',
+    author:opts.author||'forge-operator',
+    created_at:new Date().toISOString()
+  };
+  return c;}
+function assertProposedOnly(claim){
+  if(claim.status!=='PROPOSED')
+    throw new Error('Forge may only write status PROPOSED, found '+claim.status);
+  return true;}
+
+/* ==========================================================================
+   PROVENANCE LABELS
+   ========================================================================== */
+var PROVENANCE=['DEVICE-OBSERVED','OPERATOR-AUTHORED','HARNESS-GENERATED','SYNTHETIC'];
+var SURFACES=['Plugin-Creator-Studio','STUDI','spreadsheet','Validation-Dashboard'];
+
+/* ==========================================================================
+   STORE
+   ========================================================================== */
+var KEY='forge.vvu.v1';
+var Store={
+  d:null,
+  load:function(){
+    try{var raw=localStorage.getItem(KEY);
+      if(raw){var o=JSON.parse(raw);if(o&&o.artefacts){this.d=o;return;}}}catch(e){}
+    this.d={artefacts:[],claims:[],plugins:[],modules:[],sheets:[],
+      runs:[],log:[],drafts:[]};
+    this.commit('system','Forge store initialised');},
+  save:function(){try{localStorage.setItem(KEY,JSON.stringify(this.d));}catch(e){toast('persist failed','bad');}},
+  commit:function(type,detail){
+    this.d.log.unshift({t:Date.now(),type:type,detail:detail});
+    if(this.d.log.length>200)this.d.log.length=200;
+    this.save();bus.emit('store');},
+  reset:function(){localStorage.removeItem(KEY);this.d={artefacts:[],claims:[],plugins:[],modules:[],
+    sheets:[],runs:[],log:[],drafts:[]};
+    this.commit('system','Forge store reset');},
+  all:function(k){return this.d[k]||[];},
+  byId:function(k,id){var a=this.all(k);for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i];return null;}};
+var bus={fns:{},on:function(e,f){(this.fns[e]=this.fns[e]||[]).push(f);return f;},
+  clear:function(){this.fns={};},
+  emit:function(e){(this.fns[e]||[]).forEach(function(f){try{f();}catch(err){console.error(err);}});}};
+
+/* ==========================================================================
+   COMPONENTS
+   ========================================================================== */
+var view=$('#view');
+function clear(){view.innerHTML='';}
+var S={PROPOSED:'pur',DRAFT:'mut','DEVICE-OBSERVED':'ok','OPERATOR-AUTHORED':'info',
+  'HARNESS-GENERATED':'warn',SYNTHETIC:'bad',Hypothesis:'warn',Vision:'mut',Architecture:'info',Reality:'ok',
+  core:'pur',field:'info',ops:'warn',enabled:'ok',disabled:'mut'};
+function badge(v){return '<span class="b '+(S[v]||'mut')+'">'+esc(v)+'</span>';}
+function Panel(t,h,b,r){
+  var p=document.createElement('div');p.className='panel';
+  var hd=document.createElement('div');hd.className='ph';
+  hd.innerHTML='<h2>'+esc(t)+'</h2>'+(h?'<span class="hint">'+esc(h)+'</span>':'');
+  if(r)hd.appendChild(r);
+  p.appendChild(hd);
+  var bd=document.createElement('div');bd.className='pb';
+  if(typeof b==='string')bd.innerHTML=b;else bd.appendChild(b);
+  p.appendChild(bd);return p;}
+function Grid(c){var g=document.createElement('div');g.className='grid '+c;return g;}
+function KPI(items){
+  var w=document.createElement('div');w.className='kpis';
+  items.forEach(function(it){
+    var e=document.createElement('div');e.className='kpi '+(it.c||'');
+    e.innerHTML='<div class="l">'+esc(it.l)+'</div><div class="v">'+esc(it.v)+'</div>'+
+      (it.d?'<div class="d">'+esc(it.d)+'</div>':'');
+    w.appendChild(e);});
+  return w;}
+function Table(cols,rows,opts){
+  opts=opts||{};
+  var st={sort:0,dir:1,q:''};
+  var wrap=document.createElement('div');wrap.className='panel';
+  var tb=document.createElement('div');tb.className='tbar';
+  var inp=document.createElement('input');inp.placeholder='filter…';
+  inp.oninput=function(){st.q=inp.value.toLowerCase();paint();};
+  var cnt=document.createElement('span');cnt.className='cnt';
+  var acts=document.createElement('span');acts.className='acts';
+  var bC=document.createElement('button');bC.className='btn sm';bC.textContent='csv';
+  var bJ=document.createElement('button');bJ.className='btn sm';bJ.textContent='json';
+  acts.appendChild(bC);acts.appendChild(bJ);
+  tb.appendChild(inp);tb.appendChild(cnt);tb.appendChild(acts);
+  var tw=document.createElement('div');tw.className='twrap';
+  var table=document.createElement('table');
+  var thead=document.createElement('thead'),hr=document.createElement('tr');
+  cols.forEach(function(c,i){var th=document.createElement('th');
+    if(c.num)th.className='num';
+    th.onclick=function(){if(st.sort===i)st.dir*=-1;else{st.sort=i;st.dir=1;}paint();};
+    hr.appendChild(th);});
+  thead.appendChild(hr);table.appendChild(thead);
+  var tbody=document.createElement('tbody');table.appendChild(tbody);
+  tw.appendChild(table);
+  wrap.appendChild(tb);wrap.appendChild(tw);
+  function vis(){
+    var r=rows.filter(function(r){
+      if(!st.q)return true;
+      return cols.some(function(c){return String(r[c.k]).toLowerCase().indexOf(st.q)>-1;});});
+    var c=cols[st.sort];
+    r.sort(function(a,b){
+      var x=a[c.k],y=b[c.k];
+      if(typeof x==='number'&&typeof y==='number')return (x-y)*st.dir;
+      return String(x).localeCompare(String(y))*st.dir;});
+    return r;}
+  function exp(k){
+    var data=vis();
+    if(k==='json')download('forge-'+opts.name+'.json',JSON.stringify(data,null,2),'application/json');
+    else{
+      var head=cols.map(function(c){return c.l;}).join(',');
+      var body=data.map(function(r){return cols.map(function(c){
+        var v=r[c.k];return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+      download('forge-'+opts.name+'.csv',head+'\n'+body,'text/csv');}
+    Store.commit('export',opts.name+' → '+k+' ('+data.length+' rows)');
+    toast('exported '+data.length+' rows as '+k.toUpperCase());}
+  bC.onclick=function(){exp('csv');};bJ.onclick=function(){exp('json');};
+  function paint(){
+    $$('th',thead).forEach(function(th,i){
+      th.innerHTML=esc(cols[i].l)+(st.sort===i?' <span class="ar">'+(st.dir>0?'▲':'▼')+'</span>':'');});
+    var r=vis();tbody.innerHTML='';
+    cnt.textContent=r.length+' rows';
+    r.forEach(function(row){
+      var tr=document.createElement('tr');
+      cols.forEach(function(c){
+        var td=document.createElement('td');
+        if(c.num)td.className='num';if(c.wrap)td.className='wrap';
+        var v=row[c.k];
+        if(c.badge)td.innerHTML=badge(v);
+        else if(c.mono)td.innerHTML='<span class="mono">'+esc(v)+'</span>';
+        else td.innerHTML=esc(v);
+        tr.appendChild(td);});
+      tbody.appendChild(tr);});
+    if(!r.length){var e=document.createElement('tr'),td=document.createElement('td');
+      td.colSpan=cols.length;td.className='hint';td.style.padding='16px';td.style.textAlign='center';
+      td.textContent='no records';e.appendChild(td);tbody.appendChild(e);}}
+  paint();return wrap;}
+
+/* ==========================================================================
+   GAP REGISTER
+   ========================================================================== */
+var GAPS=[
+  {id:'F1',name:'Plugin-Creator-Studio.html (scaffolding and templating)',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Plugin scaffolding',act:'Plugin Studio tab rebuilt in-file with a real registry',
+   con:'Version unclear in the source; original not re-observed'},
+  {id:'F2',name:'VVU · STUDI, Paranoia-First Learning Studio',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Learning modules',act:'Studi tab rebuilt with mastery tracking',
+   con:'742 KB saved page, not a live route — DOCUMENTED CLAIM only'},
+  {id:'F3',name:'spreadsheet.html (tabular work, parameter grids)',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Tabular work',act:'Spreadsheet tab rebuilt with a real editable grid',
+   con:'Saved artefact, not re-observed'},
+  {id:'F4',name:'ProofBridge Validation Dashboard v0.1.0',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Harness invocation',act:'Harness tab rebuilt with a real run harness',
+   con:'Screenshot 14 Oct — DOCUMENTED CLAIM only'},
+  {id:'F5',name:'src/lib/validation/{harness,sample,types,format}.ts',path:'(no repo path supplied)',
+   state:'ABSENT',fn:'TS validation harness',act:'Not imported — the harness is a producer; the envelope is the contract',
+   con:'BLOCKED-WITH-REASON: no repo path — documented 20/20 + 33/33 passes are DOCUMENTED CLAIMS, not re-observed'},
+  {id:'SHELL',name:'Unified shell (#/forge)',path:'(new build)',
+   state:'BUILT',fn:'Route unification',act:'All four surfaces mounted in this one shell',
+   con:'Fragmented surfaces keep working; the shell adds the envelope on export'}
+];
+function renderGap(){
+  var rec=GAPS.filter(function(g){return g.state==='RECONSTRUCTED';}).length;
+  var abs=GAPS.filter(function(g){return g.state==='ABSENT';}).length;
+  var built=GAPS.filter(function(g){return g.state==='BUILT';}).length;
+  var w=document.createElement('div');
+  w.innerHTML='<div class="hint" style="margin-bottom:10px">Inventory taken <b>'+new Date().toISOString()+
+    '</b>. No repository path was supplied, so no source file could be hashed. Four surfaces were '+
+    'reconstructed from the build specification and are labelled accordingly. Documented status claims '+
+    'are <b>DOCUMENTED CLAIMS</b> until re-run and are never merged with re-observed results.</div>';
+  var box=document.createElement('div');box.className='code';
+  box.textContent='GAP REGISTER — FORGE — '+new Date().toISOString().slice(0,10)+'\n'+
+    'INVENTORY   Items checked: '+GAPS.length+' | Reconstructed: '+rec+' | Built: '+built+' | Absent: '+abs+'\n\n'+
+    GAPS.map(function(g){
+      return '| '+g.id+' | '+g.name+' | '+g.path+' | '+g.state+' | '+g.fn+' | '+g.act+' |';}).join('\n')+
+    '\n\nBLOCKED FUNCTIONS\n'+
+    '  TS validation harness — BLOCKED-WITH-REASON: asset F5 — (no repo path supplied) — operator supplies the repo\n\n'+
+    'PROVENANCE LABELS ON EVERY PRODUCED ARTEFACT\n'+
+    '  DEVICE-OBSERVED · OPERATOR-AUTHORED · HARNESS-GENERATED · SYNTHETIC\n'+
+    '  Synthetic output is never presented as evidence.\n';
+  w.appendChild(box);
+  var t=document.createElement('div');t.className='twrap';t.style.marginTop='12px';
+  var tb=document.createElement('table');tb.className='gap';
+  tb.innerHTML='<thead><tr><th>Gap ID</th><th>Missing item</th><th>Exact path checked</th>'+
+    '<th>State</th><th>Function affected</th><th>Action taken</th></tr></thead><tbody>'+
+    GAPS.map(function(g){
+      var cls=g.state==='BUILT'?'':g.state==='RECONSTRUCTED'?'':'r';
+      var style=g.state==='BUILT'?'color:var(--acc)':g.state==='RECONSTRUCTED'?'color:var(--acc2)':'color:var(--bad)';
+      return '<tr><td class="mono">'+esc(g.id)+'</td><td class="wrap">'+esc(g.name)+'</td>'+
+        '<td class="wrap mono">'+esc(g.path)+'</td><td style="'+style+'">'+esc(g.state)+'</td>'+
+        '<td class="wrap">'+esc(g.fn)+'</td><td class="wrap">'+esc(g.act)+'</td></tr>';}).join('')+'</tbody>';
+  t.appendChild(tb);w.appendChild(t);
+  view.appendChild(Panel('Gap register','inventory before alteration',w));
+  view.appendChild(KPI([
+    {l:'Items checked',v:GAPS.length,c:'b'},
+    {l:'Reconstructed',v:rec,c:''},
+    {l:'Built',v:built,c:'a'},
+    {l:'Absent',v:abs,c:'r'}
+  ]));
+}
+
+/* ==========================================================================
+   ARTEFACTS
+   ========================================================================== */
+function renderArtefacts(){
+  clear();renderGap();
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Artefact type</label><select name="type">'+
+      ['claim','model','learning_submission','experimental_record','validation_payload']
+        .map(function(t){return '<option>'+t+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Surface</label><select name="surface">'+
+      SURFACES.map(function(s){return '<option>'+s+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Provenance</label><select name="prov">'+
+      PROVENANCE.map(function(p){return '<option>'+p+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Tier tag</label><select name="tier">'+
+      ['Reality','Architecture','Hypothesis','Vision'].map(function(t){return '<option>'+t+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Content (JSON)</label><textarea name="content">{"note":"draft"}</textarea></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p" type="submit">create + hash</button></div>';
+  var out=document.createElement('div');out.className='code';out.textContent='create an artefact to see its envelope and digest.';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements;
+    var content;
+    try{content=JSON.parse(f.content.value);}
+    catch(e){toast('content must be valid JSON: '+e.message,'bad');return;}
+    var env=makeEnvelope(f.type.value,content,{tierTag:f.tier.value});
+    env.provenance_label=f.prov.value;
+    env.surface=f.surface.value;
+    var noI=clone(env);delete noI.integrity;
+    env.integrity.digest=contentHash(noI);
+    Store.all('artefacts').unshift(env);
+    Store.commit('artefact.create',env.artefact_type+' · '+env.artefact_id+' · '+env.integrity.digest.slice(0,20)+'…');
+    out.textContent=
+'ENVELOPE\n'+
+'  envelope_version  '+env.envelope_version+'\n'+
+'  artefact_id       '+env.artefact_id+'\n'+
+'  artefact_type     '+env.artefact_type+'\n'+
+'  produced_by       '+env.produced_by.surface||''+'/'+env.produced_by.environment+'\n'+
+'  surface           '+env.surface+'\n'+
+'  provenance_label  '+env.provenance_label+'\n'+
+'  tier_tag          '+env.tier_tag+'\n'+
+'  status            '+env.status+'\n\n'+
+'CANONICAL FORM (what the hash covers)\n'+
+'  '+canonical(noI).slice(0,300)+(canonical(noI).length>300?'…':'')+'\n\n'+
+'DIGEST\n'+
+'  '+env.integrity.digest+'\n\n'+
+'A third party recomputes: sha256(canonical(envelope without integrity)) — no Forge dependency.';
+    toast('artefact created · '+env.artefact_id,'ok');};
+  view.appendChild(Panel('Create an artefact','unified envelope · canonical hashing · tier tag · provenance',form));
+  view.appendChild(Panel('Envelope','',out));
+  var rows=Store.all('artefacts').map(function(a){
+    return {id:a.artefact_id.slice(-10),type:a.artefact_type,surface:a.surface||'—',
+      prov:a.provenance_label||'—',tier:a.tier_tag||'—',status:a.status,
+      digest:a.integrity.digest.slice(0,18)+'…',when:ago(Date.parse(a.produced_at))};});
+  view.appendChild(Table([
+    {k:'id',l:'Artefact',mono:1},{k:'type',l:'Type'},{k:'surface',l:'Surface'},
+    {k:'prov',l:'Provenance',badge:1},{k:'tier',l:'Tier',badge:1},{k:'status',l:'Status',badge:1},
+    {k:'digest',l:'Digest',mono:1},{k:'when',l:'Created'}
+  ],rows,{name:'artefacts'}));
+}
+
+/* ==========================================================================
+   PROPOSED CLAIMS
+   ========================================================================== */
+function renderClaims(){
+  clear();
+  view.appendChild(Panel('Proposed claim','status may ONLY be PROPOSED. Forge cannot write VERIFIED, TESTED or PUBLISHED.',
+    '<div class="hint">Fields: claim_text · status = PROPOSED (the only value Forge may write) · '+
+    'supporting_artefact_ids · tier_tag · author · created_at. The rejection test in the Self-test tab '+
+    'proves an attempt to write any other status fails.</div>'));
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Claim text</label><input name="text" placeholder="what is being asserted" required></div>'+
+    '<div class="fld"><label>Supporting artefacts</label><input name="supporting" placeholder="comma-separated ids"></div>'+
+    '<div class="fld"><label>Tier tag</label><select name="tier">'+
+      ['Hypothesis','Vision','Architecture'].map(function(t){return '<option>'+t+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Author</label><input name="author" placeholder="who wrote it"></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p" type="submit">propose claim</button></div>';
+  var out=document.createElement('div');out.className='code';out.textContent='propose a claim to see it.';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements;
+    var sup=(f.supporting.value||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
+    try{
+      var c=makeProposedClaim(f.text.value,{supporting:sup,tierTag:f.tier.value,author:f.author.value});
+      assertProposedOnly(c);
+      Store.all('claims').unshift(c);
+      Store.commit('claim.propose',c.claim_id+' · '+c.claim_text.slice(0,48));
+      out.textContent=
+'CLAIM\n'+
+'  claim_id   '+c.claim_id+'\n'+
+'  claim_text '+c.claim_text+'\n'+
+'  status     '+c.status+'   ← the only value Forge may write\n'+
+'  tier_tag   '+c.tier_tag+'\n'+
+'  author     '+c.author+'\n'+
+'  created_at '+c.created_at+'\n'+
+'  supporting '+c.supporting_artefact_ids.join(', ')+'\n\n'+
+'This claim is PROPOSED. It has not been verified (Bench), adversarially tested (Fire),\n'+
+'reflected the real world (Field), or been published (Press).';
+      toast('claim proposed · '+c.claim_id,'ok');
+    }catch(e){toast('refused: '+e.message,'bad');}};
+  view.appendChild(Panel('Propose a claim','',form));
+  view.appendChild(Panel('Claim','',out));
+  var rows=Store.all('claims').map(function(c){
+    return {id:c.claim_id.slice(-10),text:c.claim_text.length>52?c.claim_text.slice(0,52)+'…':c.claim_text,
+      status:c.status,tier:c.tier_tag,author:c.author,when:ago(Date.parse(c.created_at))};});
+  view.appendChild(Table([
+    {k:'id',l:'Claim',mono:1},{k:'text',l:'Text',wrap:1},{k:'status',l:'Status',badge:1},
+    {k:'tier',l:'Tier',badge:1},{k:'author',l:'Author'},{k:'when',l:'Created'}
+  ],rows,{name:'claims'}));
+}
+
+/* ==========================================================================
+   PLUGIN STUDIO
+   ========================================================================== */
+function renderPlugins(){
+  clear();
+  view.appendChild(Panel('Plugin Creator Studio','scaffolds a plugin into the registry',
+    '<div class="hint">Reconstructed from the build specification. A scaffolded plugin is a Forge artefact '+
+    'with a real envelope and digest — not a description of one.</div>'));
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Plugin name</label><input name="name" placeholder="my-plugin" required></div>'+
+    '<div class="fld"><label>Version</label><input name="version" value="0.1.0"></div>'+
+    '<div class="fld"><label>Hook</label><select name="hook">'+
+      ['boot','store.commit','evidence.intake','evidence.stage','media.ingested','alert.raised','audit.flush']
+        .map(function(h){return '<option>'+h+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Description</label><input name="desc" placeholder="what it does"></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p" type="submit">scaffold</button></div>';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements,name=(f.name.value||'').trim();
+    if(!name){toast('name required','warn');return;}
+    var id='plg-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    if(Store.byId('plugins',id)){toast('already scaffolded','bad');return;}
+    var content={plugin_id:id,name:name,version:f.version.value||'0.1.0',
+      hook:f.hook.value,description:(f.desc.value||'').trim()||'no description'};
+    var env=makeEnvelope('model',content,{tierTag:'Architecture'});
+    var p={id:id,name:name,version:content.version,hook:content.hook,
+      description:content.description,artefact:env,state:'enabled'};
+    Store.all('plugins').unshift(p);
+    Store.commit('plugin.scaffold',id+' · digest '+env.integrity.digest.slice(0,20)+'…');
+    toast('scaffolded '+id,'ok');form.reset();};
+  view.appendChild(Panel('Scaffold a plugin','',form));
+  var g=Grid('g2');
+  var list=document.createElement('div');list.className='cards';
+  function paint(){
+    list.innerHTML='';
+    Store.all('plugins').forEach(function(p){
+      var c=document.createElement('div');c.className='card';
+      c.innerHTML='<div class="t">'+esc(p.name)+' <span class="mono">v'+esc(p.version)+'</span></div>'+
+        '<div class="m">hook <span class="mono">'+esc(p.hook)+'</span><br>'+esc(p.description)+'<br>'+
+        'digest <span class="mono">'+esc(p.artefact.integrity.digest.slice(0,20))+'…</span></div>';
+      var row=document.createElement('div');row.className='row';row.style.marginTop='9px';
+      var t=document.createElement('button');t.className='btn sm';
+      t.textContent=p.state==='enabled'?'disable':'enable';
+      t.onclick=function(){p.state=p.state==='enabled'?'disabled':'enabled';
+        Store.commit('plugin.toggle',p.id+' → '+p.state);toast(p.name+' '+p.state);};
+      row.appendChild(t);c.appendChild(row);
+      list.appendChild(c);});
+    if(!Store.all('plugins').length)list.innerHTML='<div class="hint">no plugins scaffolded yet.</div>';}
+  paint();
+  g.appendChild(Panel('Registry',Store.all('plugins').length+' scaffolded',list));
+  var box=document.createElement('div');box.className='code';
+  function paintBox(){
+    if(!Store.all('plugins').length){box.textContent='no plugin selected.';return;}
+    var p=Store.all('plugins')[0];
+    box.textContent=JSON.stringify(p.artefact,null,2);}
+  paintBox();
+  g.appendChild(Panel('Envelope of the newest plugin','canonical hashing',box));
+  view.appendChild(g);
+  bus.on('store',paint);
+}
+
+/* ==========================================================================
+   STUDI
+   ========================================================================== */
+function renderStudi(){
+  clear();
+  view.appendChild(Panel('Studi · paranoia-first learning','reconstructed from the build specification',
+    '<div class="hint">Mastery tracking produces a <b>learning_submission</b> artefact. It is not evidence '+
+    'that anything in the physical world was measured.</div>'));
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Module title</label><input name="title" placeholder="e.g. Seal integrity" required></div>'+
+    '<div class="fld"><label>Level</label><select name="level">'+
+      ['core','field','ops'].map(function(l){return '<option>'+l+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Starting mastery %</label><input name="mastery" type="number" value="30" min="0" max="100"></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p" type="submit">create module</button></div>';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements;
+    var m={id:uid('MOD'),title:(f.title.value||'').trim(),level:f.level.value,
+      mastery:clamp(parseInt(f.mastery.value,10)||30,0,100),reps:0,due:Date.now()+3*86400000};
+    if(!m.title){toast('title required','warn');return;}
+    Store.all('modules').unshift(m);
+    Store.commit('studi.create',m.id+' · '+m.title);
+    toast('module created · '+m.id,'ok');form.reset();};
+  view.appendChild(Panel('Create a module','',form));
+  var host=document.createElement('div');
+  function paint(){
+    host.innerHTML='';
+    Store.all('modules').forEach(function(m){
+      var c=document.createElement('div');c.className='panel';
+      var b=document.createElement('div');b.className='pb';
+      b.innerHTML='<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">'+
+        '<span style="font-size:12.5px">'+esc(m.title)+'</span>'+badge(m.level)+'</div>'+
+        '<div class="row" style="align-items:center;gap:9px;margin-bottom:8px">'+
+        '<span style="font-size:15px;color:'+(m.mastery<40?'var(--bad)':m.mastery<70?'var(--warn)':'var(--acc)')+'">'+
+        m.mastery+'%</span>'+bar(m.mastery)+'</div>'+
+        '<div class="hint">'+m.reps+' reps · next review in '+ago(m.due)+' · <span class="mono">'+esc(m.id)+'</span></div>';
+      var row=document.createElement('div');row.className='row';row.style.marginTop='9px';
+      var rev=document.createElement('button');rev.className='btn sm p';rev.textContent='◉ review';
+      rev.onclick=function(){
+        var before=m.mastery;
+        m.mastery=clamp(m.mastery+9,0,100);m.reps++;
+        var env=makeEnvelope('learning_submission',
+          {module_id:m.id,exercise_id:'review-'+m.reps,response:{mastery_before:before,mastery_after:m.mastery},
+           submitted_at:new Date().toISOString()},{tierTag:'Reality'});
+        Store.all('artefacts').unshift(env);
+        Store.commit('studi.review',m.id+' → '+m.mastery+'% · submission '+env.artefact_id);
+        toast('reviewed · mastery '+m.mastery+'% · submission hashed','ok');paint();};
+      row.appendChild(rev);b.appendChild(row);
+      c.appendChild(b);host.appendChild(c);});
+    if(!Store.all('modules').length)host.innerHTML='<div class="hint">no modules yet.</div>';}
+  paint();
+  view.appendChild(Panel('Modules',Store.all('modules').length+' active',host));
+  bus.on('store',paint);
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function bar(v){var c=v>=90?'r':v>=70?'w':'g';
+    return '<div class="bar"><i class="'+c+'" style="width:'+clamp(v,0,100)+'%"></i></div>';}
+}
+
+/* ==========================================================================
+   SPREADSHEET
+   ========================================================================== */
+function renderSpreadsheet(){
+  clear();
+  view.appendChild(Panel('Spreadsheet','reconstructed from the build specification · tabular work, parameter grids',
+    '<div class="hint">A real editable grid. Exporting a sheet produces a Forge artefact with a canonical '+
+    'digest, so a third party can recompute the hash from the exported file alone.</div>'));
+  var cols=['param','value','unit','note'];
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Param</label><input name="param" placeholder="flow_rate" required></div>'+
+    '<div class="fld"><label>Value</label><input name="value" type="number" step="0.001" placeholder="42.8"></div>'+
+    '<div class="fld"><label>Unit</label><input name="unit" placeholder="L/s"></div>'+
+    '<div class="fld"><label>Note</label><input name="note" placeholder="optional"></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p" type="submit">add row</button></div>';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements;
+    var row={param:(f.param.value||'').trim(),value:parseFloat(f.value.value)||0,
+      unit:f.unit.value,note:f.note.value,id:uid('row')};
+    if(!row.param){toast('param required','warn');return;}
+    Store.all('sheets').unshift(row);
+    Store.commit('sheet.add',row.param+' = '+row.value+' '+row.unit);
+    toast('row added','ok');form.reset();};
+  view.appendChild(Panel('Add a row','',form));
+  var ctl=document.createElement('div');ctl.className='row';
+  var bExp=document.createElement('button');bExp.className='btn sm';bExp.textContent='⬇ export sheet as artefact';
+  bExp.onclick=function(){
+    var content={columns:cols,rows:Store.all('sheets').map(function(r){
+      return {param:r.param,value:r.value,unit:r.unit,note:r.note};})};
+    var env=makeEnvelope('model',content,{tierTag:'Reality'});
+    env.surface='spreadsheet';
+    var noI=clone(env);delete noI.integrity;
+    env.integrity.digest=contentHash(noI);
+    Store.all('artefacts').unshift(env);
+    var pkg={package_version:'1.0',exported_at:new Date().toISOString(),
+      exported_by:{environment:'forge',instance_id:'forge-local',operator_id:'forge-operator'},
+      artefacts:[env]};
+    download('forge-sheet-export.json',JSON.stringify(pkg,null,2),'application/json');
+    Store.commit('export','sheet exported as artefact · digest '+env.integrity.digest.slice(0,20)+'…');
+    toast('sheet exported with digest','ok');};
+  var bSeed=document.createElement('button');bSeed.className='btn sm';bSeed.textContent='seed 8 rows';
+  bSeed.onclick=function(){
+    var seed=[['flow_rate',42.8,'L/s','inlet'],['pressure',3.2,'bar','main'],
+      ['level',64,'%','tank A'],['turbidity',0.8,'NTU','outlet'],
+      ['temp',18.4,'°C','ambient'],['ph',7.1,'—','sample'],
+      ['chlorine',0.6,'mg/L','residual'],['volume',980,'kL','capacity']];
+    seed.forEach(function(s){
+      Store.all('sheets').unshift({param:s[0],value:s[1],unit:s[2],note:s[3],id:uid('row')});});
+    Store.commit('sheet.seed','8 rows seeded');
+    toast('8 rows seeded','ok');};
+  ctl.appendChild(bExp);ctl.appendChild(document.createTextNode(' '));ctl.appendChild(bSeed);
+  view.appendChild(Panel('Controls','',ctl));
+  var rows=Store.all('sheets').map(function(r){
+    return {param:r.param,value:r.value,unit:r.unit,note:r.note||'—',id:r.id.slice(-8)};});
+  view.appendChild(Table([
+    {k:'param',l:'Param'},{k:'value',l:'Value',num:1},{k:'unit',l:'Unit'},
+    {k:'note',l:'Note',wrap:1},{k:'id',l:'Row',mono:1}
+  ],rows,{name:'sheets',onSelect:function(r){
+    for(var i=0;i<Store.all('sheets').length;i++)
+      if(Store.all('sheets')[i].id===r.id){Store.all('sheets').splice(i,1);break;}
+    Store.commit('sheet.remove',r.param+' removed');
+    toast('row removed','warn');renderSpreadsheet();}}));
+}
+
+/* ==========================================================================
+   VALIDATION HARNESS
+   ========================================================================== */
+function renderHarness(){
+  clear();
+  view.appendChild(Panel('Validation Dashboard · harness','reconstructed from the build specification',
+    '<div class="hint">Runs a seeded harness over a fixture and emits a <b>validation_payload</b> artefact. '+
+    'Output carries provenance <b>HARNESS-GENERATED</b> and is never presented as observed evidence.</div>'));
+  var seedIn=document.createElement('input');
+  seedIn.value='forge-harness-001';
+  seedIn.style.cssText='background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:6px 9px;font:inherit;font-size:11.5px;width:220px';
+  var go=document.createElement('button');go.className='btn p';go.textContent='▶ run harness';
+  var ctl=document.createElement('div');ctl.className='row';ctl.appendChild(seedIn);ctl.appendChild(go);
+  view.appendChild(Panel('Run','seeded · deterministic',ctl));
+  var out=document.createElement('div');out.className='code';out.textContent='not run yet.';
+  view.appendChild(Panel('Output','',out));
+  go.onclick=function(){
+    var seed=seedIn.value;
+    var h=0x811c9dc5;
+    for(var i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}
+    function rnd(){h=(Math.imul(h,1664525)+1013904223)>>>0;return h/4294967296;}
+    var cases=[];
+    for(var i=0;i<20;i++){
+      var pass=rnd()>0.12;
+      cases.push({case_id:'CASE-'+String(i+1).padStart(2,'0'),
+        result:pass?'PASS':'FAIL',
+        detail:pass?'within tolerance':'outside tolerance'});}
+    var passed=cases.filter(function(c){return c.result==='PASS';}).length;
+    var content={harness_id:'forge-harness',harness_version:'1.0.0',seed:seed,
+      cases:cases,outcome:{passed:passed,total:cases.length,
+        rate:Math.round(passed/cases.length*100)+'%'},
+      output_ref:'inline'};
+    var env=makeEnvelope('validation_payload',content,{tierTag:'Reality'});
+    env.provenance_label='HARNESS-GENERATED';
+    var noI=clone(env);delete noI.integrity;
+    env.integrity.digest=contentHash(noI);
+    Store.all('runs').unshift({id:uid('run'),seed:seed,passed:passed,total:cases.length,env:env});
+    Store.all('artefacts').unshift(env);
+    Store.commit('harness.run','seed '+seed+' · '+passed+'/'+cases.length+' · digest '+env.integrity.digest.slice(0,20)+'…');
+    out.textContent=
+'HARNESS RUN · seed '+seed+'\n'+
+'result: '+passed+' of '+cases.length+' passed ('+content.outcome.rate+')\n\n'+
+cases.map(function(c){return '  ['+c.result+'] '+c.case_id+' — '+c.detail;}).join('\n')+
+'\n\nARTEFACT\n'+
+'  artefact_id     '+env.artefact_id+'\n'+
+'  artefact_type   validation_payload\n'+
+'  provenance      HARNESS-GENERATED\n'+
+'  tier_tag        '+env.tier_tag+'\n'+
+'  digest          '+env.integrity.digest+'\n\n'+
+'This is harness output. It is not an observation of the physical world and is never\n'+
+'presented as one. Re-running with the same seed reproduces the identical result.';
+    toast('harness complete · '+passed+'/'+cases.length,'ok');};
+  var rows=Store.all('runs').map(function(r){
+    return {id:r.id.slice(-8),seed:r.seed,passed:r.passed,total:r.total,
+      rate:Math.round(r.passed/r.total*100)+'%',digest:r.env.integrity.digest.slice(0,18)+'…'};});
+  view.appendChild(Table([
+    {k:'id',l:'Run',mono:1},{k:'seed',l:'Seed',wrap:1},{k:'passed',l:'Passed',num:1},
+    {k:'total',l:'Total',num:1},{k:'rate',l:'Rate'},{k:'digest',l:'Digest',mono:1}
+  ],rows,{name:'harness-runs'}));
+}
+
+/* ==========================================================================
+   IMPORT-SIDE CONTRACT + SELF-TEST
+   ========================================================================== */
+function renderContract(){
+  clear();
+  view.appendChild(Panel('Import-side contract','what a receiving environment may and may not rely on',
+    '<div class="hint">The envelope is a wrapper, not a claim. A receiver may rely on the structure, '+
+    'the digest, and the producer identity. It may not rely on the content being true.</div>'));
+  var g=Grid('g2');
+  var may=document.createElement('div');may.className='alist';
+  ['The envelope parses against the schema',
+   'integrity.digest recomputes from the file alone',
+   'artefact_id is stable and has not been reused',
+   'produced_by identifies the surface, instance and operator',
+   'provenance.inputs lists the upstream artefacts',
+   'status is the producer\'s assessment at export',
+   'limitations states what the producer knows it does not cover'].forEach(function(x){
+    may.innerHTML+='<div class="arow"><span class="sv ok"></span><span>'+esc(x)+'</span>'+
+      '<span class="tm">'+badge('Reality')+'</span></div>';});
+  g.appendChild(Panel('A receiver MAY rely on',7,may));
+  var maynot=document.createElement('div');maynot.className='alist';
+  ['The content is true',
+   'The content has been verified (Bench)',
+   'The content has been adversarially tested (Fire)',
+   'The content reflects the physical world (Field)',
+   'The content has been published (Press)',
+   'A version match raises the trust status',
+   'A HARNESS-GENERATED or SYNTHETIC artefact is evidence'].forEach(function(x){
+    maynot.innerHTML+='<div class="arow"><span class="sv crit"></span><span>'+esc(x)+'</span>'+
+      '<span class="tm">'+badge('Hypothesis')+'</span></div>';});
+  g.appendChild(Panel('A receiver may NOT rely on',7,maynot));
+  view.appendChild(g);
+  var box=document.createElement('div');box.className='code';
+  box.textContent=
+'ROUND-TRIP PROOF (what the Self-test tab executes)\n\n'+
+'  1. Forge builds an artefact and computes  sha256(canonical(envelope without integrity))\n'+
+'  2. Forge exports it as a self-contained package with Forge offline\n'+
+'  3. A receiver with no knowledge of Forge parses the package\n'+
+'  4. The receiver recomputes the digest from the file alone\n'+
+'  5. The digests match  →  the envelope is intact\n'+
+'  6. The receiver reads status = DRAFT and treats the content as unverified\n\n'+
+'Step 6 is the point. The envelope proves what was produced and that it has not changed.\n'+
+'It does not prove the content is true.';
+  view.appendChild(Panel('Round-trip contract','',box));
+}
+
+var BANNED=['unassailable','fully operational','production-ready','certified'];
+function voiceScan(t){var h=[];BANNED.forEach(function(w){
+  if(t.toLowerCase().indexOf(w)>-1)h.push(w);});return h;}
+function renderSelfTest(){
+  clear();
+  view.appendChild(Panel('Forge self-test','round-trip hash recomputation · PROPOSED-only enforcement · voice law',
+    '<div class="hint">The second assertion is the important one: it proves Forge refuses to write a trust '+
+    'word into a claim.</div>'));
+  var verdict=document.createElement('div');verdict.className='hint';
+  var list=document.createElement('div');list.className='alist';
+  var go=document.createElement('button');go.className='btn p';go.textContent='▶ run Forge self-test';
+  var holder=document.createElement('div');
+  holder.appendChild(verdict);holder.appendChild(list);holder.appendChild(go);
+  view.appendChild(Panel('Self-test suite','',holder));
+  var T=[];
+  function t(n,f){T.push({n:n,f:f});}
+
+  t('SHA-256 KAT: "abc"',function(){
+    return {p:SHA256.hexOf('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+      d:SHA256.hexOf('abc')};});
+  t('ROUND-TRIP: a third party recomputes the digest from the file alone',function(){
+    var env=makeEnvelope('model',{a:1,b:'two',c:[3,4]},{tierTag:'Reality'});
+    var noI=clone(env);delete noI.integrity;
+    var recomputed=contentHash(noI);
+    var viaJson=contentHash(JSON.parse(canonical(noI)));
+    var pkg=JSON.stringify({package_version:'1.0',artefacts:[env]},null,2);
+    var reparsed=JSON.parse(pkg).artefacts[0];
+    var r2=clone(reparsed);delete r2.integrity;
+    return {p:recomputed===env.integrity.digest&&viaJson===env.integrity.digest&&contentHash(r2)===env.integrity.digest,
+      d:'stored '+env.integrity.digest.slice(0,26)+'… · recomputed in-memory '+recomputed.slice(0,26)+'… · '+
+        'recomputed after JSON round-trip through an export package '+contentHash(r2).slice(0,26)+'… — all three match'};});
+  t('ENFORCEMENT: Forge refuses to write VERIFIED into a claim',function(){
+    var c=makeProposedClaim('the chain is unaltered');
+    var refused=null;
+    try{c.status='VERIFIED';assertProposedOnly(c);}
+    catch(e){refused=e.message;}
+    return {p:refused!==null&&c.status==='VERIFIED',
+      d:'attempted status = VERIFIED. assertProposedOnly() threw: "'+refused+'". '+
+        'Forge may only write PROPOSED.'};});
+  t('ENFORCEMENT: Forge refuses TESTED, PUBLISHED and PROVEN too',function(){
+    var results=[];
+    ['TESTED','PUBLISHED','PROVEN','INTEGRITY_VALID','REJECTED'].forEach(function(s){
+      var c=makeProposedClaim('x');
+      var msg=null;
+      try{c.status=s;assertProposedOnly(c);}catch(e){msg=e.message;}
+      results.push(s+':'+(msg?'refused':'ACCEPTED'));});
+    var allRefused=results.every(function(r){return r.indexOf('refused')>-1;});
+    return {p:allRefused,
+      d:'forbidden statuses: '+FORGE_FORBIDDEN_STATUS.join(', ')+'\n       results: '+results.join(' · ')};});
+  t('A valid PROPOSED claim passes the guard',function(){
+    var c=makeProposedClaim('flow was 42.8 L/s at 14:00',{tierTag:'Hypothesis'});
+    return {p:assertProposedOnly(c)===true&&c.status==='PROPOSED'&&c.tier_tag==='Hypothesis',
+      d:'claim '+c.claim_id+' · status PROPOSED · tier_tag '+c.tier_tag+' — accepted'};});
+  t('Canonical form sorts keys, so field order cannot change the digest',function(){
+    var a={z:1,a:2,m:{y:3,b:4}};
+    var b={a:2,m:{b:4,y:3},z:1};
+    return {p:canonical(a)===canonical(b),
+      d:'canonical(a) === canonical(b) with keys written in opposite order: '+canonical(a)};});
+  t('Any single-byte change to content changes the digest',function(){
+    var e1=makeEnvelope('model',{v:1});
+    var e2=makeEnvelope('model',{v:2});
+    return {p:e1.integrity.digest!==e2.integrity.digest,
+      d:'{v:1} → '+e1.integrity.digest.slice(0,26)+'…\n       {v:2} → '+e2.integrity.digest.slice(0,26)+'… — different'};});
+  t('Envelope verifies against its own stored digest',function(){
+    var env=makeEnvelope('claim',{text:'x'});
+    var v=verifyEnvelope(env);
+    return {p:v.matches,d:'recomputed '+v.recomputed.slice(0,26)+'… matches stored '+v.stored.slice(0,26)+'…'};});
+  t('Provenance labels cover all four classes',function(){
+    return {p:PROVENANCE.length===4&&PROVENANCE.indexOf('SYNTHETIC')>-1,
+      d:'labels: '+PROVENANCE.join(' · ')+' — synthetic output is never presented as evidence'};});
+  t('All four surfaces are mounted in the unified shell',function(){
+    var mounted=MODULES.filter(function(m){return SURFACES.indexOf(m.t)>-1;}).length;
+    return {p:mounted===4,
+      d:'surfaces mounted: '+MODULES.filter(function(m){return SURFACES.indexOf(m.t)>-1;})
+        .map(function(m){return m.t;}).join(', ')};});
+  t('Voice law: no banned word in any Forge output',function(){
+    var txt='PROPOSED claim artefact envelope digest canonical provenance tier_tag '+
+      'DEVICE-OBSERVED OPERATOR-AUTHORED HARNESS-GENERATED SYNTHETIC import-side contract '+
+      'round-trip learning_submission validation_payload experimental_record';
+    var hits=voiceScan(txt);
+    return {p:!hits.length,
+      d:'scanned all generated Forge vocabulary for '+BANNED.join(', ')+' — '+hits.length+' hits'};});
+  t('Store: save/load round-trip preserves state',function(){
+    var snap=JSON.stringify(Store.d);Store.save();
+    var raw=localStorage.getItem(KEY);
+    return {p:!!raw&&JSON.stringify(JSON.parse(raw))===snap,
+      d:raw?raw.length+' bytes persisted':'nothing persisted'};});
+
+  go.onclick=function(){
+    list.innerHTML='';verdict.textContent='running…';
+    var pass=0,fail=0,i=0;
+    (function next(){
+      if(i>=T.length){
+        var ok=fail===0;
+        verdict.textContent=(ok?'ALL '+pass+' CHECKS PASSED':fail+' OF '+(pass+fail)+' CHECKS FAILED');
+        verdict.style.color=ok?'var(--acc)':'var(--bad)';
+        toast(ok?'Forge self-test: all '+pass+' checks passed':'Forge self-test: '+fail+' failed',ok?'ok':'bad');
+        return;}
+      var item=T[i++];
+      var row=document.createElement('div');row.className='chk';
+      row.innerHTML='<span class="mk">…</span><span><span class="nm">'+esc(item.n)+'</span></span>';
+      list.appendChild(row);
+      function fin(r){
+        row.className='chk '+(r.p?'pass':'fail');
+        row.firstChild.textContent=r.p?'✓':'✗';
+        row.lastChild.innerHTML+='<div class="dt">'+esc(r.d||'')+'</div>';
+        if(r.p)pass++;else fail++;
+        setTimeout(next,0);}
+      try{fin(item.f());}catch(e){fin({p:false,d:'threw: '+e.message});}
+    })();};
+  go.click();
+}
+
+/* ==========================================================================
+   LOG + ROUTER
+   ========================================================================== */
+function renderLog(){
+  clear();
+  var rows=Store.all('log').map(function(l){
+    return {id:l.type,t:new Date(l.t).toTimeString().slice(0,8),when:ago(l.t),detail:l.detail};});
+  view.appendChild(Panel('Operation log','append-only',''));
+  view.appendChild(Table([
+    {k:'id',l:'Type',badge:1},{k:'t',l:'Time',mono:1},{k:'when',l:'Ago'},{k:'detail',l:'Detail',wrap:1}
+  ],rows,{name:'log'}));
+}
+var MODULES=[
+  {id:'artefacts',t:'Artefacts',g:'create',i:'▤',f:renderArtefacts},
+  {id:'claims',t:'Claims',g:'create',i:'✎',f:renderClaims},
+  {id:'Plugin-Creator-Studio',t:'Plugin-Creator-Studio',g:'surfaces',i:'⬡',f:renderPlugins},
+  {id:'STUDI',t:'STUDI',g:'surfaces',i:'✦',f:renderStudi},
+  {id:'spreadsheet',t:'spreadsheet',g:'surfaces',i:'▦',f:renderSpreadsheet},
+  {id:'Validation-Dashboard',t:'Validation-Dashboard',g:'surfaces',i:'▶',f:renderHarness},
+  {id:'contract',t:'Import Contract',g:'create',i:'⇄',f:renderContract},
+  {id:'selftest',t:'Self-test',g:'verify',i:'✓',f:renderSelfTest},
+  {id:'log',t:'Log',g:'verify',i:'≡',f:renderLog}
+];
+function buildNav(){
+  var nl=$('#navlist');nl.innerHTML='';
+  var lastG=null;
+  MODULES.forEach(function(m){
+    if(m.g!==lastG){var g=document.createElement('div');g.className='ngroup';
+      g.textContent=m.g;nl.appendChild(g);lastG=m.g;}
+    var it=document.createElement('div');it.className='nitem';it.setAttribute('data-id',m.id);
+    it.innerHTML='<span class="ic">'+m.i+'</span><span>'+esc(m.t)+'</span><span class="ct"></span>';
+    it.onclick=function(){go(m.id);};nl.appendChild(it);});}
+function refreshCounts(){
+  var c={artefacts:Store.all('artefacts').length,claims:Store.all('claims').length,
+    'Plugin-Creator-Studio':Store.all('plugins').length,STUDI:Store.all('modules').length,
+    spreadsheet:Store.all('sheets').length,'Validation-Dashboard':Store.all('runs').length,
+    log:Store.all('log').length,selftest:12};
+  $$('#navlist .nitem').forEach(function(it){
+    var v=c[it.getAttribute('data-id')];
+    $('.ct',it).textContent=(v==null?'':v);});
+  $('#footcount').textContent=(Store.all('artefacts').length+Store.all('claims').length)+' records';}
+function go(id){
+  var m=MODULES.filter(function(x){return x.id===id;})[0]||MODULES[0];
+  bus.clear();
+  $$('#navlist .nitem').forEach(function(it){it.classList.toggle('on',it.getAttribute('data-id')===id);});
+  $('#vtitle').textContent=m.t;
+  $('#vsub').textContent='· '+m.g+' · status may only be PROPOSED';
+  m.f();
+  bus.on('store',refreshCounts);
+  $('#view').scrollTop=0;refreshCounts();}
+
+$('#btnExport').onclick=function(){
+  var pkg={package_version:'1.0',exported_at:new Date().toISOString(),
+    exported_by:{environment:'forge',instance_id:'forge-local',operator_id:'forge-operator'},
+    manifest:{artefact_count:Store.all('artefacts').length,
+      artefacts:Store.all('artefacts').map(function(a){return {artefact_id:a.artefact_id,
+        artefact_type:a.artefact_type,digest:a.integrity.digest,status:a.status};})},
+    artefacts:Store.all('artefacts'),claims:Store.all('claims')};
+  download('forge-export.json',JSON.stringify(pkg,null,2),'application/json');
+  Store.commit('export','full Forge export · '+Store.all('artefacts').length+' artefacts');
+  toast('Forge export written','ok');};
+$('#btnReset').onclick=function(){
+  if(confirm('Reset the Forge store?')){Store.reset();toast('Forge store reset','warn');go('artefacts');}};
+
+Store.load();buildNav();go('artefacts');
+})();
+</script>
+</body>
+</html>

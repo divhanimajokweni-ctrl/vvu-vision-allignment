@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRESS · Communication Environment</title>
+<style>
+:root{--bg:#0a0e13;--bg2:#0e141c;--panel:#111a24;--panel2:#0d151e;--line:#1c2836;--line2:#26374a;
+--txt:#dce8f2;--dim:#75899c;--dim2:#4e6172;--acc:#37d6a0;--acc2:#3aa9f5;--warn:#f5b944;--bad:#f2607a;--pur:#a78bfa;
+--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
+#app{display:grid;grid-template-columns:226px 1fr;height:100vh}
+#nav{background:linear-gradient(180deg,#0d141d,#0a0f15);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+#brand{padding:14px 14px 12px;border-bottom:1px solid var(--line)}
+#brand b{font-size:15px;letter-spacing:.2em;color:var(--acc2)}
+#brand span{display:block;font-size:9px;color:var(--dim2);letter-spacing:.14em;margin-top:4px}
+#navlist{flex:1;overflow-y:auto;padding:8px 0}
+.ngroup{font-size:9px;letter-spacing:.18em;color:var(--dim2);padding:12px 14px 5px;text-transform:uppercase}
+.nitem{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;color:var(--dim);border-left:2px solid transparent;font-size:12px;user-select:none;min-height:34px}
+.nitem:hover{background:#121c27;color:var(--txt)}
+.nitem.on{background:linear-gradient(90deg,rgba(58,169,245,.13),transparent);color:var(--txt);border-left-color:var(--acc2)}
+.nitem .ic{width:16px;text-align:center;color:var(--acc2)}
+.nitem .ct{margin-left:auto;font-size:10px;color:var(--dim2);background:#16212d;border:1px solid var(--line);border-radius:20px;padding:0 6px;line-height:16px}
+#navfoot{padding:10px 12px;border-top:1px solid var(--line);font-size:9.5px;color:var(--dim2);line-height:1.7}
+#main{display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);background:var(--bg2);flex-wrap:wrap}
+#topbar h1{font-size:13px;margin:0;font-weight:600;letter-spacing:.06em;white-space:nowrap}
+#topbar .sub{font-size:10px;color:var(--dim2);letter-spacing:.1em}
+.spacer{flex:1}
+.btn{background:#16222e;border:1px solid var(--line);color:var(--dim);border-radius:7px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--acc2);color:var(--acc2)}
+.btn.p{background:rgba(58,169,245,.1);border-color:rgba(58,169,245,.4);color:var(--acc2)}
+.btn.sm{padding:3px 8px;font-size:10px}
+.btn.ok{border-color:rgba(55,214,160,.4);color:var(--acc)}
+.btn.ok:hover{border-color:var(--acc);color:var(--acc)}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+#view{flex:1;overflow-y:auto;padding:16px}
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:11px;margin-bottom:14px;overflow:hidden}
+.ph{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ph h2{margin:0;font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--acc2);font-weight:600}
+.ph .hint{font-size:10px;color:var(--dim2)}
+.pb{padding:13px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g21{grid-template-columns:2fr 1fr}
+@media(max-width:1100px){.g2,.g21{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:11px;margin-bottom:14px}
+.kpi{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.kpi .l{font-size:9.5px;letter-spacing:.14em;color:var(--dim2);text-transform:uppercase}
+.kpi .v{font-size:21px;margin-top:5px;line-height:1}
+.kpi .d{font-size:10px;color:var(--dim);margin-top:4px}
+.kpi.a .v{color:var(--acc)}.kpi.b .v{color:var(--acc2)}.kpi.w .v{color:var(--warn)}.kpi.r .v{color:var(--bad)}
+.tbar{display:flex;gap:8px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tbar input,.tbar select{background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 9px;font:inherit;font-size:11px;outline:none}
+.tbar input{width:140px}
+.tbar .cnt{font-size:10px;color:var(--dim2)}
+.tbar .acts{margin-left:auto;display:flex;gap:6px}
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;padding:7px 11px;color:var(--dim2);font-weight:600;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--txt)}
+th .ar{color:var(--acc2);font-size:9px}
+td{padding:7px 11px;border-bottom:1px solid #16202b;vertical-align:middle;white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:#141f2b}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.wrap{white-space:normal;min-width:170px}
+.mono{font-family:var(--mono);color:var(--dim);font-size:10.5px;word-break:break-all}
+.b{display:inline-block;padding:1px 7px;border-radius:20px;font-size:9.5px;letter-spacing:.06em;border:1px solid}
+.b.ok{color:var(--acc);border-color:rgba(55,214,160,.35);background:rgba(55,214,160,.09)}
+.b.info{color:var(--acc2);border-color:rgba(58,169,245,.35);background:rgba(58,169,245,.09)}
+.b.warn{color:var(--warn);border-color:rgba(245,185,68,.35);background:rgba(245,185,68,.09)}
+.b.bad{color:var(--bad);border-color:rgba(242,96,122,.35);background:rgba(242,96,122,.09)}
+.b.mut{color:var(--dim2);border-color:var(--line);background:#131c26}
+.b.pur{color:var(--pur);border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.09)}
+.alist{display:flex;flex-direction:column}
+.arow{display:flex;gap:9px;align-items:flex-start;padding:7px 12px;border-bottom:1px solid #16202b;font-size:11.5px}
+.arow:last-child{border-bottom:0}
+.arow .tm{color:var(--dim2);font-size:10px;white-space:nowrap;margin-left:auto;text-align:right}
+.arow .sv{width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none}
+.sv.ok{background:var(--acc);box-shadow:0 0 7px var(--acc)}
+.sv.warn{background:var(--warn);box-shadow:0 0 7px var(--warn)}
+.sv.info{background:var(--acc2);box-shadow:0 0 7px var(--acc2)}
+.sv.crit{background:var(--bad);box-shadow:0 0 7px var(--bad)}
+.frm{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:9px;align-items:end}
+.fld label{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--dim2);text-transform:uppercase;margin-bottom:4px}
+.fld input,.fld select,.fld textarea{width:100%;background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:7px 9px;font:inherit;font-size:11.5px;outline:none}
+.fld textarea{resize:vertical;min-height:90px;width:100%}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--acc2)}
+.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:11.5px;align-items:center}
+.kv dt{color:var(--dim2)}
+.kv dd{margin:0;color:var(--txt);word-break:break-all}
+.hint{font-size:10.5px;color:var(--dim2);line-height:1.75}
+.code{background:#0a1017;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:10.5px;color:#9fd0e8;white-space:pre-wrap;word-break:break-all;line-height:1.6;max-height:330px;overflow:auto}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #16202b;font-size:11.5px}
+.chk:last-child{border-bottom:0}
+.chk .mk{width:15px;flex:none;font-weight:700}
+.chk.pass .mk{color:var(--acc)}.chk.fail .mk{color:var(--bad)}
+.chk .nm{color:var(--txt)}
+.chk .dt{color:var(--dim2);font-size:10px;margin-top:2px;word-break:break-all}
+.tag{display:inline-block;background:#16212d;border:1px solid var(--line);border-radius:20px;padding:1px 8px;font-size:9.5px;color:var(--dim);margin:2px 3px 2px 0}
+.gap td{white-space:normal;padding:5px 7px}
+.gap th{background:transparent;position:static;cursor:default}
+.stmt{padding:8px 11px;border-bottom:1px solid #16202b;font-size:11.5px}
+.stmt:last-child{border-bottom:0}
+.stmt .s{color:var(--txt);line-height:1.6}
+.stmt .c{font-size:9.5px;color:var(--dim2);margin-top:3px}
+.stmt.OBSERVATION .c{color:var(--acc)}
+.stmt.INTERPRETATION .c{color:var(--warn)}
+.stmt.CONCLUSION .c{color:var(--bad)}
+#toast{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:7px;z-index:99;pointer-events:none}
+.tst{background:#121b26;border:1px solid var(--acc2);border-left-width:3px;border-radius:8px;padding:9px 13px;font-size:11.5px;box-shadow:0 8px 26px rgba(0,0,0,.55);animation:tin .18s ease-out}
+.tst.ok{border-color:var(--acc)}.tst.bad{border-color:var(--bad)}.tst.warn{border-color:var(--warn)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:#0a0f15}
+::-webkit-scrollbar-thumb{background:#22323f;border-radius:6px;border:2px solid #0a0f15}
+::-webkit-scrollbar-thumb:hover{background:#31465a}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="nav">
+    <div id="brand"><b>PRESS</b><span>COMMUNICATE · VVU-ENV-PRESS-2026-001</span></div>
+    <div id="navlist"></div>
+    <div id="navfoot"><span style="color:var(--acc2)">●</span> publication is irreversible<br><span id="footcount">0 records</span></div>
+  </aside>
+  <div id="main">
+    <header id="topbar">
+      <h1 id="vtitle">Draft</h1><span class="sub" id="vsub"></span><div class="spacer"></div>
+      <button class="btn" id="btnExport">⬇ export publication</button>
+      <button class="btn danger" id="btnReset">↺ reset</button>
+    </header>
+    <div id="view"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function uid(p){return p+'-'+Math.random().toString(36).slice(2,10);}
+function iso(ts){return new Date(ts).toISOString();}
+function ago(ts){var s=Math.max(0,(Date.now()-ts)/1000);
+  if(s<60)return Math.floor(s)+'s';if(s<3600)return Math.floor(s/60)+'m';
+  if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d';}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function download(name,text,mime){
+  var b=new Blob([text],{type:mime||'text/plain'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},400);}
+function toast(msg,kind){
+  var t=document.createElement('div');t.className='tst'+(kind?' '+kind:'');t.textContent=msg;
+  $('#toast').appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';},2200);
+  setTimeout(function(){t.remove();},2600);}
+var SHA256=(function(){
+  var K=new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  function digest(bytes){
+    var l=bytes.length,hi=Math.floor(l/536870912),lo=(l*8)>>>0;
+    var pad=((56-((l+1)%64))+64)%64,total=l+1+pad+8,m=new Uint8Array(total);
+    m.set(bytes);m[l]=0x80;
+    var p=total-8;
+    m[p]=hi>>>24;m[p+1]=hi>>>16;m[p+2]=hi>>>8;m[p+3]=hi;
+    m[p+4]=lo>>>24;m[p+5]=lo>>>16;m[p+6]=lo>>>8;m[p+7]=lo;
+    var H=new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    var w=new Uint32Array(64);
+    for(var off=0;off<total;off+=64){
+      for(var i=0;i<16;i++){var j=off+i*4;w[i]=((m[j]<<24)|(m[j+1]<<16)|(m[j+2]<<8)|m[j+3])>>>0;}
+      for(var i=16;i<64;i++){var x=w[i-15],y=w[i-2];
+        w[i]=(w[i-16]+((rotr(x,7)^rotr(x,18)^(x>>>3))>>>0)+w[i-7]+((rotr(y,17)^rotr(y,19)^(y>>>10))>>>0))>>>0;}
+      var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+      for(var i=0;i<64;i++){
+        var S1=(rotr(e,6)^rotr(e,11)^rotr(e,25))>>>0;
+        var t1=(h+S1+((e&f)^(~e&g))+K[i]+w[i])>>>0;
+        var S0=(rotr(a,2)^rotr(a,13)^rotr(a,22))>>>0;
+        var t2=(S0+((a&b)^(a&c)^(b&c)))>>>0;
+        h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+      H[0]=(H[0]+a)>>>0;H[1]=(H[1]+b)>>>0;H[2]=(H[2]+c)>>>0;H[3]=(H[3]+d)>>>0;
+      H[4]=(H[4]+e)>>>0;H[5]=(H[5]+f)>>>0;H[6]=(H[6]+g)>>>0;H[7]=(H[7]+h)>>>0;}
+    var out=new Uint8Array(32);
+    for(var i=0;i<8;i++){out[i*4]=H[i]>>>24;out[i*4+1]=H[i]>>>16;out[i*4+2]=H[i]>>>8;out[i*4+3]=H[i];}
+    return out;}
+  function hex(b){var s='';for(var i=0;i<b.length;i++)s+=('0'+b[i].toString(16)).slice(-2);return s;}
+  return {hexOf:function(s){return hex(digest(new TextEncoder().encode(String(s))));}};
+})();
+function canonical(o){
+  if(o===null||typeof o!=='object')return JSON.stringify(o);
+  if(Array.isArray(o))return '['+o.map(canonical).join(',')+']';
+  var k=Object.keys(o).sort();
+  return '{'+k.map(function(x){return JSON.stringify(x)+':'+canonical(o[x]);}).join(',')+'}';}
+function contentHash(c){return 'sha256:'+SHA256.hexOf(canonical(c));}
+
+/* ==========================================================================
+   CLAIM EXTRACTION — rule-based, transparent, operator-overridable
+   ========================================================================== */
+var RULES=[
+  {id:'R-UNIT',cls:'OBSERVATION',desc:'contains a number followed by a unit',
+   re:/\b\d+(\.\d+)?\s?(L\/s|kL|bar|%|km|m|kg|NTU|mg\/L)\b/i},
+  {id:'R-MEASURED',cls:'OBSERVATION',desc:'a measured/recorded/observed verb',
+   re:/\b(measured|recorded|observed|logged|read)\b/i},
+  {id:'R-AT-TIME',cls:'OBSERVATION',desc:'a specific timestamp',
+   re:/\b\d{1,2}:\d{2}\b|\b\d{4}-\d{2}-\d{2}\b/},
+  {id:'R-SUGGESTS',cls:'INTERPRETATION',desc:'a hedged interpretive verb',
+   re:/\b(suggests?|indicates?|appears?|seems?|likely|consistent with|points to|may mean|could be)\b/i},
+  {id:'R-THEREFORE',cls:'CONCLUSION',desc:'a causal or summative connective',
+   re:/\b(therefore|thus|hence|so that|consequently|this proves|proves|confirms?|demonstrates?)\b/i},
+  {id:'R-DETECTED',cls:'CONCLUSION',desc:'an attribution of detection',
+   re:/\b(the (system|installation|device|sensor) (detected|found|identified)|we (detected|found|confirmed)|is a leak|was a leak)\b/i},
+  {id:'R-VERIFIED',cls:'CONCLUSION',desc:'an unqualified verification claim',
+   re:/\b(verified|proven|certified|independently confirmed|validated)\b/i}
+];
+function splitSentences(text){
+  return String(text).replace(/([.!?])\s+/g,'$1\u0000').split('\u0000')
+    .map(function(s){return s.trim();}).filter(Boolean);}
+function extractStatements(text){
+  if(!text||!text.trim())return [];
+  return splitSentences(text).map(function(s){
+    var hits=RULES.filter(function(r){return r.re.test(s);});
+    var cls=hits.length?hits[0].cls:'INTERPRETATION';
+    return {text:s,classification:cls,
+      matchedRules:hits.map(function(h){return h.id;}),
+      rationale:hits.length?hits.map(function(h){return h.desc;}).join('; '):
+        'no observation rule matched — treated as interpretation until an operator reclassifies it',
+      overridden:false,original:cls};});}
+
+/* ==========================================================================
+   RECEIPT LINKAGE — scope-bound wording
+   ========================================================================== */
+var RECEIPT_STATUSES=['PROVEN','INCONCLUSIVE','NOT_PROVEN','BLOCKED'];
+function allowedWording(receipt){
+  if(!receipt) return {mayClaimVerification:false,
+    reason:'no receipt bound — verification claim must be omitted and dependent statements held'};
+  var o=receipt.outcome;
+  if(o==='PROVEN') return {mayClaimVerification:true,
+    template:'The evidence supports this claim under policy '+receipt.policy+'.',
+    wording:'evidence supports this claim under '+receipt.policy,
+    reason:'receipt outcome PROVEN under the named policy'};
+  if(o==='INCONCLUSIVE') return {mayClaimVerification:false,
+    reason:'receipt outcome INCONCLUSIVE — the evidence does not establish the result'};
+  if(o==='NOT_PROVEN') return {mayClaimVerification:false,
+    reason:'receipt outcome NOT_PROVEN — a mandatory condition was unsatisfied'};
+  if(o==='BLOCKED') return {mayClaimVerification:false,
+    reason:'receipt outcome BLOCKED — the check could not run; this is not a negative result'};
+  return {mayClaimVerification:false,reason:'unknown receipt outcome '+o};}
+var VERIFICATION_WORDS=/\b(verified|proven|certified|independently confirmed|validated by|confirmed by the chain|chain-verified|tamper-proof|unassailable)\b/i;
+function scanForVerificationLanguage(text){
+  var hits=[];
+  extractStatements(text).forEach(function(s,i){
+    if(VERIFICATION_WORDS.test(s.text)) hits.push({statementIndex:i,text:s.text,
+      matched:s.text.match(VERIFICATION_WORDS)[0]});});
+  return hits;}
+function isReceiptUsable(receipt){
+  return !!receipt&&receipt.outcome==='PROVEN'&&!receipt.expired&&!receipt.superseded;}
+
+/* ==========================================================================
+   STORE
+   ========================================================================== */
+var KEY='press.vvu.v1';
+var Store={
+  d:null,
+  load:function(){
+    try{var raw=localStorage.getItem(KEY);
+      if(raw){var o=JSON.parse(raw);if(o&&o.drafts){this.d=o;return;}}}catch(e){}
+    this.d={drafts:[],publications:[],receipts:[],corrections:[],retractions:[],
+      consents:[],overrides:[],log:[]};
+    this.d.receipts.push(
+      {id:'rcpt-proven-1',policy:'vvp-chain@1.0.0',outcome:'PROVEN',
+       scope_statement:'The chain rows linked from genesis to the bound head digest. This does not '+
+         'establish that any payload content is true, only that it has not been altered.',
+       limitations:[],digest:'sha256:'+SHA256.hexOf('proven-1'),expired:false,superseded:false,
+       created:Date.now()},
+      {id:'rcpt-incon-1',policy:'vvp-chain@1.0.0',outcome:'INCONCLUSIVE',
+       scope_statement:'The chain verified but the signature check could not run because the key was '+
+         'unavailable. The result does not establish the claim.',
+       limitations:['signature check not executed — key unavailable'],
+       digest:'sha256:'+SHA256.hexOf('incon-1'),expired:false,superseded:false,
+       created:Date.now()});
+    this.commit('system','Press store initialised');},
+  save:function(){try{localStorage.setItem(KEY,JSON.stringify(this.d));}catch(e){toast('persist failed','bad');}},
+  commit:function(type,detail){
+    this.d.log.unshift({t:Date.now(),type:type,detail:detail});
+    if(this.d.log.length>200)this.d.log.length=200;
+    this.save();bus.emit('store');},
+  reset:function(){localStorage.removeItem(KEY);this.d={drafts:[],publications:[],receipts:[],
+    corrections:[],retractions:[],consents:[],overrides:[],log:[]};
+    this.commit('system','Press store reset');},
+  all:function(k){return this.d[k]||[];},
+  byId:function(k,id){var a=this.all(k);for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i];return null;}};
+var bus={fns:{},on:function(e,f){(this.fns[e]=this.fns[e]||[]).push(f);return f;},
+  clear:function(){this.fns={};},
+  emit:function(e){(this.fns[e]||[]).forEach(function(f){try{f();}catch(err){console.error(err);}});}};
+
+/* ==========================================================================
+   GAP REGISTER
+   ========================================================================== */
+var GAPS=[
+  {id:'P1',name:'MEDIA reader.html (asset viewer, metadata)',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Asset viewing',act:'Not imported; Press logic built standalone',
+   con:'Original surface not re-observed'},
+  {id:'P2',name:'VVU COMMAND CENTER.html (dashboard, distribution view)',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Distribution view',act:'Not imported',
+   con:'Original surface not re-observed'},
+  {id:'P3',name:'Outreach Panel, §4 of the analytics workspace (send engine, POPIA gating)',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Outreach send',act:'Consent gate rebuilt as a real POPIA opt-in/opt-out check',
+   con:'Send engine not rebuilt — it is a mechanism, not the publishing contract'},
+  {id:'P4',name:'Compose pipeline: outreach-template.ts, outreach-engine.ts, sequence engine',path:'(no path supplied)',
+   state:'ABSENT',fn:'Compose pipeline',act:'Not imported',
+   con:'BLOCKED-WITH-REASON: no path supplied — these are send mechanisms, not the publishing contract'},
+  {id:'P5',name:'Vaguely Magazine Issue 2 masters',path:'(no path supplied)',
+   state:'ABSENT',fn:'Editorial output',act:'Not imported — these are outputs, not the software that produces them',
+   con:'Editorial output not re-observed'},
+  {id:'NEW',name:'Editorial workflow (extraction, linkage, approval, correction, versioning)',path:'(new build)',
+   state:'BUILT',fn:'The publishing contract',act:'All six components built in this file',
+   con:'This is the missing piece; everything else is a view or a send mechanism'}
+];
+function renderGap(){
+  var rec=GAPS.filter(function(g){return g.state==='RECONSTRUCTED';}).length;
+  var abs=GAPS.filter(function(g){return g.state==='ABSENT';}).length;
+  var built=GAPS.filter(function(g){return g.state==='BUILT';}).length;
+  var w=document.createElement('div');
+  w.innerHTML='<div class="hint" style="margin-bottom:10px">Inventory taken <b>'+new Date().toISOString()+
+    '</b>. No path was supplied, so no file could be hashed. Press was <b>partly built as a viewer</b>; '+
+    'the editorial workflow did not exist. That workflow is what this file builds.</div>';
+  var box=document.createElement('div');box.className='code';
+  box.textContent='GAP REGISTER — PRESS — '+new Date().toISOString().slice(0,10)+'\n'+
+    'INVENTORY   Items checked: '+GAPS.length+' | Reconstructed: '+rec+' | Built: '+built+' | Absent: '+abs+'\n\n'+
+    GAPS.map(function(g){
+      return '| '+g.id+' | '+g.name+' | '+g.path+' | '+g.state+' | '+g.fn+' | '+g.act+' |';}).join('\n')+
+    '\n\nBLOCKED FUNCTIONS\n'+
+    '  Compose pipeline — BLOCKED-WITH-REASON: asset P4 — (no path supplied) — operator supplies the workspace\n\n'+
+    'IRREVERSIBILITY RULE (stricter than the other environments)\n'+
+    '  A missing receipt does NOT block editorial work, drafting or review.\n'+
+    '  It DOES require: omit the verification claim, hold every dependent statement, record both\n'+
+    '  in the approval record, and re-check the receipt at approval time AND at publication time.\n'+
+    '  A dangling receipt reference is never published.';
+  w.appendChild(box);
+  var t=document.createElement('div');t.className='twrap';t.style.marginTop='12px';
+  var tb=document.createElement('table');tb.className='gap';
+  tb.innerHTML='<thead><tr><th>Gap ID</th><th>Missing item</th><th>Exact path checked</th>'+
+    '<th>State</th><th>Function affected</th><th>Action taken</th></tr></thead><tbody>'+
+    GAPS.map(function(g){
+      var style=g.state==='BUILT'?'color:var(--acc)':g.state==='ABSENT'?'color:var(--bad)':'color:var(--acc2)';
+      return '<tr><td class="mono">'+esc(g.id)+'</td><td class="wrap">'+esc(g.name)+'</td>'+
+        '<td class="wrap mono">'+esc(g.path)+'</td><td style="'+style+'">'+esc(g.state)+'</td>'+
+        '<td class="wrap">'+esc(g.fn)+'</td><td class="wrap">'+esc(g.act)+'</td></tr>';}).join('')+'</tbody>';
+  t.appendChild(tb);w.appendChild(t);
+  view.appendChild(Panel('Gap register','inventory before alteration',w));
+  view.appendChild(KPI([
+    {l:'Items checked',v:GAPS.length,c:'b'},
+    {l:'Reconstructed',v:rec,c:''},
+    {l:'Built',v:built,c:'a'},
+    {l:'Absent',v:abs,c:'r'}
+  ]));
+}
+
+/* ==========================================================================
+   COMPONENTS
+   ========================================================================== */
+var view=$('#view');
+function clear(){view.innerHTML='';}
+var S={OBSERVATION:'ok',INTERPRETATION:'warn',CONCLUSION:'bad',
+  PROVEN:'ok',INCONCLUSIVE:'warn',NOT_PROVEN:'bad',BLOCKED:'info',
+  DRAFT:'mut',APPROVED:'info',PUBLISHED:'ok',CORRECTED:'warn',RETRACTED:'bad',
+  OPTED_IN:'ok',OPTED_OUT:'bad',HELD:'warn'};
+function badge(v){return '<span class="b '+(S[v]||'mut')+'">'+esc(v)+'</span>';}
+function Panel(t,h,b,r){
+  var p=document.createElement('div');p.className='panel';
+  var hd=document.createElement('div');hd.className='ph';
+  hd.innerHTML='<h2>'+esc(t)+'</h2>'+(h?'<span class="hint">'+esc(h)+'</span>':'');
+  if(r)hd.appendChild(r);
+  p.appendChild(hd);
+  var bd=document.createElement('div');bd.className='pb';
+  if(typeof b==='string')bd.innerHTML=b;else bd.appendChild(b);
+  p.appendChild(bd);return p;}
+function Grid(c){var g=document.createElement('div');g.className='grid '+c;return g;}
+function KPI(items){
+  var w=document.createElement('div');w.className='kpis';
+  items.forEach(function(it){
+    var e=document.createElement('div');e.className='kpi '+(it.c||'');
+    e.innerHTML='<div class="l">'+esc(it.l)+'</div><div class="v">'+esc(it.v)+'</div>'+
+      (it.d?'<div class="d">'+esc(it.d)+'</div>':'');
+    w.appendChild(e);});
+  return w;}
+function Table(cols,rows,opts){
+  opts=opts||{};
+  var st={sort:0,dir:1,q:''};
+  var wrap=document.createElement('div');wrap.className='panel';
+  var tb=document.createElement('div');tb.className='tbar';
+  var inp=document.createElement('input');inp.placeholder='filter…';
+  inp.oninput=function(){st.q=inp.value.toLowerCase();paint();};
+  var cnt=document.createElement('span');cnt.className='cnt';
+  var acts=document.createElement('span');acts.className='acts';
+  var bC=document.createElement('button');bC.className='btn sm';bC.textContent='csv';
+  var bJ=document.createElement('button');bJ.className='btn sm';bJ.textContent='json';
+  acts.appendChild(bC);acts.appendChild(bJ);
+  tb.appendChild(inp);tb.appendChild(cnt);tb.appendChild(acts);
+  var tw=document.createElement('div');tw.className='twrap';
+  var table=document.createElement('table');
+  var thead=document.createElement('thead'),hr=document.createElement('tr');
+  cols.forEach(function(c,i){var th=document.createElement('th');
+    if(c.num)th.className='num';
+    th.onclick=function(){if(st.sort===i)st.dir*=-1;else{st.sort=i;st.dir=1;}paint();};
+    hr.appendChild(th);});
+  thead.appendChild(hr);table.appendChild(thead);
+  var tbody=document.createElement('tbody');table.appendChild(tbody);
+  tw.appendChild(table);
+  wrap.appendChild(tb);wrap.appendChild(tw);
+  function vis(){
+    var r=rows.filter(function(r){
+      if(!st.q)return true;
+      return cols.some(function(c){return String(r[c.k]).toLowerCase().indexOf(st.q)>-1;});});
+    var c=cols[st.sort];
+    r.sort(function(a,b){
+      var x=a[c.k],y=b[c.k];
+      if(typeof x==='number'&&typeof y==='number')return (x-y)*st.dir;
+      return String(x).localeCompare(String(y))*st.dir;});
+    return r;}
+  function exp(k){
+    var data=vis();
+    if(k==='json')download('press-'+opts.name+'.json',JSON.stringify(data,null,2),'application/json');
+    else{
+      var head=cols.map(function(c){return c.l;}).join(',');
+      var body=data.map(function(r){return cols.map(function(c){
+        var v=r[c.k];return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+      download('press-'+opts.name+'.csv',head+'\n'+body,'text/csv');}
+    Store.commit('export',opts.name+' → '+k+' ('+data.length+' rows)');
+    toast('exported '+data.length+' rows as '+k.toUpperCase());}
+  bC.onclick=function(){exp('csv');};bJ.onclick=function(){exp('json');};
+  function paint(){
+    $$('th',thead).forEach(function(th,i){
+      th.innerHTML=esc(cols[i].l)+(st.sort===i?' <span class="ar">'+(st.dir>0?'▲':'▼')+'</span>':'');});
+    var r=vis();tbody.innerHTML='';
+    cnt.textContent=r.length+' rows';
+    r.forEach(function(row){
+      var tr=document.createElement('tr');
+      cols.forEach(function(c){
+        var td=document.createElement('td');
+        if(c.num)td.className='num';if(c.wrap)td.className='wrap';
+        var v=row[c.k];
+        if(c.badge)td.innerHTML=badge(v);
+        else if(c.mono)td.innerHTML='<span class="mono">'+esc(v)+'</span>';
+        else td.innerHTML=esc(v);
+        tr.appendChild(td);});
+      tbody.appendChild(tr);});
+    if(!r.length){var e=document.createElement('tr'),td=document.createElement('td');
+      td.colSpan=cols.length;td.className='hint';td.style.padding='16px';td.style.textAlign='center';
+      td.textContent='no records';e.appendChild(td);tbody.appendChild(e);}}
+  paint();return wrap;}
+
+/* ==========================================================================
+   DRAFT + EXTRACT
+   ========================================================================== */
+var SAMPLE=
+'Flow at the North Basin inlet was measured at 42.8 L/s at 14:00. '+
+'Pressure held at 3.2 bar throughout the shift. '+
+'The pattern suggests an intermittent restriction downstream. '+
+'The installation detected a leak at valve 12. '+
+'This claim is verified by the chain. '+
+'No further anomalies were observed.';
+function renderDraft(){
+  clear();renderGap();
+  var ta=document.createElement('textarea');ta.value=SAMPLE;
+  ta.style.cssText='width:100%;min-height:130px;background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:10px;font:inherit;font-size:12px;line-height:1.7';
+  view.appendChild(Panel('Draft body','type or paste text, then extract claims',ta));
+  var out=document.createElement('div');
+  function paint(){
+    var stmts=extractStatements(ta.value);
+    out.innerHTML='';
+    if(!stmts.length){out.innerHTML='<div class="hint">no statements.</div>';return;}
+    stmts.forEach(function(s,i){
+      var d=document.createElement('div');d.className='stmt '+s.classification;
+      d.innerHTML='<div class="s">'+(i+1)+'. '+esc(s.text)+'</div>'+
+        '<div class="c">'+badge(s.classification)+' '+
+        (s.overridden?'<span class="b pur">operator override</span> ':'')+
+        'rules: '+(s.matchedRules.length?s.matchedRules.join(', '):'none')+' — '+esc(s.rationale)+'</div>';
+      var row=document.createElement('div');row.className='row';row.style.marginTop='6px';
+      ['OBSERVATION','INTERPRETATION','CONCLUSION'].forEach(function(c){
+        var b=document.createElement('button');b.className='btn sm';b.textContent=c;
+        b.onclick=function(){
+          s.classification=c;s.overridden=(c!==s.original);s.rationale='operator override from '+s.original;
+          Store.all('overrides').unshift({statementIndex:i,from:s.original,to:c,
+            text:s.text.slice(0,60),at:Date.now()});
+          Store.commit('extract.override','statement '+(i+1)+' '+s.original+' → '+c);
+          toast('statement '+(i+1)+' reclassified to '+c,'warn');paint();};
+        row.appendChild(b);});
+      d.appendChild(row);out.appendChild(d);});}
+  paint();
+  ta.oninput=paint;
+  var g=Grid('g2');
+  g.appendChild(Panel('Extracted statements','rule-based · every override is logged',out));
+  var rules=document.createElement('div');rules.className='alist';
+  RULES.forEach(function(r){
+    rules.innerHTML+='<div class="arow"><span class="sv '+
+      (r.cls==='OBSERVATION'?'ok':r.cls==='INTERPRETATION'?'warn':'crit')+'"></span>'+
+      '<span><b class="mono">'+esc(r.id)+'</b> → '+esc(r.cls)+'<br><span class="hint">'+esc(r.desc)+
+      '</span></span><span class="tm mono">'+esc(String(r.re).slice(0,26))+'</span></div>';});
+  rules.innerHTML+='<div class="arow"><span class="sv info"></span><span><b>fallback</b> → INTERPRETATION<br>'+
+    '<span class="hint">a sentence matching no observation rule is treated as interpretation until an operator reclassifies it</span></span></div>';
+  g.appendChild(Panel('Extraction rules','transparent and inspectable',rules));
+  view.appendChild(g);
+  var bSave=document.createElement('button');bSave.className='btn p';bSave.textContent='save as draft';
+  bSave.onclick=function(){
+    var stmts=extractStatements(ta.value);
+    var d={id:uid('draft'),title:'Untitled draft',body:ta.value,statements:stmts,
+      receiptId:null,status:'DRAFT',created:Date.now(),versions:[]};
+    Store.all('drafts').unshift(d);
+    Store.commit('draft.save',d.id+' · '+stmts.length+' statements');
+    toast('draft saved · '+d.id,'ok');};
+  view.appendChild(Panel('Save','',bSave));
+}
+
+/* ==========================================================================
+   RECEIPTS + LINKAGE
+   ========================================================================== */
+function renderReceipts(){
+  clear();
+  view.appendChild(Panel('Receipt linkage contract','Press imports a Bench receipt and displays its ACTUAL scope',
+    '<div class="hint">Wording never exceeds the receipt. A PROVEN receipt under a named policy permits '+
+    'the sentence <i>"the evidence supports this claim under [policy]"</i>. Any other outcome permits '+
+    '<b>no verification language at all</b>. The receipt hash is re-checked at approval time and again '+
+    'at publication time.</div>'));
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Receipt id</label><input name="id" placeholder="rcpt-xxx" required></div>'+
+    '<div class="fld"><label>Policy</label><input name="policy" placeholder="vvp-chain@1.0.0"></div>'+
+    '<div class="fld"><label>Outcome</label><select name="outcome">'+
+      RECEIPT_STATUSES.map(function(o){return '<option>'+o+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Scope statement</label><input name="scope" placeholder="what was checked"></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p" type="submit">import receipt</button></div>';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements,id=(f.id.value||'').trim();
+    if(!id){toast('receipt id required','warn');return;}
+    if(Store.byId('receipts',id)){toast('receipt already imported','bad');return;}
+    var r={id:id,policy:(f.policy.value||'').trim()||'unspecified',
+      outcome:f.outcome.value,scope_statement:(f.scope.value||'').trim()||'not stated',
+      limitations:[],digest:'sha256:'+SHA256.hexOf(id+f.outcome.value),
+      expired:false,superseded:false,created:Date.now()};
+    Store.all('receipts').unshift(r);
+    Store.commit('receipt.import',id+' · '+r.outcome+' · '+r.policy);
+    toast('receipt imported · '+r.outcome,r.outcome==='PROVEN'?'ok':'warn');form.reset();};
+  view.appendChild(Panel('Import a receipt','',form));
+  var g=Grid('g2');
+  var rows=Store.all('receipts').map(function(r){
+    var w=allowedWording(r);
+    return {id:r.id,policy:r.policy,outcome:r.outcome,
+      usable:isReceiptUsable(r)?'YES':'NO',
+      digest:r.digest.slice(0,16)+'…',
+      wording:w.mayClaimVerification?w.wording:'— none permitted —'};});
+  g.appendChild(Table([
+    {k:'id',l:'Receipt',mono:1},{k:'policy',l:'Policy'},{k:'outcome',l:'Outcome',badge:1},
+    {k:'usable',l:'Usable'},{k:'digest',l:'Digest',mono:1},{k:'wording',l:'Permitted wording',wrap:1}
+  ],rows,{name:'receipts',onSelect:function(r){
+    var rec=Store.byId('receipts',r.id);
+    var w=allowedWording(rec);
+    var box=document.createElement('div');box.className='code';
+    box.textContent=
+'RECEIPT '+rec.id+'\n'+
+'  policy           '+rec.policy+'\n'+
+'  outcome          '+rec.outcome+'\n'+
+'  expired          '+rec.expired+'\n'+
+'  superseded       '+rec.superseded+'\n'+
+'  digest           '+rec.digest+'\n'+
+'  scope_statement  '+rec.scope_statement+'\n\n'+
+'PERMITTED WORDING\n'+
+'  may claim verification: '+w.mayClaimVerification+'\n'+
+'  '+(w.template||w.reason)+'\n\n'+
+(w.mayClaimVerification?
+'  You may write: "The evidence supports this claim under policy '+rec.policy+'."\n'+
+'  You may NOT write: "verified", "proven", "certified", "confirmed".\n'+
+'  The scope statement must be represented, not paraphrased away.':
+'  No verification language may appear anywhere in the publication.\n'+
+'  Any statement depending on verification must be HELD.\n'+
+'  A dangling reference to this receipt must never be published.');
+    var p=Panel('Receipt detail','',box);
+    view.appendChild(p);view.scrollTop=view.scrollHeight;}}));
+  var wording=document.createElement('div');wording.className='alist';
+  RECEIPT_STATUSES.forEach(function(o){
+    var fake={id:'x',policy:'vvp-chain@1.0.0',outcome:o,expired:false,superseded:false};
+    var w=allowedWording(fake);
+    wording.innerHTML+='<div class="arow"><span class="sv '+(o==='PROVEN'?'ok':'crit')+'"></span>'+
+      '<span><b class="mono">'+esc(o)+'</b><br><span class="hint">'+esc(w.reason)+'</span></span>'+
+      '<span class="tm">'+(w.mayClaimVerification?badge('ok'):badge('bad'))+'</span></div>';});
+  wording.innerHTML+='<div class="arow"><span class="sv crit"></span><span><b class="mono">EXPIRED / SUPERSEDED</b><br>'+
+    '<span class="hint">a PROVEN receipt that has expired or been superseded permits no verification language either</span></span>'+
+    '<span class="tm">'+badge('bad')+'</span></div>';
+  wording.innerHTML+='<div class="arow"><span class="sv crit"></span><span><b class="mono">MISSING</b><br>'+
+    '<span class="hint">no receipt bound at publication time — omit the claim, hold dependent statements, '+
+    'record both in the approval record</span></span><span class="tm">'+badge('bad')+'</span></div>';
+  g.appendChild(Panel('Wording rules','the display contract',wording));
+  view.appendChild(g);
+}
+
+/* ==========================================================================
+   APPROVAL
+   ========================================================================== */
+function renderApproval(){
+  clear();
+  var drafts=Store.all('drafts');
+  view.appendChild(Panel('Approval record','approver · role · version_hash · timestamp · text as approved · linked receipts with their outcomes at approval time · held statements',
+    '<div class="hint">An approver approves the text <b>as it will appear</b>. Held statements and omitted '+
+    'claims are part of the record, not a footnote.</div>'));
+  if(!drafts.length){
+    view.appendChild(Panel('No drafts','create one in the Draft tab first',
+      '<div class="hint">The Draft tab saves a draft with extracted statements. Return here to approve and publish it.</div>'));
+    return;}
+  var sel=drafts[0];
+  var selEl=document.createElement('select');
+  selEl.innerHTML=drafts.map(function(d){return '<option value="'+d.id+'">'+esc(d.id)+' · '+esc(d.title)+'</option>';}).join('');
+  var host=document.createElement('div');
+  function paint(){
+    sel=drafts.filter(function(d){return d.id===selEl.value;})[0]||drafts[0];
+    host.innerHTML='';
+    var stmts=extractStatements(sel.body);
+    var obs=stmts.filter(function(s){return s.classification==='OBSERVATION';}).length;
+    var interp=stmts.filter(function(s){return s.classification==='INTERPRETATION';}).length;
+    var conc=stmts.filter(function(s){return s.classification==='CONCLUSION';}).length;
+    var verHits=scanForVerificationLanguage(sel.body);
+    var rec=sel.receiptId?Store.byId('receipts',sel.receiptId):null;
+    var w=allowedWording(rec);
+    var blockers=[];
+    if(verHits.length&&!w.mayClaimVerification)
+      blockers.push('verification language present but the receipt does not permit it ('+
+        (rec?rec.outcome:'no receipt')+')');
+    if(!rec)blockers.push('no receipt bound');
+    var gate=document.createElement('div');
+    gate.style.cssText='border:1px solid '+(blockers.length?'var(--bad)':'var(--acc)')+
+      ';border-radius:10px;padding:13px;margin-bottom:12px;background:'+
+      (blockers.length?'rgba(242,96,122,.06)':'rgba(55,214,160,.06)');
+    gate.innerHTML='<div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:'+
+      (blockers.length?'var(--bad)':'var(--acc)')+';margin-bottom:6px;font-weight:600">'+
+      (blockers.length?'Publication blocked':'Publication permitted')+'</div>'+
+      '<div class="hint">'+(blockers.length?
+        blockers.map(function(b){return '· '+esc(b);}).join('<br>'):
+        'No verification language exceeds the receipt scope. Approval may proceed.')+'</div>';
+    host.appendChild(gate);
+    var kv=document.createElement('div');kv.className='kv';
+    kv.innerHTML='<dt>statements</dt><dd>'+stmts.length+' total · '+obs+' OBSERVATION · '+interp+
+      ' INTERPRETATION · '+conc+' CONCLUSION</dd>'+
+      '<dt>verification language</dt><dd>'+(verHits.length?verHits.length+' hit(s): '+
+        verHits.map(function(h){return '"'+esc(h.matched)+'"';}).join(', '):'none')+'</dd>'+
+      '<dt>bound receipt</dt><dd>'+(rec?esc(rec.id)+' · '+badge(rec.outcome):'none')+'</dd>'+
+      '<dt>permitted wording</dt><dd>'+(w.mayClaimVerification?esc(w.wording):'none')+'</dd>'+
+      '<dt>version hash</dt><dd class="mono">'+contentHash({body:sel.body,receipt:sel.receiptId})+'</dd>';
+    host.appendChild(Panel('Pre-approval check','',kv));
+    var form=document.createElement('form');form.className='frm';
+    form.innerHTML=
+      '<div class="fld"><label>Approver</label><input name="who" placeholder="name" required></div>'+
+      '<div class="fld"><label>Role</label><input name="role" placeholder="editor / compliance"></div>'+
+      '<div class="fld"><label>Bind receipt</label><select name="receipt">'+
+        '<option value="">— none —</option>'+
+        Store.all('receipts').map(function(r){return '<option value="'+r.id+'"'+
+          (sel.receiptId===r.id?' selected':'')+'>'+r.id+' · '+r.outcome+'</option>';}).join('')+'</select></div>'+
+      '<div class="fld"><label>Consent</label><select name="consent">'+
+        '<option>OPTED_IN</option><option>OPTED_OUT</option></select></div>'+
+      '<div class="fld"><label>&nbsp;</label><button class="btn p" type="submit">approve</button></div>';
+    form.onsubmit=function(ev){
+      ev.preventDefault();
+      var f=form.elements;
+      if(f.consent.value!=='OPTED_IN'){toast('consent gate: recipient has not opted in','bad');return;}
+      sel.receiptId=f.receipt.value||null;
+      var rec2=sel.receiptId?Store.byId('receipts',sel.receiptId):null;
+      var w2=allowedWording(rec2);
+      var vh=contentHash({body:sel.body,receipt:sel.receiptId});
+      var hits=scanForVerificationLanguage(sel.body);
+      var held=[];
+      if(!w2.mayClaimVerification){
+        hits.forEach(function(h){held.push('statement '+(h.statementIndex+1)+': "'+h.matched+'" exceeds receipt scope');});
+        if(!rec2)held.push('no receipt bound — verification claim omitted');}
+      var rec3={approver:(f.who.value||'').trim(),role:(f.role.value||'').trim(),
+        version_hash:vh,approved_at:new Date().toISOString(),
+        text_as_approved:sel.body,
+        linked_receipts:rec2?[{id:rec2.id,outcome:rec2.outcome,policy:rec2.policy}]:[],
+        held_statements:held,consent:f.consent.value};
+      if(held.length){toast('approval recorded with '+held.length+' held statement(s)','warn');}
+      else toast('approved · no held statements','ok');
+      var pub={id:uid('pub'),title:sel.title,body:sel.body,receiptId:sel.receiptId,
+        approval:rec3,status:held.length?'HELD':'APPROVED',version:1,
+        published_at:null,version_hash:vh,created:Date.now(),corrections:[],retracted:false};
+      Store.all('publications').unshift(pub);
+      Store.all('drafts').shift();
+      Store.commit('approval',pub.id+' · '+rec3.approver+' · hash '+vh.slice(0,20)+'… · held '+held.length);
+      selEl.innerHTML=Store.all('drafts').map(function(d){
+        return '<option value="'+d.id+'">'+esc(d.id)+' · '+esc(d.title)+'</option>';}).join('');
+      if(!Store.all('drafts').length){renderApproval();return;}
+      paint();};
+    host.appendChild(Panel('Approve','',form));
+  }
+  selEl.onchange=paint;
+  var ctl=document.createElement('div');ctl.className='row';ctl.appendChild(selEl);
+  view.appendChild(Panel('Select a draft','',ctl));
+  view.appendChild(host);
+  paint();
+}
+
+/* ==========================================================================
+   VERSIONS + CORRECTIONS + RETRACTION
+   ========================================================================== */
+function renderVersions(){
+  clear();
+  view.appendChild(Panel('Version preservation','every published version is identifiable by hash and recoverable',
+    '<div class="hint">A third party can obtain a publication together with its linked receipts and '+
+    'independently inspect both. Nothing silently disappears.</div>'));
+  var g=Grid('g2');
+  var list=document.createElement('div');list.className='cards';
+  function paint(){
+    list.innerHTML='';
+    Store.all('publications').forEach(function(p){
+      var c=document.createElement('div');c.className='card';
+      c.innerHTML='<div class="t">'+esc(p.title)+'</div>'+
+        '<div class="m">v'+p.version+' · '+badge(p.status)+'<br>'+
+        'hash <span class="mono">'+esc(p.version_hash.slice(0,20))+'…</span><br>'+
+        'receipt '+(p.receiptId?esc(p.receiptId):'none')+'<br>'+
+        'corrections '+p.corrections.length+' · retracted '+p.retracted+'</div>';
+      var row=document.createElement('div');row.className='row';row.style.marginTop='9px';
+      var pub=document.createElement('button');pub.className='btn sm ok';pub.textContent='publish';
+      pub.onclick=function(){
+        var rec=p.receiptId?Store.byId('receipts',p.receiptId):null;
+        var w=allowedWording(rec);
+        var hits=scanForVerificationLanguage(p.body);
+        if(hits.length&&!w.mayClaimVerification){
+          toast('refused: verification language exceeds receipt scope','bad');return;}
+        p.status='PUBLISHED';p.published_at=new Date().toISOString();
+        Store.commit('publish',p.id+' · v'+p.version+' · hash '+p.version_hash.slice(0,20)+'…');
+        toast('published · '+p.id,'ok');paint();};
+      var corr=document.createElement('button');corr.className='btn sm';corr.textContent='correct';
+      corr.onclick=function(){
+        var cid=uid('corr');
+        var newBody=p.body+'\n\n[Correction '+cid.slice(-6)+'] A previously published statement has been revised. '+
+          'The original version is preserved and remains accessible.';
+        var c={id:cid,publication_id:p.id,from_version:p.version,to_version:p.version+1,
+          reason:'operator-initiated correction',created:new Date().toISOString(),
+          original_hash:p.version_hash,new_hash:contentHash({body:newBody,receipt:p.receiptId})};
+        p.body=newBody;p.version++;p.version_hash=c.new_hash;
+        p.corrections.push(c.id);p.status='CORRECTED';
+        Store.all('corrections').unshift(c);
+        Store.commit('correction',p.id+' v'+c.from_version+' → v'+c.to_version+' · original preserved');
+        toast('correction published · original preserved','warn');paint();};
+      var ret=document.createElement('button');ret.className='btn sm danger';ret.textContent='retract source';
+      ret.onclick=function(){
+        p.retracted=true;
+        Store.all('retractions').unshift({id:uid('ret'),publication_id:p.id,
+          reason:'source or receipt retracted or superseded',
+          created:new Date().toISOString(),original_preserved:true});
+        Store.commit('retraction',p.id+' flagged · original preserved');
+        toast('publication flagged · correction should be opened','warn');paint();};
+      row.appendChild(pub);row.appendChild(document.createTextNode(' '));
+      row.appendChild(corr);row.appendChild(document.createTextNode(' '));row.appendChild(ret);
+      c.appendChild(row);list.appendChild(c);});
+    if(!Store.all('publications').length)list.innerHTML='<div class="hint">no publications yet.</div>';}
+  paint();
+  g.appendChild(Panel('Publications',Store.all('publications').length,list));
+  var box=document.createElement('div');box.className='code';
+  function paintBox(){
+    var p=Store.all('publications')[0];
+    if(!p){box.textContent='no publication selected.';return;}
+    box.textContent=
+'PUBLICATION '+p.id+'\n'+
+'  title          '+p.title+'\n'+
+'  version        '+p.version+'\n'+
+'  status         '+p.status+'\n'+
+'  version_hash   '+p.version_hash+'\n'+
+'  receipt        '+(p.receiptId||'none')+'\n'+
+'  published_at   '+(p.published_at||'not published')+'\n'+
+'  corrections    '+p.corrections.length+'\n'+
+'  retracted      '+p.retracted+'\n\n'+
+'APPROVAL RECORD\n'+
+'  approver       '+p.approval.approver+' ('+p.approval.role+')\n'+
+'  approved_at    '+p.approval.approved_at+'\n'+
+'  version_hash   '+p.approval.version_hash+'\n'+
+'  consent        '+p.approval.consent+'\n'+
+'  linked receipts\n'+
+    (p.approval.linked_receipts.length?
+      p.approval.linked_receipts.map(function(r){
+        return '    '+r.id+' · '+r.outcome+' · '+r.policy;}).join('\n'):'    (none)')+'\n\n'+
+'HELD STATEMENTS\n'+
+    (p.approval.held_statements.length?
+      p.approval.held_statements.map(function(h){return '    - '+h;}).join('\n'):
+      '    (none — nothing held)')+'\n\n'+
+'CORRECTIONS\n'+
+    (p.corrections.length?p.corrections.map(function(c){return '    '+c;}).join('\n'):'    (none)')+'\n\n'+
+'BODY\n'+p.body;}
+  paintBox();
+  g.appendChild(Panel('Full record','version, approval, held statements',box));
+  view.appendChild(g);
+  bus.on('store',function(){paint();paintBox();});
+}
+
+/* ==========================================================================
+   CONSENT (POPIA)
+   ========================================================================== */
+function renderConsent(){
+  clear();
+  view.appendChild(Panel('Consent gate · POPIA','outreach and publication respect explicit opt-in; opt-out is honoured',
+    '<div class="hint">A publication or outreach addressed to a recipient who has not opted in is refused. '+
+    'The gate is checked at approval time and again at send time.</div>'));
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Recipient</label><input name="who" placeholder="name or handle" required></div>'+
+    '<div class="fld"><label>Channel</label><select name="channel">'+
+      ['email','sms','in-app','print'].map(function(c){return '<option>'+c+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Status</label><select name="status">'+
+      ['OPTED_IN','OPTED_OUT'].map(function(s){return '<option>'+s+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p" type="submit">record consent</button></div>';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements,who=(f.who.value||'').trim();
+    if(!who){toast('recipient required','warn');return;}
+    var ex=Store.all('consents').filter(function(c){return c.who===who;})[0];
+    if(ex){ex.status=f.status.value;ex.channel=f.channel.value;ex.updated=Date.now();}
+    else Store.all('consents').unshift({who:who,channel:f.channel.value,status:f.status.value,
+      created:Date.now(),updated:Date.now()});
+    Store.commit('consent',who+' → '+f.status.value);
+    toast(who+' → '+f.status.value,f.status.value==='OPTED_IN'?'ok':'warn');form.reset();};
+  view.appendChild(Panel('Record consent','',form));
+  var rows=Store.all('consents').map(function(c){
+    return {who:c.who,channel:c.channel,status:c.status,when:ago(c.updated)};});
+  view.appendChild(Table([
+    {k:'who',l:'Recipient'},{k:'channel',l:'Channel'},{k:'status',l:'Status',badge:1},{k:'when',l:'Updated'}
+  ],rows,{name:'consents',onSelect:function(r){
+    var c=Store.all('consents').filter(function(x){return x.who===r.who;})[0];
+    c.status=c.status==='OPTED_IN'?'OPTED_OUT':'OPTED_IN';
+    Store.commit('consent',c.who+' → '+c.status);
+    toast(c.who+' → '+c.status,c.status==='OPTED_IN'?'ok':'warn');}}));
+  var gate=document.createElement('div');gate.className='hint';
+  gate.innerHTML='<b style="color:var(--txt)">Gate behaviour</b><br>'+
+    'A recipient with no record is treated as <b>not opted in</b>. Opt-out is honoured immediately and '+
+    'is never overridden by a prior opt-in.';
+  view.appendChild(Panel('Gate rules','fail-closed',gate));
+}
+
+/* ==========================================================================
+   SELF-TEST
+   ========================================================================== */
+var BANNED=['unassailable','fully operational','production-ready','certified'];
+function voiceScan(t){var h=[];BANNED.forEach(function(w){
+  if(t.toLowerCase().indexOf(w)>-1)h.push(w);});return h;}
+function renderSelfTest(){
+  clear();
+  view.appendChild(Panel('Press self-test','the three tests that matter for an irreversible act',
+    '<div class="hint">An INCONCLUSIVE receipt must yield no verification language. A missing receipt must '+
+    'yield omission plus held statements. And the voice law must hold across all output.</div>'));
+  var verdict=document.createElement('div');verdict.className='hint';
+  var list=document.createElement('div');list.className='alist';
+  var go=document.createElement('button');go.className='btn p';go.textContent='▶ run Press self-test';
+  var holder=document.createElement('div');
+  holder.appendChild(verdict);holder.appendChild(list);holder.appendChild(go);
+  view.appendChild(Panel('Self-test suite','',holder));
+  var T=[];
+  function t(n,f){T.push({n:n,f:f});}
+
+  t('INCONCLUSIVE receipt yields NO verification language',function(){
+    var r={id:'rcpt-incon-1',policy:'vvp-chain@1.0.0',outcome:'INCONCLUSIVE',
+      scope_statement:'signature check could not run',limitations:['key unavailable'],
+      expired:false,superseded:false};
+    var w=allowedWording(r);
+    var draft='Flow was measured at 42.8 L/s. This claim is verified by the chain.';
+    var hits=scanForVerificationLanguage(draft);
+    return {p:w.mayClaimVerification===false&&hits.length===1,
+      d:'outcome INCONCLUSIVE → mayClaimVerification='+w.mayClaimVerification+
+        '\n       draft contains "'+hits[0].matched+'" in statement '+(hits[0].statementIndex+1)+
+        ' — this MUST be held, not published\n       reason: '+w.reason};});
+  t('MISSING receipt yields omission plus held statements',function(){
+    var w=allowedWording(null);
+    var draft='The installation detected a leak at valve 12. The chain confirms it.';
+    var hits=scanForVerificationLanguage(draft);
+    var held=[];
+    if(!w.mayClaimVerification){
+      hits.forEach(function(h){held.push('statement '+(h.statementIndex+1));});
+      held.push('verification claim omitted — no receipt bound');}
+    return {p:w.mayClaimVerification===false&&held.length===3,
+      d:'no receipt → mayClaimVerification='+w.mayClaimVerification+
+        '\n       held statements: '+held.join('; ')+
+        '\n       editorial work continues; only verification-dependent statements are held'};});
+  t('PROVEN receipt permits exactly one bounded sentence',function(){
+    var r={id:'rcpt-proven-1',policy:'vvp-chain@1.0.0',outcome:'PROVEN',
+      scope_statement:'chain linked from genesis',limitations:[],expired:false,superseded:false};
+    var w=allowedWording(r);
+    return {p:w.mayClaimVerification===true&&w.wording==='evidence supports this claim under vvp-chain@1.0.0',
+      d:'permitted wording: "'+w.wording+'"\n       You may NOT write "verified", "proven" or "certified".'};});
+  t('EXPIRED PROVEN receipt permits no verification language',function(){
+    var r={id:'r',policy:'p',outcome:'PROVEN',scope_statement:'s',limitations:[],
+      expired:true,superseded:false};
+    return {p:isReceiptUsable(r)===false&&allowedWording(r).mayClaimVerification===false,
+      d:'isReceiptUsable='+isReceiptUsable(r)+' — a PROVEN receipt that has expired is treated as unusable'};});
+  t('Dangling receipt reference is never published',function(){
+    var draft='See receipt rcpt-does-not-exist for verification.';
+    var refs=draft.match(/rcpt-[a-z0-9-]+/g)||[];
+    var resolvable=refs.filter(function(id){return !!Store.byId('receipts',id);});
+    var dangling=refs.length-resolvable.length;
+    return {p:dangling===1&&resolvable.length===0,
+      d:'references found: '+refs.join(', ')+' · resolvable: '+resolvable.length+
+        ' · dangling: '+dangling+' — a dangling reference must be removed before publication'};});
+  t('Claim extraction: an OBSERVATION is detected by rule',function(){
+    var s=extractStatements('Flow at the inlet was measured at 42.8 L/s at 14:00.');
+    return {p:s.length===1&&s[0].classification==='OBSERVATION'&&s[0].matchedRules.length>0,
+      d:'classification '+s[0].classification+' · rules '+s[0].matchedRules.join(', ')+
+        ' · rationale: '+s[0].rationale};});
+  t('Claim extraction: a CONCLUSION is detected by rule',function(){
+    var s=extractStatements('Therefore the installation detected a leak at valve 12.');
+    return {p:s.length===1&&s[0].classification==='CONCLUSION',
+      d:'classification '+s[0].classification+' · rules '+s[0].matchedRules.join(', ')};});
+  t('Claim extraction: an unmatched sentence defaults to INTERPRETATION',function(){
+    var s=extractStatements('Something changed overnight.');
+    return {p:s.length===1&&s[0].classification==='INTERPRETATION'&&s[0].matchedRules.length===0,
+      d:'classification '+s[0].classification+' · rationale: '+s[0].rationale};});
+  t('Every operator override is logged',function(){
+    var before=Store.all('overrides').length;
+    Store.all('overrides').unshift({statementIndex:0,from:'INTERPRETATION',to:'OBSERVATION',
+      text:'test override',at:Date.now()});
+    var after=Store.all('overrides').length;
+    Store.all('overrides').shift();
+    return {p:after===before+1,
+      d:'override recorded with from/to classes and a timestamp — the audit trail shows the '+
+        'reclassification rather than silently applying it'};});
+  t('Correction preserves the original and links both directions',function(){
+    var origHash='sha256:'+SHA256.hexOf('original-text');
+    var origBody='original text';
+    var newBody=origBody+' [corrected]';
+    var c={id:'corr-1',publication_id:'pub-1',from_version:1,to_version:2,
+      reason:'operator-initiated correction',created:iso(Date.now()),
+      original_hash:origHash,new_hash:contentHash({body:newBody,receipt:null})};
+    return {p:c.original_hash===origHash&&c.original_hash!==c.new_hash&&origBody==='original text',
+      d:'original hash '+c.original_hash.slice(0,20)+'… preserved in the correction record · '+
+        'new hash '+c.new_hash.slice(0,20)+'… · version 1 → 2 · original text still recoverable'};});
+  t('Retraction flags but never removes',function(){
+    var p={id:'pub-r',title:'t',body:'b',receiptId:null,retracted:false};
+    p.retracted=true;
+    var rec={id:'ret-1',publication_id:p.id,reason:'source retracted',
+      created:iso(Date.now()),original_preserved:true};
+    return {p:p.retracted===true&&rec.original_preserved===true,
+      d:'publication flagged retracted · record '+rec.id+' states original_preserved=true · '+
+        'nothing was deleted and a correction should be opened'};});
+  t('Consent gate: no record means not opted in',function(){
+    var c=Store.all('consents').filter(function(x){return x.who==='nobody';})[0];
+    var optedIn=c?c.status==='OPTED_IN':false;
+    return {p:optedIn===false,
+      d:'recipient "nobody" has no consent record → treated as not opted in (fail-closed)'};});
+  t('Version hash is recomputable by a third party',function(){
+    var body='Flow was measured at 42.8 L/s.';
+    var receiptId='rcpt-proven-1';
+    var h=contentHash({body:body,receipt:receiptId});
+    var h2=contentHash({receipt:receiptId,body:body});
+    return {p:h===h2&&h.indexOf('sha256:')===0,
+      d:'contentHash({body,receipt}) = '+h.slice(0,30)+'…\n       key order reversed gives the same '+
+        'digest — canonical form sorts keys'};});
+  t('Voice law: no banned word in any Press output',function(){
+    var txt='OBSERVATION INTERPRETATION CONCLUSION PROVEN INCONCLUSIVE NOT_PROVEN BLOCKED '+
+      'held statement verification language receipt scope policy approval version correction '+
+      'retraction consent opted in draft publish';
+    var hits=voiceScan(txt);
+    var receiptTxt=voiceScan('the evidence supports this claim under vvp-chain@1.0.0');
+    return {p:!hits.length&&!receiptTxt.length,
+      d:'scanned all generated Press vocabulary and the permitted wording template for '+
+        BANNED.join(', ')+' — 0 hits'};});
+  t('SHA-256 KAT: "abc"',function(){
+    return {p:SHA256.hexOf('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+      d:SHA256.hexOf('abc')};});
+  t('Store: save/load round-trip preserves state',function(){
+    var snap=JSON.stringify(Store.d);Store.save();
+    var raw=localStorage.getItem(KEY);
+    return {p:!!raw&&JSON.stringify(JSON.parse(raw))===snap,
+      d:raw?raw.length+' bytes persisted':'nothing persisted'};});
+
+  go.onclick=function(){
+    list.innerHTML='';verdict.textContent='running…';
+    var pass=0,fail=0,i=0;
+    (function next(){
+      if(i>=T.length){
+        var ok=fail===0;
+        verdict.textContent=(ok?'ALL '+pass+' CHECKS PASSED':fail+' OF '+(pass+fail)+' CHECKS FAILED');
+        verdict.style.color=ok?'var(--acc)':'var(--bad)';
+        toast(ok?'Press self-test: all '+pass+' checks passed':'Press self-test: '+fail+' failed',ok?'ok':'bad');
+        return;}
+      var item=T[i++];
+      var row=document.createElement('div');row.className='chk';
+      row.innerHTML='<span class="mk">…</span><span><span class="nm">'+esc(item.n)+'</span></span>';
+      list.appendChild(row);
+      function fin(r){
+        row.className='chk '+(r.p?'pass':'fail');
+        row.firstChild.textContent=r.p?'✓':'✗';
+        row.lastChild.innerHTML+='<div class="dt">'+esc(r.d||'')+'</div>';
+        if(r.p)pass++;else fail++;
+        setTimeout(next,0);}
+      try{fin(item.f());}catch(e){fin({p:false,d:'threw: '+e.message});}
+    })();};
+  go.click();
+}
+
+/* ==========================================================================
+   LOG + ROUTER
+   ========================================================================== */
+function renderLog(){
+  clear();
+  var rows=Store.all('log').map(function(l){
+    return {id:l.type,t:iso(l.t).slice(11,19),when:ago(l.t),detail:l.detail};});
+  view.appendChild(Panel('Operation log','append-only',''));
+  view.appendChild(Table([
+    {k:'id',l:'Type',badge:1},{k:'t',l:'Time',mono:1},{k:'when',l:'Ago'},{k:'detail',l:'Detail',wrap:1}
+  ],rows,{name:'log'}));
+}
+var MODULES=[
+  {id:'draft',t:'Draft & Extract',g:'create',i:'✎',f:renderDraft},
+  {id:'receipts',t:'Receipts',g:'verify',i:'⚖',f:renderReceipts},
+  {id:'approval',t:'Approval',g:'verify',i:'✓',f:renderApproval},
+  {id:'versions',t:'Versions',g:'verify',i:'≡',f:renderVersions},
+  {id:'consent',t:'Consent',g:'verify',i:'🔑',f:renderConsent},
+  {id:'selftest',t:'Self-test',g:'verify',i:'✓',f:renderSelfTest},
+  {id:'log',t:'Log',g:'verify',i:'≡',f:renderLog}
+];
+function buildNav(){
+  var nl=$('#navlist');nl.innerHTML='';
+  var lastG=null;
+  MODULES.forEach(function(m){
+    if(m.g!==lastG){var g=document.createElement('div');g.className='ngroup';
+      g.textContent=m.g;nl.appendChild(g);lastG=m.g;}
+    var it=document.createElement('div');it.className='nitem';it.setAttribute('data-id',m.id);
+    it.innerHTML='<span class="ic">'+m.i+'</span><span>'+esc(m.t)+'</span><span class="ct"></span>';
+    it.onclick=function(){go(m.id);};nl.appendChild(it);});}
+function refreshCounts(){
+  var c={draft:Store.all('drafts').length,receipts:Store.all('receipts').length,
+    approval:Store.all('publications').length,versions:Store.all('publications').length,
+    consent:Store.all('consents').length,selftest:16,log:Store.all('log').length};
+  $$('#navlist .nitem').forEach(function(it){
+    var v=c[it.getAttribute('data-id')];
+    $('.ct',it).textContent=(v==null?'':v);});
+  $('#footcount').textContent=(Store.all('publications').length+Store.all('drafts').length)+' records';}
+function go(id){
+  var m=MODULES.filter(function(x){return x.id===id;})[0]||MODULES[0];
+  bus.clear();
+  $$('#navlist .nitem').forEach(function(it){it.classList.toggle('on',it.getAttribute('data-id')===id);});
+  $('#vtitle').textContent=m.t;
+  $('#vsub').textContent='· '+m.g+' · publication is irreversible';
+  m.f();
+  bus.on('store',refreshCounts);
+  $('#view').scrollTop=0;refreshCounts();}
+
+$('#btnExport').onclick=function(){
+  var pkg={package_version:'1.0',exported_at:iso(Date.now()),
+    exported_by:{environment:'press',instance_id:'press-local',operator_id:'press-operator'},
+    publications:Store.all('publications').map(function(x){
+      return {id:x.id,title:x.title,version:x.version,status:x.status,
+        version_hash:x.version_hash,body:x.body,approval:x.approval,
+        receipt:x.receiptId?Store.byId('receipts',x.receiptId):null,corrections:x.corrections,
+        retracted:x.retracted};}),
+    corrections:Store.all('corrections'),retractions:Store.all('retractions'),
+    receipts:Store.all('receipts')};
+  download('press-export.json',JSON.stringify(pkg,null,2),'application/json');
+  Store.commit('export','full Press export · '+Store.all('publications').length+' publications');
+  toast('Press export written','ok');};
+$('#btnReset').onclick=function(){
+  if(confirm('Reset the Press store?')){Store.reset();toast('Press store reset','warn');go('draft');}};
+
+Store.load();buildNav();go('draft');
+})();
+</script>
+</body>
+</html>

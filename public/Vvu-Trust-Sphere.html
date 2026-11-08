@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>▲ VVU · Validation Dashboard</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#050a18;font-family:'Segoe UI',system-ui,monospace;color:#e8edf3}
+
+#boot{position:fixed;inset:0;z-index:999;display:grid;place-items:center;background:#050a18;transition:opacity 1.2s ease}
+#boot.done{opacity:0;pointer-events:none}
+.boot-wrap{text-align:center}
+.boot-mark{font-size:56px;background:linear-gradient(90deg,#a5f3fc,#22d3ee,#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.boot-title{font-size:28px;font-weight:700;letter-spacing:.4em;color:#e2e8f0;margin:8px 0 4px}
+.boot-sub{font-size:10px;letter-spacing:.2em;color:#64748b}
+.boot-bar{width:200px;height:2px;background:#1e293b;margin:20px auto 0;overflow:hidden;border-radius:2px}
+.boot-bar i{display:block;height:100%;width:30%;background:linear-gradient(90deg,#a5f3fc,#22d3ee,#38bdf8);animation:scan 1.4s ease-in-out infinite alternate;border-radius:2px}
+@keyframes scan{from{transform:translateX(-80%)}to{transform:translateX(420%)}}
+
+#three-canvas{position:fixed;inset:0;z-index:0;display:block}
+#map-overlay{position:fixed;inset:0;z-index:10;display:none;background:#0b0e14}
+#map{width:100%;height:100%}
+
+#topbar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:8px 20px;background:rgba(5,10,24,.88);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.04)}
+#topbar .brand h1{font-size:15px;font-weight:700;letter-spacing:.08em}
+#topbar .brand h1 span{color:#D4AF37}
+#topbar .status{display:flex;align-items:center;gap:14px;font-size:10px;color:#94a3b8}
+#topbar .status .dot{width:6px;height:6px;border-radius:50%;background:#4caf50;box-shadow:0 0 8px rgba(76,175,80,.3);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.badge{padding:2px 10px;border-radius:12px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.2);color:#D4AF37;font-size:8px;font-weight:600;text-transform:uppercase}
+
+#validation-bar{position:fixed;top:52px;left:0;right:0;z-index:19;display:flex;gap:16px;padding:6px 20px;background:rgba(5,10,24,.75);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,.03);font-size:9px;color:#94a3b8}
+#validation-bar div span{color:#e8edf3;font-weight:600}
+
+#controls{position:fixed;bottom:20px;left:20px;z-index:25;display:flex;gap:8px}
+.btn{padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#e8edf3;font-size:11px;cursor:pointer;font-family:inherit}
+.btn.on{background:rgba(34,211,238,.15);border-color:rgba(34,211,238,.3);color:#22d3ee}
+
+#log{position:fixed;bottom:20px;right:20px;z-index:25;width:320px;max-height:200px;overflow:auto;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px;font-size:10px;line-height:1.4;color:#94a3b8;font-family:monospace}
+
+/* mobile guard (appended by VVU workspace QA — Task 25): on narrow screens the
+   fixed 320px log covered the control buttons; lift the log above the controls
+   and let it span the width. Desktop layout is unchanged. */
+@media (max-width:480px){
+  #log{left:20px;right:20px;width:auto;bottom:78px;max-height:110px}
+  #controls{flex-wrap:wrap;max-width:calc(100vw - 40px)}
+}
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div class="boot-wrap">
+    <div class="boot-mark">▲</div>
+    <div class="boot-title">VVU</div>
+    <div class="boot-sub">VALIDATION DASHBOARD</div>
+    <div class="boot-bar"><i></i></div>
+  </div>
+</div>
+
+<canvas id="three-canvas"></canvas>
+<div id="map-overlay"><div id="map"></div></div>
+
+<div id="topbar">
+  <div class="brand"><h1>▲ VVU <span>TRUST</span></h1></div>
+  <div class="status">
+    <span class="dot"></span>
+    <span id="map-status">MAP: init</span>
+    <span class="badge">DEMO</span>
+  </div>
+</div>
+
+<div id="validation-bar">
+  <div>TRUST: <span id="trust-label">—</span></div>
+  <div>CITATIONS: <span id="citations-label">—</span></div>
+  <div>TIER: <span id="tier-label">FREE</span></div>
+  <div id="key-status">FEED: —</div>
+</div>
+
+<!-- VVU OPERATOR PATCH (workspace Task 26 — user delegated the role-reversed veto:
+     "if it wouldn't wash with you running the company, change it"). Disclosed changes:
+     1) TRUST / CITATIONS / FEED wired to the live VVU API (computed, not claimed);
+        honest "—" placeholders when offline — never fabricated numbers.
+     2) Boot now reveals the CITY first (map stays one click away) — was: map auto-opened
+        over the canvas, contradicting "the moment the boot fades, the eye reads it as a city".
+     3) Scrubbed the stale Google-key error log line, dead key constants and the
+        GoogleMutant script include (debugging residue in a viewer-facing artifact).
+     4) Satellite button label now matches actual behaviour (toggles Esri ↔ Carto Dark).
+     Mobile guard (<480px) from Task 25. Everything else is the user's file verbatim. -->
+<div id="controls">
+  <button id="toggle-map" class="btn">🗺 Map</button>
+  <button id="toggle-fallback" class="btn">Satellite: Esri / Carto</button>
+</div>
+
+<div id="log"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// ── Logging ────────────────────────────────────────────────
+const logEl = document.getElementById('log');
+function log(msg){
+  const d=document.createElement('div');
+  d.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+  logEl.prepend(d);
+  console.log(msg);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   THE CITY  —  recognizable skyline on a circuit-board disc
+   Buildings = actual buildings. Streets = glowing traces.
+   Same palette as the VVU shell: cyan #22d3ee, gold #D4AF37.
+   ═══════════════════════════════════════════════════════════ */
+
+const canvas = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x050a18, 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x050a18, 260, 480);
+
+// Isometric camera — orthographic so the perspective is "flat" like a technical drawing
+const aspect = window.innerWidth / window.innerHeight;
+const frustum = 200;
+const camera = new THREE.OrthographicCamera(
+  -frustum * aspect, frustum * aspect,
+  frustum, -frustum,
+  1, 1000
+);
+camera.position.set(140, 120, 140);
+camera.lookAt(0, 0, 0);
+
+// Lights — cool ambient, warm key from one side, cyan rim from behind
+scene.add(new THREE.AmbientLight(0x2a4060, 0.9));
+
+const key = new THREE.DirectionalLight(0xa8e4ff, 1.1);
+key.position.set(80, 140, 60);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+key.shadow.camera.left = -150;
+key.shadow.camera.right = 150;
+key.shadow.camera.top = 150;
+key.shadow.camera.bottom = -150;
+key.shadow.camera.far = 400;
+scene.add(key);
+
+const rim = new THREE.DirectionalLight(0x22d3ee, 0.8);
+rim.position.set(-100, 60, -100);
+scene.add(rim);
+
+const gold = new THREE.PointLight(0xD4AF37, 0.6, 300);
+gold.position.set(0, 60, 0);
+scene.add(gold);
+
+/* ── THE DISC (circuit-board base) ───────────────────────── */
+const R = 140;
+const discGeo = new THREE.CircleGeometry(R, 96);
+const discMat = new THREE.MeshStandardMaterial({
+  color: 0x081a30,
+  roughness: 0.85,
+  metalness: 0.15,
+  emissive: 0x0a2540,
+  emissiveIntensity: 0.35
+});
+const disc = new THREE.Mesh(discGeo, discMat);
+disc.rotation.x = -Math.PI / 2;
+disc.receiveShadow = true;
+scene.add(disc);
+
+// Rim glow ring
+const rimGeo = new THREE.RingGeometry(R - 0.6, R + 0.8, 96);
+const rimMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+const rimRing = new THREE.Mesh(rimGeo, rimMat);
+rimRing.rotation.x = -Math.PI / 2;
+rimRing.position.y = 0.02;
+scene.add(rimRing);
+
+/* ── STREETS (glowing traces on the disc) ────────────────── */
+function makeStreet(points, color, width, y) {
+  const pts = points.map(p => new THREE.Vector3(p[0], y, p[1]));
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.85, linewidth: 1 });
+  return new THREE.Line(geo, mat);
+}
+
+const streetGroup = new THREE.Group();
+scene.add(streetGroup);
+
+// Two arterials (cross)
+streetGroup.add(makeStreet([[-R*0.92, -R*0.92], [R*0.92, R*0.92]], 0x8eefff, 1, 0.05));
+streetGroup.add(makeStreet([[-R*0.92, R*0.92], [R*0.92, -R*0.92]], 0x8eefff, 1, 0.05));
+
+// Concentric ring roads
+for (let r = 1; r <= 3; r++) {
+  const radius = r * 34;
+  const pts = [];
+  for (let a = 0; a <= 72; a++) {
+    const ang = (a / 72) * Math.PI * 2;
+    pts.push([Math.cos(ang) * radius, Math.sin(ang) * radius]);
+  }
+  streetGroup.add(makeStreet(pts, 0x22d3ee, 1, 0.05));
+}
+
+// Radial spokes
+for (let k = 0; k < 8; k++) {
+  const ang = k * Math.PI / 4;
+  const pts = [];
+  for (let t = 0.10; t <= 0.94; t += 0.06) {
+    pts.push([Math.cos(ang) * t * R, Math.sin(ang) * t * R]);
+  }
+  streetGroup.add(makeStreet(pts, 0x22d3ee, 1, 0.05));
+}
+
+/* ── TRAFFIC (moving dots along the arterials) ───────────── */
+const traffic = [];
+const trafficGroup = new THREE.Group();
+scene.add(trafficGroup);
+
+const trafficMat = new THREE.MeshBasicMaterial({ color: 0xD4AF37 });
+
+// Sprinkle traffic on the two arterial diagonals
+for (let i = 0; i < 24; i++) {
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.9, 8, 8), trafficMat);
+  const t = Math.random();
+  const onA = i % 2 === 0;
+  dot.userData = {
+    t,
+    onA,
+    speed: 0.0009 + Math.random() * 0.0008
+  };
+  trafficGroup.add(dot);
+  traffic.push(dot);
+}
+
+/* ── BUILDINGS ──────────────────────────────────────────── */
+const buildings = new THREE.Group();
+scene.add(buildings);
+
+// Palette for buildings
+const buildingTop   = 0x1a3a5c;
+const buildingLeft  = 0x0d2030;
+const buildingRight = 0x071018;
+
+// Landmarks — 6 anchor towers with spires
+function makeBuilding(x, z, w, d, h, isLandmark) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+
+  // Body — subtle emissive so it reads against dark bg
+  const bodyGeo = new THREE.BoxGeometry(w, h, d);
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: buildingTop,
+    roughness: 0.6,
+    metalness: 0.25,
+    emissive: isLandmark ? 0x1a3a5c : 0x0a1e30,
+    emissiveIntensity: isLandmark ? 0.6 : 0.35
+  });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.position.y = h / 2;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  g.add(body);
+
+  // Window grid — thin emissive planes on the two visible faces
+  // Left face (facing -x in local)
+  const windowMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.7 });
+  const windowMatLit = new THREE.MeshBasicMaterial({ color: 0xa5f3fc, transparent: true, opacity: 0.95 });
+
+  const rows = Math.max(3, Math.floor(h / 5));
+  const colsL = Math.max(2, Math.floor(d / 3));
+  const colsR = Math.max(2, Math.floor(w / 3));
+
+  // We'll simulate windows via small emissive boxes on the outward faces
+  const winGeo = new THREE.PlaneGeometry(0.6, 0.9);
+
+  // Face +Z (toward "camera left" in iso)
+  for (let r = 1; r < rows; r++) {
+    for (let c = 0; c < colsL; c++) {
+      const lit = Math.random() < 0.22;
+      const m = lit ? windowMatLit : windowMat;
+      const wm = new THREE.Mesh(winGeo, m);
+      const px = -w / 2 + (c + 0.5) * (w / colsL);
+      const py = (r / rows) * h;
+      wm.position.set(px, py, d / 2 + 0.02);
+      g.add(wm);
+    }
+  }
+
+  // Face +X
+  for (let r = 1; r < rows; r++) {
+    for (let c = 0; c < colsR; c++) {
+      const lit = Math.random() < 0.22;
+      const m = lit ? windowMatLit : windowMat;
+      const wm = new THREE.Mesh(winGeo, m);
+      const pz = -d / 2 + (c + 0.5) * (d / colsR);
+      const py = (r / rows) * h;
+      wm.rotation.y = Math.PI / 2;
+      wm.position.set(w / 2 + 0.02, py, pz);
+      g.add(wm);
+    }
+  }
+
+  // Roof cap — brighter top so silhouettes read as buildings
+  const capGeo = new THREE.BoxGeometry(w * 1.02, 0.4, d * 1.02);
+  const capMat = new THREE.MeshStandardMaterial({
+    color: 0x2a5078,
+    roughness: 0.5,
+    metalness: 0.3,
+    emissive: 0x1a3a5c,
+    emissiveIntensity: 0.5
+  });
+  const cap = new THREE.Mesh(capGeo, capMat);
+  cap.position.y = h + 0.2;
+  g.add(cap);
+
+  // Landmark spire
+  if (isLandmark) {
+    const spireGeo = new THREE.CylinderGeometry(0.15, 0.5, 20, 6);
+    const spireMat = new THREE.MeshStandardMaterial({
+      color: 0xa5f3fc,
+      emissive: 0x22d3ee,
+      emissiveIntensity: 1.1,
+      roughness: 0.3
+    });
+    const spire = new THREE.Mesh(spireGeo, spireMat);
+    spire.position.y = h + 10;
+    g.add(spire);
+
+    // Blinking beacon
+    const beaconGeo = new THREE.SphereGeometry(0.7, 8, 8);
+    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff5577 });
+    const beacon = new THREE.Mesh(beaconGeo, beaconMat);
+    beacon.position.y = h + 20;
+    g.add(beacon);
+    beacon.userData.blink = true;
+    g.userData.beacon = beacon;
+  }
+
+  // Outline glow — wireframe box drawn slightly larger
+  const edgesGeo = new THREE.EdgesGeometry(bodyGeo);
+  const edgesMat = new THREE.LineBasicMaterial({
+    color: isLandmark ? 0xa5f3fc : 0x3a80a8,
+    transparent: true,
+    opacity: isLandmark ? 0.9 : 0.5
+  });
+  const edges = new THREE.LineSegments(edgesGeo, edgesMat);
+  edges.position.y = h / 2;
+  g.add(edges);
+
+  buildings.add(g);
+  return g;
+}
+
+// Landmark anchors
+makeBuilding(  0,  -110, 22, 22, 78, true);
+makeBuilding(-100,  100, 20, 20, 62, true);
+makeBuilding( 100,  100, 20, 20, 62, true);
+makeBuilding(-100,  -60, 18, 18, 54, true);
+makeBuilding( 100,  -60, 18, 18, 54, true);
+makeBuilding(  0,   110, 26, 18, 48, true);
+
+// Grid of standard buildings — clamped to disc, skip streets
+function pointOnStreet(x, z) {
+  // Skip near the two arterials (|x|≈|z|)
+  if (Math.abs(Math.abs(x) - Math.abs(z)) < 9) return true;
+  // Skip near central hub
+  if (Math.hypot(x, z) < 20) return true;
+  // Skip near radial spokes and rings
+  const r = Math.hypot(x, z);
+  for (let ring = 1; ring <= 3; ring++) {
+    if (Math.abs(r - ring * 34) < 6) return true;
+  }
+  for (let k = 0; k < 8; k++) {
+    const ang = Math.atan2(z, x);
+    const spoke = k * Math.PI / 4;
+    const diff = Math.abs(Math.atan2(Math.sin(ang - spoke), Math.cos(ang - spoke)));
+    if (diff < 0.08 && r > 15) return true;
+  }
+  return false;
+}
+
+for (let i = -7; i <= 7; i++) {
+  for (let j = -7; j <= 7; j++) {
+    const gx = i * 18;
+    const gz = j * 18;
+    const dist = Math.hypot(gx, gz);
+    if (dist > R - 14 || dist < 24) continue;
+    if (pointOnStreet(gx, gz)) continue;
+
+    const jx = gx + (Math.random() - 0.5) * 3;
+    const jz = gz + (Math.random() - 0.5) * 3;
+
+    const core = dist / R;
+    let h, w, d;
+    if (core < 0.35) {
+      h = 26 + Math.random() * 34;
+      w = 9 + Math.random() * 6;
+      d = 9 + Math.random() * 6;
+    } else if (core < 0.7) {
+      h = 16 + Math.random() * 22;
+      w = 8 + Math.random() * 5;
+      d = 8 + Math.random() * 5;
+    } else {
+      h = 8 + Math.random() * 14;
+      w = 7 + Math.random() * 4;
+      d = 7 + Math.random() * 4;
+    }
+    makeBuilding(jx, jz, w, d, h, false);
+  }
+}
+
+/* ── HUB at center (market square) ───────────────────────── */
+const hubGeo = new THREE.CylinderGeometry(8, 8, 1.5, 24);
+const hubMat = new THREE.MeshStandardMaterial({
+  color: 0x2a5078,
+  emissive: 0x22d3ee,
+  emissiveIntensity: 0.5,
+  roughness: 0.4,
+  metalness: 0.5
+});
+const hub = new THREE.Mesh(hubGeo, hubMat);
+hub.position.y = 0.75;
+hub.receiveShadow = true;
+scene.add(hub);
+
+const hubRingGeo = new THREE.TorusGeometry(9, 0.3, 8, 48);
+const hubRingMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
+const hubRing = new THREE.Mesh(hubRingGeo, hubRingMat);
+hubRing.rotation.x = -Math.PI / 2;
+hubRing.position.y = 0.1;
+scene.add(hubRing);
+
+/* ── AMBIENT DUST (city hum) ─────────────────────────────── */
+const dustGeo = new THREE.BufferGeometry();
+const dustCount = 200;
+const dustPos = new Float32Array(dustCount * 3);
+for (let i = 0; i < dustCount; i++) {
+  const r = R * 0.9 * Math.sqrt(Math.random());
+  const a = Math.random() * Math.PI * 2;
+  dustPos[i*3]     = Math.cos(a) * r;
+  dustPos[i*3 + 1] = Math.random() * 60 + 5;
+  dustPos[i*3 + 2] = Math.sin(a) * r;
+}
+dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+const dustMat = new THREE.PointsMaterial({
+  color: 0x22d3ee, size: 0.6, transparent: true, opacity: 0.35,
+  blending: THREE.AdditiveBlending, depthWrite: false
+});
+const dust = new THREE.Points(dustGeo, dustMat);
+scene.add(dust);
+
+/* ── RESIZE ──────────────────────────────────────────────── */
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h, false);
+  const a = w / h;
+  camera.left   = -frustum * a;
+  camera.right  =  frustum * a;
+  camera.top    =  frustum;
+  camera.bottom = -frustum;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ── ANIMATE ─────────────────────────────────────────────── */
+const clock = new THREE.Clock();
+let beaconPulse = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  // Rotate whole scene slowly — gives the "alive" feel
+  // Keep it minimal so it reads as a slow orbital drift, not a spin
+  scene.rotation.y = Math.sin(t * 0.06) * 0.08;
+
+  // Traffic dots along the arterials
+  traffic.forEach(dot => {
+    dot.userData.t += dot.userData.speed;
+    if (dot.userData.t > 1) {
+      dot.userData.t = 0;
+      dot.userData.onA = !dot.userData.onA;
+    }
+    const tt = dot.userData.t;
+    let x, z;
+    if (dot.userData.onA) {
+      x = -R * 0.92 + tt * R * 1.84;
+      z = -R * 0.92 + tt * R * 1.84;
+    } else {
+      x = -R * 0.92 + tt * R * 1.84;
+      z =  R * 0.92 - tt * R * 1.84;
+    }
+    dot.position.set(x, 1.2, z);
+  });
+
+  // Beacon blink on landmarks
+  beaconPulse += 0.02;
+  buildings.children.forEach(g => {
+    if (g.userData.beacon) {
+      const b = g.userData.beacon;
+      const k = (Math.sin(beaconPulse * 3 + g.position.x) + 1) / 2;
+      b.material.color.setRGB(0.4 + k * 0.6, 0.1, 0.2 + k * 0.3);
+      b.scale.setScalar(0.8 + k * 0.5);
+    }
+  });
+
+  // Subtle dust drift
+  dust.rotation.y = t * 0.02;
+
+  // Hub ring rotate
+  hubRing.rotation.z = t * 0.3;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+/* ── LEAFLET MAP (unchanged) ────────────────────────────── */
+let map = null;
+let mapVisible = false;
+const mapOverlay = document.getElementById('map-overlay');
+const mapStatus = document.getElementById('map-status');
+const keyStatus = document.getElementById('key-status');
+const toggleBtn = document.getElementById('toggle-map');
+
+function initMap() {
+  if (map) return;
+  log('initMap() called');
+  map = L.map('map', { zoomControl: false, attributionControl: true })
+          .setView([-33.9608, 25.6022], 5);
+
+  const esriSat = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { attribution: 'Esri, Maxar', maxZoom: 19 }
+  );
+  const cartoDark = L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    { attribution: '&copy; OpenStreetMap &copy; CartoDB', maxZoom: 19 }
+  );
+
+  esriSat.addTo(map);
+  mapStatus.textContent = 'MAP: Esri Satellite (demo fallback)';
+  keyStatus.textContent = 'KEY: demo - using Esri';
+
+  L.marker([-33.9608, 25.6022]).addTo(map).bindPopup('Port Elizabeth - Home');
+  L.marker([-26.534, 27.844]).addTo(map).bindPopup('Vanderbijlpark');
+}
+
+function toggleMap() {
+  mapVisible = !mapVisible;
+  mapOverlay.style.display = mapVisible ? 'block' : 'none';
+  toggleBtn.textContent = mapVisible ? '✕ Map' : '🗺 Map';
+  toggleBtn.classList.toggle('on', mapVisible);
+  if (mapVisible) {
+    if (!map) initMap();
+    else map.invalidateSize();
+  }
+  log('Map visible: ' + mapVisible);
+}
+
+toggleBtn.addEventListener('click', toggleMap);
+
+document.getElementById('toggle-fallback').addEventListener('click', () => {
+  if (!map) return;
+  map.eachLayer(l => { if (l instanceof L.TileLayer) map.removeLayer(l); });
+  const isDark = document.getElementById('toggle-fallback').classList.contains('on');
+  if (isDark) {
+    L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19 }
+    ).addTo(map);
+    mapStatus.textContent = 'MAP: Esri Satellite';
+  } else {
+    L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      { maxZoom: 19 }
+    ).addTo(map);
+    mapStatus.textContent = 'MAP: Carto Dark';
+  }
+  document.getElementById('toggle-fallback').classList.toggle('on');
+});
+
+/* ── LIVE FEED (Task 26 operator patch) ────────────────────
+   TRUST / CITATIONS / FEED are computed from the VVU app's real API (same origin
+   when served from the workspace): the WORM ledger chain, its record count and
+   the live telemetry frame count. Computed, not claimed — and when the file is
+   opened standalone (no API reachable) the slots honestly show placeholders. */
+(async () => {
+  try {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch('/api/vvu/analytics', { signal: ctrl.signal });
+    clearTimeout(to);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    const certified = (d.gates || []).filter(g => g.status === 'CERTIFIED').length;
+    const total = (d.gates || []).length;
+    const worm = d.worm || { count: 0, chainValid: false };
+    document.getElementById('trust-label').textContent = worm.chainValid ? 'VALID' : 'CHECK';
+    document.getElementById('citations-label').textContent = worm.count.toLocaleString();
+    document.getElementById('key-status').textContent =
+      'FEED: LIVE · ' + (d.telemetryCount || 0).toLocaleString() + ' frames';
+    log('Live feed: WORM ' + worm.count.toLocaleString() + ' records · chain ' +
+        (worm.chainValid ? 'VALID' : 'CHECK') + ' · trust gates ' + certified + '/' + total + ' CERTIFIED');
+  } catch (e) {
+    document.getElementById('key-status').textContent = 'FEED: OFFLINE · standalone';
+    log('Live feed: offline — standalone mode (values unavailable, no placeholders faked).');
+  }
+})();
+
+/* ── BOOT ──────────────────────────────────────────────────
+   Task 26 operator patch: the CITY is the show — boot reveals it directly.
+   The map is one click away (button starts in the closed state, 🗺 Map). */
+const boot = document.getElementById('boot');
+setTimeout(() => {
+  boot.classList.add('done');
+  setTimeout(() => {
+    boot.remove();
+  }, 800);
+}, 1800);
+
+log('VVU Dashboard loaded.');
+log('City rendered: ' + (buildings.children.length) + ' buildings, 6 landmarks.');
+</script>
+</body>
+</html>

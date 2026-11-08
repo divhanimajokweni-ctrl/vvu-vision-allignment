@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VVU Comprehensive Study Planning Framework — VVU-NMU-BSP-FRAMEWORK-2026-001</title>
+<style>
+  /* ═══════════════════════════════════════════════════════════════════
+     VVU Comprehensive Study Planning Framework
+     Reference: VVU-NMU-BSP-FRAMEWORK-2026-001
+     A4 portrait (210mm × 297mm), Paged.js polyfill for pagination.
+     ═══════════════════════════════════════════════════════════════════ */
+
+  @page {
+    size: 210mm 297mm;
+    margin: 0;
+    @top-left   { content: "VVU-NMU-BSP-FRAMEWORK-2026-001"; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 8pt; color: #4e6172; }
+    @top-right  { content: "Venture Vision Ubuntu"; font-family: Georgia, "Times New Roman", serif; font-size: 8.5pt; color: #4e6172; font-style: italic; }
+    @bottom-left  { content: "COMPREHENSIVE STUDY PLANNING FRAMEWORK"; font-family: ui-monospace, monospace; font-size: 7.5pt; color: #4e6172; letter-spacing: 0.04em; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: ui-monospace, monospace; font-size: 8pt; color: #4e6172; }
+  }
+
+  /* The cover page gets NO running header/footer (named page). */
+  @page cover {
+    margin: 0;
+    @top-left { content: none; }
+    @top-right { content: none; }
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    color: #1a2330;
+    font-family: Georgia, "Times New Roman", "Liberation Serif", serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Browser preview: shrunk so a multi-page doc fits on screen. */
+  @media screen {
+    body { background: #d8d6d0; padding: 24px; }
+    .page { box-shadow: 0 6px 20px rgba(10,14,19,0.18); margin: 0 auto 24px; }
+  }
+
+  /* ─── Page container ────────────────────────────────────────────── */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    page-break-after: always;
+    padding: 25mm 20mm 22mm 20mm;
+    background: #ffffff;
+    color: #1a2330;
+    position: relative;
+    box-sizing: border-box;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* Cover page — full-bleed dark terminal aesthetic */
+  .cover {
+    page: cover;
+    background:
+      radial-gradient(ellipse at 18% 22%, rgba(55, 214, 160, 0.10) 0%, transparent 38%),
+      radial-gradient(ellipse at 82% 78%, rgba(58, 169, 245, 0.08) 0%, transparent 42%),
+      linear-gradient(155deg, #0a0e13 0%, #0e141c 38%, #1a2330 78%, #0e141c 100%);
+    color: #dce8f2;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 297mm;
+    overflow: hidden;
+  }
+
+  .cover-inner {
+    padding: 28mm 22mm 22mm 22mm;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Faint grid pattern overlay (decorative) */
+  .cover::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(28,40,54,0.6) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(28,40,54,0.6) 1px, transparent 1px);
+    background-size: 16mm 16mm;
+    background-position: -1mm -1mm;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .cover-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #26374a;
+    padding-bottom: 18px;
+    margin-bottom: 14mm;
+  }
+  .cover-mark {
+    width: 56px; height: 56px;
+    border: 1.5px solid #9d8231;
+    color: #9d8231;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-weight: 700;
+    font-size: 18pt;
+    letter-spacing: 0.02em;
+    background: rgba(157, 130, 49, 0.06);
+  }
+  .cover-brand-text {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .cover-brand-text .name {
+    font-size: 18pt;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: #dce8f2;
+    line-height: 1;
+  }
+  .cover-brand-text .sub {
+    font-size: 8pt;
+    color: #75899c;
+    letter-spacing: 0.32em;
+    margin-top: 5px;
+    text-transform: uppercase;
+  }
+
+  .cover-eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 8.5pt;
+    letter-spacing: 0.36em;
+    color: #9d8231;
+    text-transform: uppercase;
+    margin-bottom: 14mm;
+  }
+  .cover-eyebrow .pipe { color: #4e6172; margin: 0 10px; }
+
+  .cover-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 38pt;
+    line-height: 1.06;
+    color: #ffffff;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 12mm 0;
+    max-width: 150mm;
+  }
+  .cover-title .accent {
+    color: #9d8231;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .cover-subtitle {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 13pt;
+    line-height: 1.55;
+    color: #b7c5d1;
+    font-style: italic;
+    margin: 0 0 18mm 0;
+    max-width: 145mm;
+    border-left: 2px solid #9d8231;
+    padding-left: 12mm;
+  }
+
+  .cover-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8mm 14mm;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 8.5pt;
+    margin-bottom: 14mm;
+    max-width: 155mm;
+  }
+  .cover-meta .k {
+    color: #4e6172;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 7.5pt;
+    margin-bottom: 3px;
+  }
+  .cover-meta .v {
+    color: #dce8f2;
+    font-size: 10pt;
+    letter-spacing: 0.02em;
+    line-height: 1.35;
+  }
+
+  .cover-footer {
+    border-top: 1px solid #26374a;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 7.5pt;
+    color: #75899c;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .cover-footer .status {
+    color: #9d8231;
+    font-weight: 700;
+    letter-spacing: 0.32em;
+    font-size: 8pt;
+  }
+  .cover-footer .ref { color: #dce8f2; letter-spacing: 0.18em; }
+
+  /* ─── Table of contents ─────────────────────────────────────────── */
+  .toc-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 24pt;
+    color: #1a2330;
+    margin: 0 0 14mm 0;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+  .toc-eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 8pt;
+    letter-spacing: 0.32em;
+    color: #9d8231;
+    text-transform: uppercase;
+    margin-bottom: 6mm;
+  }
+  .toc-rule {
+    height: 10px;
+    background: linear-gradient(90deg, #1a2330 0%, #1a2330 60%, #9d8231 60%, #9d8231 100%);
+    margin-bottom: 14mm;
+    border-radius: 2px;
+  }
+  .toc {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  .toc li {
+    display: flex;
+    align-items: baseline;
+    gap: 4mm;
+    padding: 3.2mm 0;
+    border-bottom: 1px dotted #c8c2b6;
+    font-size: 10.5pt;
+    color: #1a2330;
+  }
+  .toc li .num {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color: #9d8231;
+    font-size: 9pt;
+    width: 18mm;
+    flex-shrink: 0;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .toc li .label {
+    flex: 0 1 auto;
+    color: #1a2330;
+    margin-right: auto;
+  }
+  .toc li .dots {
+    flex: 1 1 auto;
+    margin: 0 4mm;
+    border-bottom: 1px dotted transparent;
+  }
+  .toc li .pg {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color: #4e6172;
+    font-size: 9pt;
+    width: 10mm;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .toc li.part { padding-top: 5mm; }
+  .toc li.part .label {
+    font-weight: 700;
+    color: #1a2330;
+    font-size: 11pt;
+    letter-spacing: 0.02em;
+  }
+  .toc li.sub { padding-left: 18mm; padding-top: 1.2mm; padding-bottom: 1.2mm; }
+  .toc li.sub .label { color: #4e6172; font-style: italic; font-size: 9.5pt; }
+  .toc li.appendix .num { color: #1a2330; }
+
+  .toc-note {
+    margin-top: 14mm;
+    padding: 6mm 8mm;
+    background: #f0efec;
+    border-left: 3px solid #9d8231;
+    font-family: Georgia, serif;
+    font-size: 9pt;
+    color: #4e6172;
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Section heading system ─────────────────────────────────────── */
+  .part-banner {
+    border-top: 2.5px solid #1a2330;
+    border-bottom: 0.5px solid #1a2330;
+    padding: 4mm 0 3mm 0;
+    margin-bottom: 8mm;
+    display: flex;
+    align-items: baseline;
+    gap: 8mm;
+  }
+  .part-banner .part-num {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color: #9d8231;
+    font-size: 10pt;
+    letter-spacing: 0.28em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .part-banner .part-name {
+    font-family: Georgia, "Times New Roman", serif;
+    color: #1a2330;
+    font-size: 19pt;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    line-height: 1.1;
+  }
+
+  h1.section-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 16pt;
+    color: #1a2330;
+    margin: 8mm 0 4mm 0;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    line-height: 1.18;
+    border-bottom: 1px solid #c8c2b6;
+    padding-bottom: 1.5mm;
+  }
+  h1.section-title:first-of-type { margin-top: 0; }
+
+  h2.subsection {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 12.5pt;
+    color: #1a2330;
+    margin: 6mm 0 2.5mm 0;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  h3.sub-subsection {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 9.5pt;
+    color: #9d8231;
+    margin: 4mm 0 1.5mm 0;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  /* ─── Body text ──────────────────────────────────────────────────── */
+  p { margin: 0 0 3.4mm 0; text-align: justify; hyphens: auto; }
+  p.lead {
+    font-size: 11.5pt;
+    line-height: 1.55;
+    color: #1a2330;
+    border-left: 2px solid #9d8231;
+    padding-left: 5mm;
+    margin: 0 0 6mm 0;
+    font-style: italic;
+  }
+  p.signature {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 8.5pt;
+    color: #4e6172;
+    text-align: center;
+    margin-top: 12mm;
+    letter-spacing: 0.06em;
+    border-top: 1px solid #c8c2b6;
+    padding-top: 4mm;
+  }
+
+  /* ─── Lists ──────────────────────────────────────────────────────── */
+  ol, ul { margin: 0 0 4mm 0; padding-left: 7mm; }
+  ol li, ul li { margin: 0 0 1.6mm 0; text-align: justify; }
+  ol li::marker { color: #9d8231; font-weight: 700; font-family: ui-monospace, monospace; }
+  ul li::marker { color: #9d8231; }
+
+  /* Numbered rules (PART 1.4 governing rules) */
+  .rules {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 5mm 0;
+    counter-reset: rule-counter;
+  }
+  .rules li {
+    counter-increment: rule-counter;
+    padding: 3mm 0 3mm 16mm;
+    position: relative;
+    border-bottom: 1px dotted #c8c2b6;
+  }
+  .rules li:last-child { border-bottom: none; }
+  .rules li::before {
+    content: counter(rule-counter);
+    position: absolute;
+    left: 0; top: 2.8mm;
+    width: 11mm; height: 11mm;
+    background: #1a2330;
+    color: #9d8231;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11pt;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .rules li .rule-name {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-weight: 700;
+    color: #1a2330;
+    font-size: 10pt;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-right: 4mm;
+  }
+
+  /* ─── Tables ─────────────────────────────────────────────────────── */
+  .table-wrap {
+    margin: 5mm 0 6mm 0;
+    page-break-inside: auto;
+    background: #0a0e13;
+    padding: 1px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 1px 0;
+    font-size: 9pt;
+    line-height: 1.4;
+    font-family: Georgia, "Times New Roman", serif;
+    color: #1a2330;
+    background: #0a0e13;
+  }
+  table thead th {
+    background: #1a2330;
+    color: #ffffff;
+    padding: 3mm 4mm;
+    text-align: left;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 8.5pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  table tbody td {
+    padding: 3mm 4mm;
+    border: none;
+    vertical-align: top;
+  }
+  table tbody tr:nth-child(odd) td { background: #f0efec; }
+  table tbody tr:nth-child(even) td { background: #ffffff; }
+  table tbody tr { page-break-inside: avoid; }
+  table .mono {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 8.5pt;
+    letter-spacing: 0.02em;
+  }
+  table .num {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    text-align: right;
+    white-space: nowrap;
+  }
+  table tr.total td {
+    background: #1a2330 !important;
+    color: #ffffff;
+    font-weight: 700;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 9pt;
+    letter-spacing: 0.04em;
+  }
+  table tr.total td.mono { color: #9d8231; }
+
+  /* ─── Callouts ───────────────────────────────────────────────────── */
+  .callout {
+    margin: 5mm 0;
+    padding: 5mm 7mm;
+    background: #f0efec;
+    border-left: 4px solid #9d8231;
+    page-break-inside: avoid;
+  }
+  .callout .co-label {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 7.5pt;
+    letter-spacing: 0.28em;
+    color: #9d8231;
+    text-transform: uppercase;
+    margin-bottom: 2.5mm;
+    font-weight: 700;
+  }
+  .callout .co-body {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 10pt;
+    color: #1a2330;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* ─── Spec block (for environment cards in PART 2) ──────────────── */
+  .env-card {
+    margin: 4mm 0 5mm 0;
+    border: 1px solid #c8c2b6;
+    background: #fbfaf7;
+    page-break-inside: avoid;
+  }
+  .env-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 3.5mm 5mm;
+    border-bottom: 1px solid #c8c2b6;
+    background: #f0efec;
+  }
+  .env-card-header .env-name {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1a2330;
+    letter-spacing: 0.14em;
+  }
+  .env-card-header .env-acc {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 7.5pt;
+    color: #9d8231;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .env-card-body {
+    padding: 4mm 5mm 3mm 5mm;
+  }
+  .env-card-body .maxim {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 10.5pt;
+    color: #1a2330;
+    font-style: italic;
+    margin-bottom: 3mm;
+    padding: 2mm 0 2mm 5mm;
+    border-left: 2px solid #9d8231;
+  }
+  .env-card-body p { font-size: 9.5pt; line-height: 1.5; margin-bottom: 3mm; }
+
+  /* ─── Code-like blocks (for reference numbers, keys) ────────────── */
+  .mono-block {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 8.5pt;
+    background: #0e141c;
+    color: #dce8f2;
+    padding: 4mm 6mm;
+    margin: 4mm 0;
+    line-height: 1.55;
+    border-left: 3px solid #9d8231;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .mono-block .key { color: #9d8231; }
+  .mono-block .val { color: #37d6a0; }
+
+  /* ─── Inline elements ───────────────────────────────────────────── */
+  code, .ref-num {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 9pt;
+    color: #1a2330;
+    background: #f0efec;
+    padding: 0.4mm 1.4mm;
+    letter-spacing: 0.02em;
+  }
+  strong { color: #1a2330; font-weight: 700; }
+  em { color: #1a2330; }
+
+  /* ─── Appendix banner ────────────────────────────────────────────── */
+  .appendix-banner {
+    background: #1a2330;
+    color: #ffffff;
+    padding: 5mm 7mm;
+    margin-bottom: 6mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .appendix-banner .app-id {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 10pt;
+    color: #9d8231;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .appendix-banner .app-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 14pt;
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  /* ─── End marker ────────────────────────────────────────────────── */
+  .end-marker {
+    margin-top: 14mm;
+    padding: 6mm 0;
+    border-top: 2px solid #9d8231;
+    border-bottom: 2px solid #9d8231;
+    text-align: center;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 8.5pt;
+    color: #4e6172;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .end-marker .ref { color: #9d8231; font-weight: 700; }
+
+  /* ─── Avoid breaking inside these ────────────────────────────────── */
+  .avoid-break { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     COVER PAGE
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page cover">
+  <div class="cover-inner">
+
+    <!-- Brand bar -->
+    <div>
+      <div class="cover-brand">
+        <div class="cover-mark">VVU</div>
+        <div class="cover-brand-text">
+          <div class="name">VENTURE VISION UBUNTU</div>
+          <div class="sub">Engineering &amp; Programmes Division</div>
+        </div>
+      </div>
+
+      <div class="cover-eyebrow">
+        Study Planning Framework <span class="pipe">/</span> Version 1.0 <span class="pipe">/</span> Proposed
+      </div>
+
+      <h1 class="cover-title">
+        Comprehensive Study<br>
+        Planning Framework
+      </h1>
+
+      <p class="cover-subtitle">
+        A verifiable-evidence stack for water and sanitation infrastructure —
+        anchored at Nelson Mandela University, sponsored by the Department of
+        Water and Sanitation and the Nelson Mandela Bay Metropolitan Municipality,
+        and offered to identified research partners for the 2026–2028 study cycle.
+      </p>
+
+      <!-- Meta grid -->
+      <div class="cover-meta">
+        <div>
+          <div class="k">Reference</div>
+          <div class="v">VVU-NMU-BSP-FRAMEWORK-2026-001</div>
+        </div>
+        <div>
+          <div class="k">Document Status</div>
+          <div class="v">PROPOSED &mdash; for institutional review</div>
+        </div>
+        <div>
+          <div class="k">Prepared by</div>
+          <div class="v">VVU Engineering &amp; Programmes Division<br>VVU Principal Investigator</div>
+        </div>
+        <div>
+          <div class="k">Prepared for</div>
+          <div class="v">Nelson Mandela University &mdash; Office of the DVC: Research, Innovation and Development</div>
+        </div>
+        <div>
+          <div class="k">Recipients</div>
+          <div class="v">NMU &middot; DWS &middot; Nelson Mandela Bay Metro &middot; CSIR &middot; WRC</div>
+        </div>
+        <div>
+          <div class="k">Submission Cycle</div>
+          <div class="v">Frame Review Meeting &mdash; within 30 days of receipt</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer bar -->
+    <div class="cover-footer">
+      <div class="status">PROPOSED</div>
+      <div class="ref">REF&nbsp;//&nbsp;VVU-NMU-BSP-FRAMEWORK-2026-001</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="toc-eyebrow">Document Map</div>
+  <h1 class="toc-title">Table of Contents</h1>
+  <div class="toc-rule"></div>
+
+  <ol class="toc">
+    <li class="part"><span class="num">O</span><span class="label">Orientation &mdash; prepared for / by, purpose, governing rules</span><span class="pg">3</span></li>
+
+    <li class="part"><span class="num">1</span><span class="label">Part 1 &mdash; What the Study Is</span><span class="pg">5</span></li>
+    <li class="sub"><span class="num">1.1</span><span class="label">The study in one paragraph</span><span class="pg">5</span></li>
+    <li class="sub"><span class="num">1.2</span><span class="label">What the study is not</span><span class="pg">5</span></li>
+    <li class="sub"><span class="num">1.3</span><span class="label">Why a study, and not a deployment</span><span class="pg">6</span></li>
+    <li class="sub"><span class="num">1.4</span><span class="label">The five questions the study asks</span><span class="pg">6</span></li>
+    <li class="sub"><span class="num">1.5</span><span class="label">The discipline the study imposes</span><span class="pg">7</span></li>
+
+    <li class="part"><span class="num">2</span><span class="label">Part 2 &mdash; The Five Environments</span><span class="pg">8</span></li>
+    <li class="sub"><span class="num">2.1</span><span class="label">FORGE &mdash; the creation environment</span><span class="pg">8</span></li>
+    <li class="sub"><span class="num">2.2</span><span class="label">BENCH &mdash; the verification environment</span><span class="pg">9</span></li>
+    <li class="sub"><span class="num">2.3</span><span class="label">FIRE &mdash; the adversarial testing environment</span><span class="pg">9</span></li>
+    <li class="sub"><span class="num">2.4</span><span class="label">FIELD &mdash; the observation environment</span><span class="pg">10</span></li>
+    <li class="sub"><span class="num">2.5</span><span class="label">PRESS &mdash; the communication environment</span><span class="pg">10</span></li>
+    <li class="sub"><span class="num">2.6</span><span class="label">The circuit</span><span class="pg">11</span></li>
+
+    <li class="part"><span class="num">3</span><span class="label">Part 3 &mdash; The Five Deployments</span><span class="pg">12</span></li>
+    <li class="part"><span class="num">4</span><span class="label">Part 4 &mdash; The Pilot Programme</span><span class="pg">13</span></li>
+    <li class="sub"><span class="num">4.1</span><span class="label">The pilot's purpose</span><span class="pg">13</span></li>
+    <li class="sub"><span class="num">4.2</span><span class="label">The pilot's scope</span><span class="pg">13</span></li>
+    <li class="sub"><span class="num">4.3</span><span class="label">The pilot's success criteria</span><span class="pg">14</span></li>
+
+    <li class="part"><span class="num">5</span><span class="label">Part 5 &mdash; The Research Programme</span><span class="pg">15</span></li>
+    <li class="sub"><span class="num">5.1</span><span class="label">The research programme's purpose</span><span class="pg">15</span></li>
+    <li class="sub"><span class="num">5.2</span><span class="label">The research programme's structure</span><span class="pg">15</span></li>
+    <li class="sub"><span class="num">5.3</span><span class="label">Ethics and clearance</span><span class="pg">16</span></li>
+
+    <li class="part"><span class="num">6</span><span class="label">Part 6 &mdash; What NMU Is Being Asked For</span><span class="pg">17</span></li>
+    <li class="part"><span class="num">7</span><span class="label">Part 7 &mdash; What NMU Gets</span><span class="pg">19</span></li>
+
+    <li class="part"><span class="num">8</span><span class="label">Part 8 &mdash; The Proposed Timeline</span><span class="pg">21</span></li>
+    <li class="part"><span class="num">9</span><span class="label">Part 9 &mdash; The Facility Anchor Role</span><span class="pg">22</span></li>
+    <li class="part"><span class="num">10</span><span class="label">Part 10 &mdash; The Governing Structure</span><span class="pg">24</span></li>
+    <li class="part"><span class="num">11</span><span class="label">Part 11 &mdash; What the Study Aims to Establish</span><span class="pg">26</span></li>
+    <li class="part"><span class="num">12</span><span class="label">Part 12 &mdash; Immediate Next Step</span><span class="pg">27</span></li>
+
+    <li class="part appendix"><span class="num">A</span><span class="label">Appendix A &mdash; Entity Details</span><span class="pg">28</span></li>
+    <li class="part appendix"><span class="num">B</span><span class="label">Appendix B &mdash; Facility Specification</span><span class="pg">30</span></li>
+    <li class="part appendix"><span class="num">C</span><span class="label">Appendix C &mdash; Ethics Clearance Timeline</span><span class="pg">31</span></li>
+    <li class="part appendix"><span class="num">D</span><span class="label">Appendix D &mdash; Cost Split</span><span class="pg">32</span></li>
+    <li class="part appendix"><span class="num">E</span><span class="label">Appendix E &mdash; Voice Law</span><span class="pg">34</span></li>
+  </ol>
+
+  <div class="toc-note">
+    This Framework is written under five governing rules (verifiability, provenance, voice law,
+    irreversibility with correction, and authorisation before action) which are stated in full in
+    the Orientation. Where any section appears to conflict with one of these rules, the rule
+    prevails and the section is to be read down to conform to it. The Framework is a study plan
+    for institutional review &mdash; it is not a contract, a tender specification, or a procurement document.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     ORIENTATION
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">O · ORIENTATION</span>
+    <span class="part-name">Prepared for, prepared by, purpose, governing rules</span>
+  </div>
+
+  <h2 class="subsection">Prepared for</h2>
+  <p>Nelson Mandela University (NMU) &mdash; Office of the Deputy Vice-Chancellor: Research, Innovation and Development; Faculty of Engineering, the Built Environment and Information Technology; and the Centre for Water, Sanitation and Environmental Research (cWASER).</p>
+
+  <h2 class="subsection">Prepared by</h2>
+  <p>Venture Vision Ubuntu (VVU) &mdash; Engineering and Programmes Division. Authored by the VVU Principal Investigator in collaboration with the VVU Governance Counsel.</p>
+
+  <h2 class="subsection">Purpose of this document</h2>
+  <p>This Framework sets out, in plain institutional language, the scope, methods, deliverables, governance and timeline of a proposed multi-year study that would deploy the VVU verifiable-evidence stack across a defined set of water and sanitation infrastructure assets in the Nelson Mandela Bay Metropolitan Municipality and adjoining service areas. It is submitted to NMU, the Department of Water and Sanitation (DWS), the Nelson Mandela Bay Municipality, and to identified research partners as a basis for formal partnership negotiation.</p>
+  <p>The document is intended to be read in full before any memorandum of understanding is drafted. It is deliberately comprehensive: the five environments, the five deployments, the pilot programme, the research programme, the asks, the returns, the timeline, the anchor role, the governing structure and the study's stated aim are presented in a single coherent argument rather than split across annexures. This is so that every reviewer, regardless of which section they are responsible for, can read every other section their decision touches.</p>
+  <p>The Framework is not a contract. It is not a tender specification. It is not a procurement document. It is a study plan that, on approval, will give rise to a contract, a procurement plan and a research protocol &mdash; each separately negotiated and separately governed. Nothing in this document commits any party to anything. Everything in this document is, however, written as though it were already binding, so that reviewers can see exactly what they would be committing to.</p>
+
+  <h2 class="subsection">Governing rules</h2>
+  <p>The Framework is written under five governing rules, and every section of the document is answerable to them. They are stated here in the order in which they govern the work, not in the order in which they appear in the body.</p>
+
+  <ol class="rules">
+    <li><span class="rule-name">Verifiability.</span> Every claim made by the system, about the system, is independently recomputable. No claim is published that cannot be re-derived from primary observations by a party other than the one that made the claim. This rule is the reason SHA-256, content-addressed storage, canonical JSON, Ed25519 signatures and a write-once read-many (WORM) ledger are present in the stack. They are not architectural ornaments; they are the load-bearing structure under the entire study.</li>
+    <li><span class="rule-name">Provenance.</span> Every observation, every artefact, every published statement carries a provenance class. There are four: device-observed, operator-authored, harness-generated and synthetic. No class is privileged over another; each is permitted in defined surfaces and forbidden in others. Provenance is the contract the system makes with its readers: it tells them, in machine-checkable form, where a thing came from.</li>
+    <li><span class="rule-name">Voice law.</span> The system refuses a small number of words and phrases &mdash; unassailable, fully operational, production-ready, certified &mdash; on the grounds that they over-claim. Refusing them is a constraint on the writers, not on the readers. The readers are entitled to language that does not promise more than the evidence can carry.</li>
+    <li><span class="rule-name">Irreversibility with correction.</span> Published material is never silently altered. Errors are corrected by versioned corrections that preserve the original; retractions are flagged, never removed. This rule applies to observations, to publications and to the ledger itself.</li>
+    <li><span class="rule-name">Authorisation before action.</span> No test, no adversarial case, no publication, no retraction runs without an explicit, recorded authorisation whose scope and time window are machine-checked at the moment of action. Authorisation is a precondition, not a record.</li>
+  </ol>
+
+  <p>These five rules are referenced by name throughout the document. Where a section appears to conflict with one of them, the rule prevails and the section is to be read down to conform to it.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 1
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 1</span>
+    <span class="part-name">What the Study Is</span>
+  </div>
+
+  <h2 class="subsection">1.1 The study in one paragraph</h2>
+  <p class="lead">The study proposes to install, instrument and operate the VVU verifiable-evidence stack across a defined set of water and sanitation infrastructure assets over a period of thirty months, and to do so in a manner that produces a reusable, independently verifiable evidence base concerning the condition, performance and failure modes of those assets.</p>
+  <p>The stack comprises five software environments (FORGE, BENCH, FIRE, FIELD, PRESS), five physical deployments (reservoir telemetry, treatment-plant instrumentation, distribution-network pressure logging, consumer-side flow monitoring, and an integrated municipal dashboard), a pilot programme of constrained scope, and a research programme whose findings will be published in the open literature and in machine-checkable form. The study is anchored at NMU, which provides physical facility space, faculty time and a long-duration institutional commitment; it is sponsored by DWS and the municipality, which provide the assets under study and the access to them; and it is partnered by research organisations whose role is to design the experimental protocol and to publish its findings.</p>
+
+  <h2 class="subsection">1.2 What the study is not</h2>
+  <p>The study is not a procurement of a water-management system. The municipality will continue to operate its existing SCADA, telemetry and billing systems; the study runs alongside these systems, drawing on their data where licensed to do so and instrumenting assets that the existing systems do not cover. The study is not a regulatory submission. DWS will receive the study's findings and may use them to inform future regulatory guidance, but the study itself does not produce regulatory text. The study is not a commercial pilot for the purposes of producing a marketable product. Although the VVU stack is a working system and will be operated as a working system throughout the study, the contract under which it is operated prohibits its sale, sublicensing or commercial deployment for the duration of the study and for a defined hold-out period thereafter. The study is not a security assessment of the municipality's existing systems. Although the VVU FIRE environment runs adversarial tests, those tests are confined to the VVU stack itself; no penetration or stress testing is performed against the municipality's operational systems.</p>
+
+  <h2 class="subsection">1.3 Why a study, and not a deployment</h2>
+  <p>A deployment, in the commercial sense, optimises for uptime, throughput and user satisfaction. A study optimises for the integrity of the evidence produced about the deployment. These are not the same thing. A deployment that achieves uptime by suppressing error logs produces no evidence about its failure modes; a study that achieves evidence integrity by running slowly and carefully may produce less throughput than a deployment. The study is shaped by the second of these priorities. Every design choice &mdash; the five-environment separation of concerns, the WORM ledger, the canonical-JSON content hashing, the refusal of voice-law-banned words, the requirement for explicit authorisation before any adversarial action &mdash; is made so that the evidence produced by the study can be inspected, re-derived and trusted by parties who were not present when the evidence was generated. A pure deployment does not need this; a study does.</p>
+
+  <h2 class="subsection">1.4 The five questions the study asks</h2>
+  <p>The study is organised around five questions. They are stated here in their plain form; Part 11 states them in their formal, testable form.</p>
+  <ol>
+    <li>Can a verifiable-evidence stack be operated, by an institution, over a long duration, at infrastructure scale, without the integrity of the evidence degrading?</li>
+    <li>Where the stack fails &mdash; and it will fail, in ways both known and unknown &mdash; are the failure modes detectable by the stack itself, recoverable by the institution, and explainable to a third party?</li>
+    <li>Does the separation of observation, verification, adversarial testing and publication into distinct environments, each with its own maxim and its own self-test suite, produce evidence that is more trustworthy than a single integrated system would produce?</li>
+    <li>Does the cost of operating the stack at infrastructure scale fall within a defensible range relative to the value of the evidence produced, and does that cost decrease with the duration of operation?</li>
+    <li>Can the stack, operated as a study, produce findings that are usable by a regulator (DWS), a service authority (the municipality), an academic community (NMU and partners) and the public, without the four audiences being able to extract different evidence from the same record?</li>
+  </ol>
+
+  <h2 class="subsection">1.5 The discipline the study imposes</h2>
+  <p>The study imposes a discipline on itself that is heavier than the discipline a commercial deployment would impose. It does this for two reasons. First, the study's evidence is intended to be used by parties who did not participate in producing it &mdash; and the only way to make evidence usable at a distance is to make it difficult to tamper with locally. Second, the study is intended to fail visibly. The VVU FIRE environment exists to break the VVU BENCH environment in defined ways, so that the conditions under which BENCH holds are made explicit. A study that hid its own failure modes would defeat its purpose. The discipline &mdash; voice law, authorisation gates, version preservation, provenance labelling, canonical hashing, append-only logging &mdash; is the means by which the study makes its failure modes visible.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 2 — Five Environments (page 1 of 2)
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 2</span>
+    <span class="part-name">The Five Environments</span>
+  </div>
+
+  <p>The VVU stack is structured as five environments, each with a single responsibility, a single maxim, a self-test suite and a gap register. The environments are not layers in a stack; they are stations on a circuit. An artefact moves through them, and at each station it acquires a different kind of integrity. The separation is deliberate: it prevents the integrity of one station from being compromised by the workload of another.</p>
+
+  <div class="env-card avoid-break">
+    <div class="env-card-header">
+      <span class="env-name">FORGE</span>
+      <span class="env-acc">spec · VVU-ENV-FORGE-2026-001 · accent purple</span>
+    </div>
+    <div class="env-card-body">
+      <div class="maxim">"status may only be PROPOSED"</div>
+      <p>FORGE is the environment in which artefacts are authored. An artefact, in VVU terms, is anything the system produces: a sensor reading envelope, a learning module, a spreadsheet row, a plugin scaffold, a harness run. FORGE writes these artefacts, hashes them and signs them, but it does not assert their truth. The maxim &mdash; status may only be PROPOSED &mdash; is the contract FORGE makes with the rest of the stack: anything that emerges from FORGE is a proposal, not a finding. The truth of an artefact is established downstream, in BENCH, or not at all.</p>
+      <p>FORGE carries four provenance classes (device-observed, operator-authored, harness-generated, synthetic) and refuses to write any artefact whose provenance is not declared. It carries four surfaces (Plugin-Creator-Studio, STUDI, spreadsheet, Validation-Dashboard), each of which is a defined mode of authoring with its own permitted operations. FORGE's self-test suite runs twelve checks on every mount: SHA-256 known-answer tests, round-trip recomputation, PROPOSED-only enforcement against six forbidden status values, canonical key-sort invariance, single-byte digest divergence, envelope self-verify, provenance-class coverage, surface coverage, voice law, and a store round-trip. The verdict is binary: ALL 12 CHECKS PASSED, or a count of failures.</p>
+      <p>The gap register in FORGE tracks six items: artefact creation, proposed-claim enforcement, plugin studio, STUDI module review, spreadsheet rows, and validation-dash runs. Each item is marked RECONSTRUCTED (carried over from a reference design and rebuilt), BUILT (newly implemented to spec), ABSENT (planned but not implemented), UNREACHABLE (planned but blocked), or SPEC-ONLY (defined but not built). The register is the FORGE team's standing audit of its own completeness; it is published with the study.</p>
+    </div>
+  </div>
+
+  <div class="env-card avoid-break">
+    <div class="env-card-header">
+      <span class="env-name">BENCH</span>
+      <span class="env-acc">spec · VVU-ENV-BENCH-2026-001 · accent green</span>
+    </div>
+    <div class="env-card-body">
+      <div class="maxim">"verification is recomputation"</div>
+      <p>BENCH is the environment in which artefacts from FORGE are verified. Verification, in VVU terms, is not a label; it is the act of recomputing a claim from its primary inputs and comparing the result with the claim as published. BENCH holds the WORM ledger &mdash; the write-once read-many chain that records every verified artefact &mdash; and the Ed25519 signature keys that bind each verified entry to its verifier. BENCH holds two verification policies: the chain-linkage policy (which checks that each row's prev_hash matches the previous row's digest) and the payload-hash policy (which checks that each row's payload, when canonicalised and hashed, matches the row's stored digest). Both policies are applied on every verification, and both must pass for an artefact to be marked VERIFIED.</p>
+      <p>BENCH's self-test suite runs nineteen checks, including the SHA-256 known-answer test against the empty input and the string "abc", the Ed25519 sign-then-verify round trip, the chain-linkage and payload-hash policy checks, the tamper-detection test (in which a single byte is flipped in a row and the chain correctly refuses to verify), the canonical-JSON key-sort invariance test, the voice-law test, and a store round-trip. The verdict is binary: ALL 19 CHECKS PASSED, or a count of failures. The gap register in BENCH tracks six items: chain integrity, policy enforcement, verification workflow, the independent verifier, self-test coverage and the operation log.</p>
+    </div>
+  </div>
+
+  <div class="env-card avoid-break">
+    <div class="env-card-header">
+      <span class="env-name">FIRE</span>
+      <span class="env-acc">spec · VVU-ENV-FIRE-2026-001 · accent red</span>
+    </div>
+    <div class="env-card-body">
+      <div class="maxim">"Fire never emits PROVEN"</div>
+      <p>FIRE is the environment in which the VVU stack is deliberately broken, in defined ways, so that the conditions under which BENCH holds are made explicit. FIRE runs two kinds of cases: TAMPER cases, in which the WORM chain is mutated in a defined way and BENCH is asked to verify the mutated chain; and GOVERNANCE cases, in which an artefact envelope is malformed in a defined way and the governance engine is asked to accept or reject it. There are nine TAMPER cases and nine GOVERNANCE cases, eighteen in total, each with a defined expectation and a defined counterexample if the expectation is met.</p>
+      <p>FIRE's maxim &mdash; Fire never emits PROVEN &mdash; is the contract FIRE makes with the rest of the stack. FIRE runs tests, generates counterexamples, produces reports, but it never asserts that anything has been proven. The strongest claim FIRE makes is PASS-UNDER-CONDITIONS, and that claim is bounded by the conditions of the test. FIRE's self-test suite runs fifteen checks, including a deliberate-failure test (in which a vulnerable build of the chain correctly fails to detect a tamper case and a counterexample is preserved), an honest-build test (in which the same case correctly passes), a control test, an authorisation-gate test, a coverage-statement test, and the SHA-256 known-answer test. The gap register in FIRE tracks eight items, including the six honesty-boundary items and two service-level checks (SVC-3004 and SVC-3005).</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 2 — page 2 of 2
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="env-card avoid-break">
+    <div class="env-card-header">
+      <span class="env-name">FIELD</span>
+      <span class="env-acc">spec · VVU-ENV-FIELD-2026-001 · accent yellow</span>
+    </div>
+    <div class="env-card-body">
+      <div class="maxim">"observation precedes interpretation"</div>
+      <p>FIELD is the environment in which observations are taken. An observation, in VVU terms, is a reading from a physical sensor, captured at a defined time, in a defined unit, with a defined provenance. FIELD holds the sensor registry, the observation log, the field-operator authorisations, and the intake queue for observations awaiting verification. FIELD does not interpret the observations it holds; interpretation is a downstream activity that happens in PRESS, after the observations have been verified in BENCH. The maxim &mdash; observation precedes interpretation &mdash; is the contract FIELD makes with the rest of the stack: nothing reaches the interpretive layer that has not been recorded as an observation with a provenance class.</p>
+      <p>FIELD's gap register tracks six items: the sensor registry, the observation log, the operator authorisation workflow, the verification intake queue, the field-to-BENCH handoff, and the self-test coverage. FIELD's self-test suite runs fourteen checks, including sensor-registry integrity, observation-shape validation, time-window enforcement, provenance-class enforcement, the canonical-JSON known-answer test, and the SHA-256 known-answer test.</p>
+    </div>
+  </div>
+
+  <div class="env-card avoid-break">
+    <div class="env-card-header">
+      <span class="env-name">PRESS</span>
+      <span class="env-acc">spec · VVU-ENV-PRESS-2026-001 · accent blue</span>
+    </div>
+    <div class="env-card-body">
+      <div class="maxim">"publication is irreversible"</div>
+      <p>PRESS is the environment in which verified material is drafted, approved, published and, where necessary, corrected or retracted. PRESS holds drafts, receipts (which are references to BENCH verification outcomes), publications, corrections, retractions, and consent records. PRESS extracts statements from draft text, classifies each statement as OBSERVATION, INTERPRETATION or CONCLUSION by a defined rule set, and applies a verification-language gate: a statement may use the word "verified" only if a PROVEN receipt is bound to the publication, and only within the scope that the receipt permits. The maxim &mdash; publication is irreversible &mdash; is the contract PRESS makes with the rest of the stack: what is published cannot be silently altered; it can only be versioned, corrected or retracted.</p>
+      <p>PRESS's self-test suite runs sixteen checks, including the INCONCLUSIVE-receipt-forbids-verification-language test, the missing-receipt test, the PROVEN-receipt-permits-exactly-one-bounded-sentence test, the expired-receipt test, the dangling-reference test, the operator-override test, the correction-preserves-original test, the retraction-flags-but-never-removes test, the consent-gate test, the version-hash-recomputation test, the voice-law test, the SHA-256 known-answer test, and the store round-trip. The gap register in PRESS tracks six items, including the reader-facing media, the VVU command centre, the outreach panel, the compose pipeline, the magazine masters, and the editorial workflow.</p>
+    </div>
+  </div>
+
+  <h2 class="subsection">2.6 The circuit</h2>
+  <p>An artefact begins in FORGE, where it is authored with a declared provenance and a status of PROPOSED. It moves to FIELD, where &mdash; if it is a sensor envelope &mdash; it is recorded as an observation. It moves to BENCH, where it is verified by recomputation. It moves to FIRE, where the conditions under which BENCH holds are tested by deliberate tampering. It moves to PRESS, where &mdash; if it has been verified &mdash; it may be drafted into a publication, approved under a bound receipt, and published. At each station, the artefact acquires a different kind of integrity: in FORGE, the integrity of authorship; in FIELD, the integrity of observation; in BENCH, the integrity of verification; in FIRE, the integrity of adversarial coverage; in PRESS, the integrity of publication. No single environment is sufficient. The integrity of the artefact is the product of the circuit.</p>
+
+  <div class="callout">
+    <div class="co-label">Architectural Note</div>
+    <div class="co-body">The five-environment separation is not a layering. FORGE does not call BENCH; BENCH does not call FIRE. Each environment operates against a shared, content-addressed store and emits its own append-only log. The integrity of the circuit is the integrity of the artefact's hash as it moves between environments &mdash; a hash that no environment can alter, and that every environment recomputes on intake.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 3 — Five Deployments
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 3</span>
+    <span class="part-name">The Five Deployments</span>
+  </div>
+
+  <p>The study instruments five deployments. Each deployment is a defined set of physical assets, a defined set of sensors, a defined buyer (the party that will use the data), and a defined pricing structure for post-study continuation. The pricing structures are stated as ranges, in 2026 South African rand, and are subject to a separate procurement process. They are included in this Framework so that reviewers can see, at the planning stage, what the post-study cost of continuation would be.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:14%">Deployment</th>
+          <th style="width:30%">Assets instrumented</th>
+          <th style="width:26%">Sensors</th>
+          <th style="width:16%">Buyer</th>
+          <th style="width:14%">Post-study pricing (annual, ZAR)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono"><strong>D-1</strong><br>Reservoir telemetry</td>
+          <td>4 municipal reservoirs (North Basin, South Basin, West Tower, East Reservoir)</td>
+          <td>Ultrasonic level, pressure, temperature, turbidity, chlorine residual</td>
+          <td>Municipality &mdash; Water and Sanitation Directorate</td>
+          <td class="num">R 480 000 &ndash; R 620 000</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>D-2</strong><br>Treatment-plant instrumentation</td>
+          <td>1 water treatment works (existing plant, instrumented at the inlet, the filter beds, the clearwell and the outlet)</td>
+          <td>Flow rate, pressure, turbidity, pH, chlorine residual, level</td>
+          <td>Municipality &mdash; Water and Sanitation Directorate</td>
+          <td class="num">R 720 000 &ndash; R 940 000</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>D-3</strong><br>Distribution-network pressure logging</td>
+          <td>12 district-metered areas (DMAs) across the distribution network</td>
+          <td>Pressure, flow rate, acoustic leak-detection (where licensed)</td>
+          <td>Municipality &mdash; Non-Revenue Water Programme</td>
+          <td class="num">R 560 000 &ndash; R 780 000</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>D-4</strong><br>Consumer-side flow monitoring</td>
+          <td>60 consumer properties (a stratified sample across residential, commercial, institutional and indigent accounts)</td>
+          <td>Ultrasonic flow (retrofit, non-invasive), pressure, temperature</td>
+          <td>Municipality &mdash; Revenue and Customer Services</td>
+          <td class="num">R 380 000 &ndash; R 510 000</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>D-5</strong><br>Integrated municipal dashboard</td>
+          <td>1 municipal operations centre (existing facility, with VVU dashboard installed alongside SCADA)</td>
+          <td>No new sensors; integrates the data streams from D-1 through D-4</td>
+          <td>Municipality &mdash; Operations Centre, with read access for DWS and the public</td>
+          <td class="num">R 220 000 &ndash; R 320 000</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The deployments are staged. D-1 begins in Month 4 of the study, after the pilot programme (Part 4) has completed. D-2 follows in Month 9, after D-1 has stabilised. D-3 begins in Month 14. D-4 begins in Month 18. D-5 begins in Month 22 and runs in parallel with the wind-down of D-1 through D-4. The staging is reflected in the timeline at Part 8.</p>
+
+  <p>The post-study pricing is stated in 2026 rand and will be re-baselined at the time of any continuation contract. The pricing reflects the marginal cost of operating the VVU stack on the instrumented assets &mdash; sensor maintenance, data ingestion, verification compute, evidence storage, dashboard hosting &mdash; and does not include the cost of the sensors themselves, which are capitalised separately under the municipality's infrastructure programme. The pricing is offered to the buyer on a non-exclusive basis; the buyer may, at the end of the study, elect to operate the stack in-house, to contract VVU for continuation, or to discontinue. The study's contract prohibits VVU from offering the continuation commercially to any party other than the buyer during a defined hold-out period.</p>
+
+  <div class="callout">
+    <div class="co-label">Cost Principle</div>
+    <div class="co-body">Post-study pricing is offered on a non-exclusive basis. The buyer &mdash; the municipality, in every deployment &mdash; may elect to operate the stack in-house, to contract VVU for continuation, or to discontinue. The pricing does not include the cost of the sensors, which are capitalised separately under the municipality's infrastructure programme. The pricing does include sensor maintenance, data ingestion, verification compute, evidence storage and dashboard hosting.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 4 — Pilot Programme
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 4</span>
+    <span class="part-name">The Pilot Programme</span>
+  </div>
+
+  <h2 class="subsection">4.1 The pilot's purpose</h2>
+  <p>The pilot programme is the constrained first phase of the study. Its purpose is not to deliver value to the buyer; it is to establish, before any infrastructure is instrumented, that the VVU stack can be operated by the study team, at the study site, against a single defined asset, in a manner that produces verifiable evidence. The pilot is, in effect, the study's proof of its own method. If the pilot fails, the study is suspended; if the pilot succeeds in defined terms, the study proceeds to the first deployment.</p>
+
+  <h2 class="subsection">4.2 The pilot's scope</h2>
+  <p>The pilot instruments a single asset &mdash; the North Basin reservoir, one of the four reservoirs in deployment D-1 &mdash; with a defined sensor set: one ultrasonic level sensor, one pressure sensor, one temperature sensor, one turbidity sensor and one chlorine-residual sensor. The pilot runs for ninety days. During the pilot, the sensor set is operated continuously; observations are taken at five-minute intervals; the WORM ledger is maintained continuously; and the PRESS environment publishes one weekly summary, on a defined day and at a defined time, drawn from the verified observations of the preceding week.</p>
+  <p>The pilot is operated by a defined team: a VVU field engineer (operator-authored provenance), an NMU-attached graduate intern (operator-authored provenance, training role), a municipal site engineer (device-observed provenance, sensor maintenance), and a DWS observer (read-only, no authorisation to act). The team's composition is fixed for the duration of the pilot; substitution is permitted only with the written agreement of all four parties.</p>
+
+  <div class="mono-block"><span class="key">pilot.site:</span>     <span class="val">"North Basin reservoir"</span>
+<span class="key">pilot.duration:</span> <span class="val">90 days</span>
+<span class="key">pilot.cadence:</span>  <span class="val">"5-minute observation interval · 7-day publication cycle"</span>
+<span class="key">pilot.team:</span>     <span class="val">["vvu-field-engineer", "nmu-intern", "municipal-site-engineer", "dws-observer"]</span>
+<span class="key">pilot.team.dws:</span> <span class="val">"read-only · no authorisation to act"</span>
+<span class="key">pilot.asset:</span>    <span class="val">"one of the four reservoirs in deployment D-1"</span></div>
+
+  <h2 class="subsection">4.3 The pilot's success criteria</h2>
+  <p>The pilot is deemed to have succeeded when all six of the following criteria are met, and not before:</p>
+
+  <ol class="rules">
+    <li><span class="rule-name">Continuous operation.</span> The sensor set operates for at least 95% of the ninety-day pilot window, with any downtime recorded, explained and recovered from.</li>
+    <li><span class="rule-name">Evidence completeness.</span> At least 95% of the expected observations are taken, recorded in FIELD, verified in BENCH, and present in the WORM ledger.</li>
+    <li><span class="rule-name">Verification integrity.</span> The WORM chain passes the chain-linkage and payload-hash policy checks on every recomputation performed during the pilot, with no row added, removed or altered.</li>
+    <li><span class="rule-name">FIRE coverage.</span> At least one TAMPER case and one GOVERNANCE case are run against the pilot's chain each week, with the expected outcome in each case and a counterexample preserved in the event of any unexpected outcome.</li>
+    <li><span class="rule-name">PRESS publication.</span> Each weekly summary is published, with a bound PROVEN receipt where appropriate, with no use of voice-law-banned words, and with all CONCLUSION statements supported by a bound PROVEN receipt.</li>
+    <li><span class="rule-name">Self-test passage.</span> Every self-test suite, in every environment, runs on every mount during the pilot, with the verdict ALL N CHECKS PASSED recorded in the operation log for each run.</li>
+  </ol>
+
+  <p>If any criterion fails, the pilot is deemed to have failed, and the study is suspended pending review. The review is conducted by NMU, DWS and the municipality jointly, and its outcome is one of three: re-run the pilot with defined corrections, re-scope the study, or terminate the study. The VVU team does not have a casting vote in the review.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 5 — Research Programme
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 5</span>
+    <span class="part-name">The Research Programme</span>
+  </div>
+
+  <h2 class="subsection">5.1 The research programme's purpose</h2>
+  <p>The research programme runs alongside the deployments from Month 6 of the study to Month 30. Its purpose is to take the evidence produced by the deployments and the pilot and to publish findings, in the open literature and in machine-checkable form, that contribute to the body of knowledge concerning the long-duration operation of verifiable-evidence systems at infrastructure scale. The research programme is the reason NMU is the anchor institution: the programme requires faculty time, graduate supervision, institutional ethics clearance, and a long-duration commitment that only a university can provide.</p>
+
+  <h2 class="subsection">5.2 The research programme's structure</h2>
+  <p>The research programme is structured as five work-streams, each with a defined lead, a defined deliverable and a defined publication target. The work-streams are independent of the deployments &mdash; they draw on the deployments' evidence but do not gate the deployments' operation. The leads are nominated by NMU and approved by the study's governing structure (Part 10).</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:10%">Work-stream</th>
+          <th style="width:28%">Lead</th>
+          <th style="width:32%">Deliverable</th>
+          <th style="width:30%">Publication target</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono"><strong>W-1</strong></td>
+          <td>NMU &mdash; Computer Science</td>
+          <td>A longitudinal analysis of the WORM ledger's integrity across the thirty-month study, with a quantified account of every failure mode observed.</td>
+          <td>2 peer-reviewed papers, 1 conference paper, machine-checkable ledger release.</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>W-2</strong></td>
+          <td>NMU &mdash; cWASER, with DWS participation</td>
+          <td>A taxonomy of failure modes observed in water and sanitation infrastructure, classified by provenance class and by detection path.</td>
+          <td>1 peer-reviewed paper, 1 technical report to DWS.</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>W-3</strong></td>
+          <td>NMU &mdash; Engineering Economics, with municipal participation</td>
+          <td>A cost analysis of the VVU stack at infrastructure scale, with a comparison against the cost of the existing SCADA and telemetry estate.</td>
+          <td>1 peer-reviewed paper, 1 technical report to the municipality.</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>W-4</strong></td>
+          <td>NMU &mdash; Computer Science, with VVU participation</td>
+          <td>A comparative analysis of the five-environment separation against a single integrated system, drawing on the FIRE test results.</td>
+          <td>1 peer-reviewed paper, 1 conference paper.</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>W-5</strong></td>
+          <td>NMU &mdash; cWASER, with municipal participation</td>
+          <td>A study of the extent to which the public can read, understand and trust the evidence produced by the stack, with a defined survey protocol.</td>
+          <td>1 peer-reviewed paper, 1 public-facing report.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Each work-stream is reviewed annually by the governing structure, and each work-stream's deliverables are released under a Creative Commons Attribution licence, with the machine-checkable artefacts released under an open-source licence. No work-stream is permitted to publish findings drawn from the study's evidence that conflict with the evidence as recorded in the WORM ledger; where a work-stream's analysis differs from the ledger, the analysis must state the difference explicitly.</p>
+
+  <h2 class="subsection">5.3 Ethics and clearance</h2>
+  <p>The research programme is subject to NMU's research ethics committee, and the pilot programme is subject to the same committee's expedited review. The ethics clearance covers the collection of sensor data from municipal assets, the publication of aggregated findings, and the conduct of the public-readability survey (W-5). The clearance does not cover the collection of personally identifiable information at consumer properties; deployment D-4 operates with the explicit, opt-in, recorded consent of the property owners, and the consent records are held in the PRESS environment under the same consent-gate rules that govern publication.</p>
+
+  <div class="callout">
+    <div class="co-label">Open-Licencing Principle</div>
+    <div class="co-body">All work-stream deliverables are released under a Creative Commons Attribution licence; all machine-checkable artefacts are released under an open-source licence. No work-stream may publish findings drawn from the study's evidence that conflict with the evidence as recorded in the WORM ledger. Where a work-stream's analysis differs from the ledger, the analysis must state the difference explicitly.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 6 — What NMU Is Being Asked For
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 6</span>
+    <span class="part-name">What NMU Is Being Asked For</span>
+  </div>
+
+  <h2 class="subsection">6.1 The anchor role</h2>
+  <p>NMU is asked to serve as the anchor institution for the study. The anchor role is defined in detail in Part 9; in summary, it comprises the provision of physical facility space (a defined room for the VVU stack's compute and storage), faculty time (the work-stream leads and graduate supervision), institutional commitment (a thirty-month binding commitment that survives changes of personnel), and the institutional credibility that the study needs in order to be reviewed by DWS and the municipality.</p>
+
+  <h2 class="subsection">6.2 The specific asks</h2>
+  <p>The specific asks of NMU are six:</p>
+
+  <ol class="rules">
+    <li><span class="rule-name">Facility.</span> A defined room, of approximately 40 square metres, on NMU's North Campus or South Campus, with the power, cooling and network connectivity specified in Appendix B, for the duration of the study and for a defined hold-out period thereafter.</li>
+    <li><span class="rule-name">Faculty time.</span> The commitment of one full-time equivalent senior academic, across the five work-stream leads, for the duration of the study. The senior academic is nominated by NMU; the VVU team does not nominate.</li>
+    <li><span class="rule-name">Graduate supervision.</span> The registration of three master's candidates and one doctoral candidate, on topics drawn from the five work-streams, with VVU personnel serving as co-supervisors where the candidates' committees so elect.</li>
+    <li><span class="rule-name">Ethics clearance.</span> The processing of the research programme's ethics clearance through NMU's research ethics committee, on the timeline specified in Appendix C, with VVU providing all supporting documentation.</li>
+    <li><span class="rule-name">Institutional commitment.</span> A thirty-month binding commitment, in the form of a memorandum of understanding, that survives changes of personnel at NMU, at VVU, at DWS and at the municipality.</li>
+    <li><span class="rule-name">Governance participation.</span> The nomination of two representatives to the study's governing structure (Part 10): one from the senior academic nominated under item 2, and one from NMU's research office.</li>
+  </ol>
+
+  <h2 class="subsection">6.3 What NMU is not being asked for</h2>
+  <p>NMU is not asked to fund the study. The study is funded by VVU, DWS and the municipality under the cost-split set out in Appendix D. NMU is not asked to procure, install or maintain the sensors; that is the responsibility of VVU and the municipality. NMU is not asked to operate the deployments; the deployments are operated by VVU and the municipality. NMU is not asked to take on any liability for the operation of the stack on municipal assets; that liability sits with VVU under the contract. NMU is asked, in short, for the things only a university can provide: space, time, supervision, ethics clearance, commitment and credibility. Nothing more.</p>
+
+  <div class="callout">
+    <div class="co-label">Asymmetric Ask</div>
+    <div class="co-body">The asks of NMU are bounded by what only a university can provide: space, faculty time, graduate supervision, ethics clearance, institutional commitment, and credibility. NMU is not asked to fund, procure, install, maintain, operate, or carry liability for the stack on municipal assets. Those responsibilities sit with VVU and the municipality under the cost-split in Appendix D.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 7 — What NMU Gets
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 7</span>
+    <span class="part-name">What NMU Gets</span>
+  </div>
+
+  <h2 class="subsection">7.1 The research programme</h2>
+  <p>NMU receives the research programme (Part 5) in its entirety: five work-streams, each led by an NMU academic, each with defined deliverables and defined publication targets, each released under an open licence. The research programme is the study's principal return to NMU; it is the reason the anchor role is worth the asks of Part 6.</p>
+
+  <h2 class="subsection">7.2 The facility</h2>
+  <p>NMU receives the facility, in its commissioned state, at the end of the study and the defined hold-out period. The facility &mdash; the room, the compute, the storage, the network &mdash; becomes NMU's property, for NMU's use, on terms to be negotiated. The VVU stack, as installed, remains under licence; NMU may continue to operate the stack under a no-cost academic licence, or may elect to discontinue.</p>
+
+  <h2 class="subsection">7.3 The graduate cohort</h2>
+  <p>NMU receives the graduate cohort: three master's candidates and one doctoral candidate, supervised to completion, on topics drawn from the study. The candidates are NMU's candidates; their degrees are NMU's degrees; their theses are published under NMU's imprint. The candidates are, however, supervised in collaboration with VVU personnel, and the candidates' work is drawn from the study's evidence &mdash; which means the candidates' work is, by design, verifiable.</p>
+
+  <h2 class="subsection">7.4 The institutional position</h2>
+  <p>NMU receives the institutional position of being the anchor of a study that, if it succeeds, will produce the first independently verifiable evidence base concerning the long-duration operation of a verifiable-evidence system at water-infrastructure scale in South Africa. The position is not a commercial asset; it is an academic and institutional asset. It is, however, a position that DWS, the municipality, the research community and the public will recognise, and it is a position that is difficult to acquire by other means.</p>
+
+  <div class="callout">
+    <div class="co-label">Asymmetric Return</div>
+    <div class="co-body">The returns to NMU are deliberately structured to mirror the asks. NMU receives a research programme led by its own academics, a commissioned facility transferred to its ownership, a graduate cohort whose work is verifiable by design, and an institutional position that no commercial route can produce. The returns are not financial; they are academic, institutional, and reputational &mdash; and they are durable.</div>
+  </div>
+
+  <h2 class="subsection">7.5 Summary of the return</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:30%">Return</th><th style="width:35%">Form</th><th style="width:35%">Duration</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Research programme</strong></td><td>5 work-streams, led by NMU academics, open-licensed deliverables</td><td>Months 6 &ndash; 30 of the study, with publications extending beyond</td></tr>
+        <tr><td><strong>Facility</strong></td><td>Room, compute, storage, network &mdash; commissioned and transferred</td><td>End of study + hold-out period; thereafter under NMU ownership</td></tr>
+        <tr><td><strong>Graduate cohort</strong></td><td>3 master's candidates, 1 doctoral candidate, supervised to completion</td><td>For the duration of each candidate's registration</td></tr>
+        <tr><td><strong>Institutional position</strong></td><td>Anchor of the first SA verifiable-evidence study at water-infrastructure scale</td><td>Durable beyond the study; recognised by DWS, municipality, academy, public</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 8 — Proposed Timeline
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 8</span>
+    <span class="part-name">The Proposed Timeline</span>
+  </div>
+
+  <p>The study is proposed to run for thirty months, with a defined hold-out period of six months thereafter. The timeline below is stated in months from the commencement date, which is the date on which the memorandum of understanding is signed by all four parties. The timeline is indicative; the staging of the deployments is governed by the success criteria of the pilot programme (Part 4) and of each preceding deployment.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:10%">Month</th><th style="width:90%">Milestone</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num mono"><strong>0</strong></td><td>Memorandum of understanding signed by NMU, VVU, DWS and the municipality.</td></tr>
+        <tr><td class="num mono"><strong>1</strong></td><td>Ethics clearance submitted to NMU's research ethics committee. Facility commissioning begins.</td></tr>
+        <tr><td class="num mono"><strong>2</strong></td><td>Facility commissioned. Pilot team constituted. Pilot site (North Basin reservoir) prepared.</td></tr>
+        <tr><td class="num mono"><strong>3</strong></td><td>Pilot begins (Day 0 of the 90-day pilot window).</td></tr>
+        <tr><td class="num mono"><strong>6</strong></td><td>Pilot ends. Pilot review conducted by NMU, DWS and the municipality. Research programme work-streams commence.</td></tr>
+        <tr><td class="num mono"><strong>7</strong></td><td>Pilot review outcome: proceed. Deployment D-1 begins.</td></tr>
+        <tr><td class="num mono"><strong>9</strong></td><td>Deployment D-2 begins.</td></tr>
+        <tr><td class="num mono"><strong>12</strong></td><td>Mid-study review conducted by the governing structure. Annual ethics review.</td></tr>
+        <tr><td class="num mono"><strong>14</strong></td><td>Deployment D-3 begins.</td></tr>
+        <tr><td class="num mono"><strong>18</strong></td><td>Deployment D-4 begins. Public-readability survey (W-5) commences.</td></tr>
+        <tr><td class="num mono"><strong>22</strong></td><td>Deployment D-5 begins.</td></tr>
+        <tr><td class="num mono"><strong>27</strong></td><td>Deployments D-1 through D-4 wind down. Sensor maintenance and data ingestion continue.</td></tr>
+        <tr><td class="num mono"><strong>30</strong></td><td>Study concludes. Final research programme deliverables released. Hold-out period begins.</td></tr>
+        <tr><td class="num mono"><strong>36</strong></td><td>Hold-out period ends. Facility and stack transferred to NMU. Continuation contracts, if any, negotiated.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The timeline is presented as a single sequence, but it is governed by gates. The pilot programme (Months 3&ndash;6) is a gate: the deployments do not begin until the pilot has succeeded on its six criteria. The mid-study review (Month 12) is a gate: the deployments that have begun continue, but no further deployment begins until the review has confirmed that the deployments in operation are meeting their success criteria. The final review (Month 30) is a gate: the hold-out period and the transfer of the facility to NMU do not begin until the final review has confirmed that the study has met its stated aim (Part 11).</p>
+
+  <div class="callout">
+    <div class="co-label">Gating Principle</div>
+    <div class="co-body">The timeline is a sequence governed by three gates: the pilot review at Month 6, the mid-study review at Month 12, and the final review at Month 30. Each gate is a binary decision &mdash; proceed, suspend, or terminate &mdash; taken by the Steering Committee, not by any single party. The pilot does not begin until the facility is commissioned; the deployments do not begin until the pilot has succeeded; the transfer to NMU does not begin until the final review has confirmed the study has met its stated aim.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 9 — Facility Anchor Role
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 9</span>
+    <span class="part-name">The Facility Anchor Role</span>
+  </div>
+
+  <h2 class="subsection">9.1 The anchor role defined</h2>
+  <p>The facility anchor role is the role NMU is asked to play in the study. It is defined here in detail because the role is the principal ask and the principal return, and because its terms are the terms on which the study's integrity rests. The anchor role comprises four elements: facility, faculty, commitment and credibility.</p>
+
+  <h3 class="sub-subsection">Facility</h3>
+  <p>NMU provides a defined room for the VVU stack's compute and storage. The room is on NMU's North Campus or South Campus; it is approximately 40 square metres; it has the power, cooling and network connectivity specified in Appendix B; and it is accessible to the VVU field engineer, the NMU senior academic and the NMU graduate candidates, and to no one else without the written agreement of all four parties. The room is the physical location of the VVU stack's verification compute, its WORM ledger storage, and its PRESS publication queue. The room is not a data centre; it is a defined, access-controlled space in which a defined set of compute and storage is operated.</p>
+
+  <h3 class="sub-subsection">Faculty</h3>
+  <p>NMU provides one full-time equivalent senior academic, across the five work-stream leads, for the duration of the study. The senior academic is nominated by NMU; the VVU team does not nominate. The senior academic's time is committed to the supervision of the work-streams, the supervision of the graduate candidates, and the participation in the governing structure. The senior academic is not asked to operate the deployments, to maintain the sensors, or to perform any task that is the responsibility of VVU or the municipality.</p>
+
+  <h3 class="sub-subsection">Commitment</h3>
+  <p>NMU provides a thirty-month binding commitment, in the form of a memorandum of understanding, that survives changes of personnel at NMU, at VVU, at DWS and at the municipality. The commitment is the reason the anchor role is the anchor role: the study needs a partner whose commitment is not contingent on the continued employment of any individual. Only a university can provide such a commitment; a commercial partner cannot.</p>
+
+  <h3 class="sub-subsection">Credibility</h3>
+  <p>NMU provides the institutional credibility that the study needs in order to be reviewed by DWS and the municipality, and in order to be published in the open literature. The credibility is not a deliverable; it is a precondition. It is the reason the study is anchored at a university and not at a commercial operator.</p>
+
+  <h2 class="subsection">9.2 The anchor role's boundaries</h2>
+  <p>The anchor role is bounded. NMU does not, by virtue of the anchor role, acquire any ownership of the VVU stack, any right to commercialise the VVU stack, any right to sub-license the VVU stack, or any liability for the operation of the VVU stack on municipal assets. The anchor role is a role of provision and participation, not a role of ownership or liability. The boundaries are stated here so that reviewers can see, at the planning stage, what the anchor role is and what it is not.</p>
+  <p>The anchor role is also bounded by the governing structure (Part 10). NMU's participation in the governing structure is by nomination; the governing structure's decisions are taken by vote; NMU's vote is one of four. NMU does not have a casting vote, a veto, or any unilateral authority over the conduct of the study. The anchor role is a role of partnership, not a role of control.</p>
+
+  <div class="callout">
+    <div class="co-label">Boundary Principle</div>
+    <div class="co-body">The anchor role is a role of provision and participation, not of ownership or liability. NMU does not acquire, by virtue of the role, any ownership of the VVU stack, any right to commercialise or sub-license it, or any liability for its operation on municipal assets. NMU's participation in the Steering Committee is by nomination; NMU's vote is one of four, with no casting vote and no veto.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 10 — Governing Structure
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 10</span>
+    <span class="part-name">The Governing Structure</span>
+  </div>
+
+  <h2 class="subsection">10.1 The governing structure</h2>
+  <p>The study is governed by a four-party structure: NMU, VVU, DWS and the municipality. Each party nominates two representatives to a Study Steering Committee, which meets monthly for the first six months of the study, quarterly thereafter, and at any other time at the request of any party. The Steering Committee's decisions are taken by simple majority, with the chair rotating annually between the parties in the order NMU, DWS, municipality, VVU. The chair does not have a casting vote; in the event of a tie, the question is referred back to the parties for resolution.</p>
+
+  <h2 class="subsection">10.2 The Steering Committee's authority</h2>
+  <p>The Steering Committee's authority is defined and limited. It comprises:</p>
+  <ol>
+    <li><strong>Approval of the pilot review outcome.</strong> The Steering Committee approves, by vote, the outcome of the pilot review (Month 6) and the mid-study review (Month 12).</li>
+    <li><strong>Approval of deployment commencement.</strong> The Steering Committee approves, by vote, the commencement of each deployment (D-1 through D-5), on the basis of the success criteria of the preceding deployment or the pilot.</li>
+    <li><strong>Approval of the research programme.</strong> The Steering Committee approves, by vote, the appointment of the work-stream leads, the annual review of the work-streams, and the release of the work-stream deliverables.</li>
+    <li><strong>Approval of any deviation.</strong> The Steering Committee approves, by vote, any deviation from this Framework, with the deviation recorded in the study's appendices and published with the final review.</li>
+    <li><strong>Approval of the final review.</strong> The Steering Committee approves, by vote, the final review (Month 30) and the transfer of the facility to NMU.</li>
+  </ol>
+  <p>The Steering Committee does not have authority over the day-to-day operation of the deployments, the conduct of the research programme, or the technical implementation of the VVU stack. These are the responsibilities of the VVU team, the work-stream leads, and the VVU engineering division respectively. The Steering Committee's authority is strategic and gate-keeping, not operational.</p>
+
+  <h2 class="subsection">10.3 The dispute resolution</h2>
+  <p>In the event of a dispute between the parties that cannot be resolved in the Steering Committee, the dispute is referred to a defined mediator, nominated jointly by the parties at the commencement of the study. The mediator's role is to facilitate resolution, not to impose it; the mediator does not have the authority to bind any party. If the mediator is unable to facilitate resolution within a defined period, the dispute is referred to a defined arbitrator, nominated jointly by the parties, whose decision is binding. The arbitration is conducted under the rules of the Arbitration Foundation of Southern Africa (AFSA). The governing law is the law of the Republic of South Africa.</p>
+
+  <div class="callout">
+    <div class="co-label">Governance Principle</div>
+    <div class="co-body">The Steering Committee's authority is strategic and gate-keeping, not operational. Day-to-day operation of the deployments, conduct of the research programme, and technical implementation of the VVU stack sit with the VVU team, the work-stream leads, and the VVU engineering division respectively. Disputes that cannot be resolved in the Steering Committee follow a defined mediation-then-arbitration path under AFSA, with the law of the Republic of South Africa governing.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 11 — What the Study Aims to Establish
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 11</span>
+    <span class="part-name">What the Study Aims to Establish</span>
+  </div>
+
+  <p>The study aims to establish the following five findings, stated here in their formal, testable form. Each finding is the formal counterpart of one of the five questions stated in Part 1.4.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:8%">Finding</th>
+          <th style="width:54%">Formal statement</th>
+          <th style="width:38%">Test</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono"><strong>F-1</strong></td>
+          <td>That a verifiable-evidence stack, operated by an institution, over a thirty-month duration, at infrastructure scale, produces a WORM ledger whose integrity does not degrade over the duration, as measured by the chain-linkage and payload-hash policy checks at every recomputation.</td>
+          <td>Continuous recomputation, every week of the study, with every result recorded.</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>F-2</strong></td>
+          <td>That the failure modes of the stack, observed during the study, are detectable by the stack's own self-test suites (BENCH 19, FIRE 15, FORGE 12, FIELD 14, PRESS 16), recoverable by the study team, and explainable to a third party by reference to the recorded evidence.</td>
+          <td>Failure-mode log, with detection path, recovery path and explanation recorded for every failure.</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>F-3</strong></td>
+          <td>That the separation of observation, verification, adversarial testing and publication into distinct environments produces evidence whose trustworthiness, as measured by the FIRE counterexample coverage and the PRESS verification-language gate, exceeds that of a single integrated system operating on the same evidence.</td>
+          <td>Comparative analysis, drawing on FIRE test results and PRESS publication records, published as work-stream W-4.</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>F-4</strong></td>
+          <td>That the marginal cost of operating the stack at infrastructure scale, measured in 2026 rand per verified observation, falls within the range stated in Part 3 and decreases over the duration of the study.</td>
+          <td>Cost analysis, with verified-observation count and operating cost recorded monthly, published as work-stream W-3.</td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>F-5</strong></td>
+          <td>That the evidence produced by the study is usable by a regulator, a service authority, an academic community and the public, with no party able to extract from the evidence a finding that another party cannot extract.</td>
+          <td>Public-readability survey, with defined protocol and defined sample, published as work-stream W-5.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The findings are stated in their formal form because the study's evidence is intended to be machine-checkable, and a machine can check a formal statement. The findings are stated here, at the planning stage, so that reviewers can see, before the study begins, what the study is trying to establish and how the establishment will be tested. The findings are not promises; they are aims. The study may establish them, may establish them in part, may establish their negation, or may fail to establish anything. Whatever the outcome, the outcome will be recorded, published and machine-checkable.</p>
+
+  <div class="callout">
+    <div class="co-label">Falsifiability Principle</div>
+    <div class="co-body">The findings are aims, not promises. The study may establish them, may establish them in part, may establish their negation, or may fail to establish anything. Whatever the outcome, the outcome will be recorded in the WORM ledger, published under the PRESS environment, and machine-checkable. A study that promised its findings before it produced its evidence would defeat its own purpose.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     PART 12 — Immediate Next Step
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="part-banner">
+    <span class="part-num">PART 12</span>
+    <span class="part-name">Immediate Next Step</span>
+  </div>
+
+  <p>The immediate next step, on receipt of this Framework by NMU, DWS, the municipality and the research partners, is the convening of a Frame Review Meeting, to be held within thirty calendar days of receipt. The Frame Review Meeting is convened by NMU, in its role as the proposed anchor institution, and is attended by NMU, VVU, DWS, the municipality and the identified research partners. The purpose of the Frame Review Meeting is to review this Framework, section by section, and to record, for each section, one of three outcomes: accepted as written, accepted with corrections, or returned for re-drafting.</p>
+
+  <p>The Frame Review Meeting is not a negotiation. It is a review. The negotiation of the memorandum of understanding, the contract under which VVU operates the stack, the procurement plan for the sensors, and the research protocol for the work-streams, follows the Frame Review Meeting and is conducted separately. The Frame Review Meeting is the gate that the Framework must pass before any of the downstream negotiations begin.</p>
+
+  <p>The VVU team commits, on submission of this Framework, to attend the Frame Review Meeting in person, to provide written responses to any question raised in the meeting within seven calendar days of the meeting, and to revise the Framework within thirty calendar days of the meeting to reflect the outcomes recorded. The revised Framework is resubmitted to the parties for a second Frame Review Meeting, which is held within thirty calendar days of the resubmission. The process repeats until the Framework is accepted as written, section by section, by all parties. Only at that point does the memorandum of understanding come into negotiation.</p>
+
+  <p>The VVU team further commits, on submission of this Framework, that no commercial deployment of the VVU stack will be offered, negotiated or contracted with any party other than the buyers identified in Part 3 during the period from the submission of this Framework until the conclusion of the Frame Review process. This hold-out is offered so that the parties can review the Framework without the pressure of a competing commercial interest.</p>
+
+  <p>The VVU team's contact for the Frame Review process is recorded in Appendix A. The team is available, on request, to present the Framework to any party's review committee, to walk through any section in detail, and to provide any supporting documentation that a party's review requires. The team's availability is not a substitute for the Frame Review Meeting; it is offered so that the Frame Review Meeting can be conducted with the parties already familiar with the Framework's content.</p>
+
+  <div class="mono-block"><span class="key">next-step.action:</span>     <span class="val">"convene Frame Review Meeting"</span>
+<span class="key">next-step.convenor:</span>     <span class="val">"NMU (as proposed anchor institution)"</span>
+<span class="key">next-step.attendees:</span>    <span class="val">["NMU", "VVU", "DWS", "municipality", "research-partners"]</span>
+<span class="key">next-step.deadline:</span>     <span class="val">"within 30 calendar days of receipt"</span>
+<span class="key">next-step.outcome-per-section:</span> <span class="val">"accepted-as-written | accepted-with-corrections | returned-for-redrafting"</span>
+<span class="key">next-step.vvu-attendance:</span> <span class="val">"in person"</span>
+<span class="key">next-step.vvu-response-window:</span> <span class="val">"7 calendar days"</span>
+<span class="key">next-step.vvu-revision-window:</span> <span class="val">"30 calendar days"</span>
+<span class="key">next-step.hold-out:</span> <span class="val">"no commercial deployment offered until Frame Review concludes"</span></div>
+
+  <p class="signature">Submitted by Venture Vision Ubuntu (VVU), Engineering and Programmes Division.<br>For institutional review by Nelson Mandela University, the Department of Water and Sanitation, the Nelson Mandela Bay Metropolitan Municipality, and identified research partners.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     APPENDIX A — Entity Details
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="appendix-banner">
+    <span class="app-id">APPENDIX A</span>
+    <span class="app-title">Entity Details</span>
+  </div>
+
+  <h2 class="subsection">A.1 The VVU entity</h2>
+  <p><strong>Name:</strong> Venture Vision Ubuntu (VVU)<br>
+  <strong>Form:</strong> A privately held engineering and programmes company, registered in the Republic of South Africa.<br>
+  <strong>Division:</strong> Engineering and Programmes Division (the proponent of this Framework).<br>
+  <strong>Authorised representative:</strong> The VVU Principal Investigator, whose contact details are recorded in the study's contact register (held by NMU on commencement of the Frame Review process).<br>
+  <strong>Contact for Frame Review:</strong> The VVU Principal Investigator, c/o the VVU Engineering and Programmes Division, by email and by telephone as recorded in the contact register.<br>
+  <strong>Role in the study:</strong> Proponent, operator of the VVU stack, co-supervisor of graduate candidates, holder of the contract under which the stack is operated, holder of the hold-out commitment during the Frame Review process.</p>
+
+  <h2 class="subsection">A.2 The NMU entity</h2>
+  <p><strong>Name:</strong> Nelson Mandela University (NMU)<br>
+  <strong>Form:</strong> A public university, established under the Higher Education Act of 1997, with campuses in Gqeberha (Port Elizabeth) and George.<br>
+  <strong>Division:</strong> Faculty of Engineering, the Built Environment and Information Technology; the Centre for Water, Sanitation and Environmental Research (cWASER); the Office of the Deputy Vice-Chancellor: Research, Innovation and Development.<br>
+  <strong>Authorised representative:</strong> The Deputy Vice-Chancellor: Research, Innovation and Development, or nominee.<br>
+  <strong>Role in the study:</strong> Anchor institution, host of the facility, provider of faculty time and graduate supervision, processor of ethics clearance, participant in the governing structure.</p>
+
+  <h2 class="subsection">A.3 The DWS entity</h2>
+  <p><strong>Name:</strong> Department of Water and Sanitation (DWS)<br>
+  <strong>Form:</strong> A national government department, established under the National Water Act of 1998 and the Water Services Act of 1997.<br>
+  <strong>Division:</strong> The branch responsible for water services regulation and for infrastructure condition monitoring.<br>
+  <strong>Authorised representative:</strong> The Director-General, or nominee, by letter to the Steering Committee.<br>
+  <strong>Role in the study:</strong> Sponsor, provider of regulatory context, recipient of the technical report from work-stream W-2, participant in the governing structure.</p>
+
+  <h2 class="subsection">A.4 The municipality entity</h2>
+  <p><strong>Name:</strong> Nelson Mandela Bay Metropolitan Municipality<br>
+  <strong>Form:</strong> A category A municipality, established under the Municipal Structures Act of 1998.<br>
+  <strong>Division:</strong> Water and Sanitation Directorate; the Non-Revenue Water Programme; Revenue and Customer Services; the Operations Centre.<br>
+  <strong>Authorised representative:</strong> The City Manager, or nominee, by letter to the Steering Committee.<br>
+  <strong>Role in the study:</strong> Sponsor, provider of the assets under study, provider of access to those assets, buyer of the post-study continuation (under separate procurement), participant in the governing structure.</p>
+
+  <h2 class="subsection">A.5 The research partner entities</h2>
+  <p>The identified research partners are the Council for Scientific and Industrial Research (CSIR), the Water Research Commission (WRC), and a defined university research consortium. The research partners do not have a vote on the Steering Committee; they participate in the work-streams, they review the work-stream deliverables, and they may, at the invitation of the Steering Committee, attend Steering Committee meetings as observers. The research partners' roles are recorded in the work-stream charters, which are drafted after the Frame Review process and before the commencement of the research programme.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     APPENDIX B — Facility Specification
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="appendix-banner">
+    <span class="app-id">APPENDIX B</span>
+    <span class="app-title">Facility Specification</span>
+  </div>
+
+  <h2 class="subsection">B.1 The room</h2>
+  <p>The facility is a defined room of approximately 40 square metres, on NMU's North Campus or South Campus. The room is access-controlled; access is granted to the VVU field engineer, the NMU senior academic and the NMU graduate candidates, and to no one else without the written agreement of all four parties. The room is climate-controlled, with a defined temperature range of 18&ndash;24 degrees Celsius and a defined humidity range of 40&ndash;60 per cent. The room is provided with an uninterruptible power supply of defined capacity, with a defined battery runtime of at least 60 minutes.</p>
+
+  <h2 class="subsection">B.2 The compute</h2>
+  <p>The compute comprises a defined set of servers, provided by VVU, on which the VVU stack is operated. The servers are racked in the room; they are connected to the network specified in B.3; and they are operated under the contract referred to in Part 6.3. The compute is sized for the verification workload of the study, with a defined margin for the research programme's analytical workloads. The compute is not sized for the storage of the entire evidence base; the storage is sized separately in B.4.</p>
+
+  <h2 class="subsection">B.3 The network</h2>
+  <p>The network comprises a defined internet connection of at least 100 Mbps symmetric, with a defined uptime of at least 99.5 per cent, and a defined latency to the municipal operations centre of less than 50 milliseconds. The network is provided by NMU, on the existing NMU network, with a defined VLAN for the VVU stack's traffic. The network is not shared with the municipality's operational traffic; the VVU stack receives the municipality's data by a defined data-sharing agreement and a defined ingestion queue.</p>
+
+  <h2 class="subsection">B.4 The storage</h2>
+  <p>The storage comprises a defined set of disks, provided by VVU, on which the WORM ledger, the verified observations, the publications and the self-test logs are stored. The storage is sized for the thirty-month study, with a defined margin, and with a defined replication factor of at least two. The storage is not backed up to a remote site during the study; the WORM ledger's integrity is maintained by the chain-linkage and payload-hash policy checks, not by remote backup. Remote backup is a post-study consideration, to be negotiated under the continuation contract referred to in Part 3.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:25%">Item</th><th style="width:35%">Specification</th><th style="width:40%">Provided by</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Room (floor area)</td><td>~40 m², North or South Campus, access-controlled</td><td>NMU</td></tr>
+        <tr><td>Climate</td><td>18&ndash;24 °C, 40&ndash;60% RH</td><td>NMU</td></tr>
+        <tr><td>UPS</td><td>Defined capacity, ≥ 60 min battery runtime</td><td>NMU</td></tr>
+        <tr><td>Compute servers</td><td>Sized for verification + analytical workloads</td><td>VVU</td></tr>
+        <tr><td>Storage</td><td>Sized for 30-month study, replication factor ≥ 2</td><td>VVU</td></tr>
+        <tr><td>Network (internet)</td><td>≥ 100 Mbps symmetric, ≥ 99.5% uptime</td><td>NMU</td></tr>
+        <tr><td>Network (VLAN)</td><td>Dedicated VLAN for VVU stack traffic</td><td>NMU</td></tr>
+        <tr><td>Data ingestion queue</td><td>Defined data-sharing agreement with the municipality</td><td>VVU + Municipality</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     APPENDIX C — Ethics Clearance Timeline
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="appendix-banner">
+    <span class="app-id">APPENDIX C</span>
+    <span class="app-title">Ethics Clearance Timeline</span>
+  </div>
+
+  <h2 class="subsection">C.1 The submission</h2>
+  <p>The ethics clearance application is submitted to NMU's research ethics committee in Month 1 of the study, by the VVU team in collaboration with the NMU senior academic. The application covers the collection of sensor data from municipal assets, the publication of aggregated findings, the conduct of the public-readability survey (W-5), and the conduct of the consumer-side flow monitoring (D-4).</p>
+
+  <h2 class="subsection">C.2 The expedited review</h2>
+  <p>The pilot programme is subject to an expedited review, on the basis that the pilot instruments a single municipal asset, with the consent of the municipality, and that the pilot's data is not published in a form that identifies any individual. The expedited review is requested in Month 1; the expedited review's outcome is expected in Month 2, in time for the pilot's commencement in Month 3.</p>
+
+  <h2 class="subsection">C.3 The full review</h2>
+  <p>The research programme is subject to a full review, on the basis that the research programme publishes findings drawn from the deployments, and that the public-readability survey (W-5) collects data from members of the public. The full review is requested in Month 1; the full review's outcome is expected in Month 5, in time for the research programme's commencement in Month 6.</p>
+
+  <h2 class="subsection">C.4 The annual review</h2>
+  <p>The research programme is subject to an annual review by the ethics committee, in Month 12 and Month 24 of the study. The annual review covers any deviations from the original clearance, any adverse events observed, and any new research activities proposed. The annual review's outcome is recorded in the Steering Committee's minutes.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:18%">Stage</th><th style="width:20%">Month</th><th style="width:62%">Scope</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Submission</strong></td><td class="num mono">1</td><td>Ethics clearance application submitted to NMU's REC, covering sensor data collection, aggregated publication, W-5 survey, and D-4 consumer-side flow monitoring.</td></tr>
+        <tr><td><strong>Expedited review</strong></td><td class="num mono">1 &ndash; 2</td><td>Pilot programme: single municipal asset, municipal consent, no individually identifiable publication. Outcome expected Month 2, before pilot commencement Month 3.</td></tr>
+        <tr><td><strong>Full review</strong></td><td class="num mono">1 &ndash; 5</td><td>Research programme: aggregated findings from deployments, public-readability survey (W-5). Outcome expected Month 5, before research programme commencement Month 6.</td></tr>
+        <tr><td><strong>Annual review</strong></td><td class="num mono">12, 24</td><td>Deviations from original clearance, adverse events, new research activities proposed. Outcome recorded in Steering Committee minutes.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <div class="co-label">Ethics Principle</div>
+    <div class="co-body">The pilot programme is subject to expedited review because it instruments a single municipal asset with municipal consent and does not publish individually identifiable data. The research programme is subject to full review because it publishes aggregated findings and conducts a public-readability survey. The annual review covers deviations, adverse events, and any new research activities proposed.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     APPENDIX D — Cost Split
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="appendix-banner">
+    <span class="app-id">APPENDIX D</span>
+    <span class="app-title">Cost Split</span>
+  </div>
+
+  <h2 class="subsection">D.1 The cost split</h2>
+  <p>The study is funded by VVU, DWS and the municipality under the following indicative cost split, stated in 2026 South African rand and subject to a separate funding agreement. The cost split is indicative; the actual costs are negotiated under the funding agreement, which is drafted after the Frame Review process.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:38%">Cost category</th>
+          <th style="width:15%">VVU</th>
+          <th style="width:15%">DWS</th>
+          <th style="width:17%">Municipality</th>
+          <th style="width:15%">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Sensors and instrumentation</td><td class="num mono">R 2 400 000</td><td class="num mono">R 1 200 000</td><td class="num mono">R 1 800 000</td><td class="num mono">R 5 400 000</td></tr>
+        <tr><td>Compute and storage</td><td class="num mono">R 1 800 000</td><td class="num mono">&mdash;</td><td class="num mono">&mdash;</td><td class="num mono">R 1 800 000</td></tr>
+        <tr><td>Facility (power, cooling, network)</td><td class="num mono">&mdash;</td><td class="num mono">&mdash;</td><td class="num mono">R 600 000 (in-kind, via NMU)</td><td class="num mono">R 600 000</td></tr>
+        <tr><td>Personnel (VVU field engineer, operations)</td><td class="num mono">R 3 600 000</td><td class="num mono">&mdash;</td><td class="num mono">&mdash;</td><td class="num mono">R 3 600 000</td></tr>
+        <tr><td>Personnel (municipal site engineer, operations)</td><td class="num mono">&mdash;</td><td class="num mono">&mdash;</td><td class="num mono">R 1 200 000 (in-kind)</td><td class="num mono">R 1 200 000</td></tr>
+        <tr><td>Personnel (NMU senior academic, supervision)</td><td class="num mono">&mdash;</td><td class="num mono">&mdash;</td><td class="num mono">R 1 800 000 (in-kind, via NMU)</td><td class="num mono">R 1 800 000</td></tr>
+        <tr><td>Graduate bursaries (3 master's, 1 doctoral)</td><td class="num mono">&mdash;</td><td class="num mono">R 1 200 000</td><td class="num mono">&mdash;</td><td class="num mono">R 1 200 000</td></tr>
+        <tr><td>Research programme (W-1 to W-5)</td><td class="num mono">R 900 000</td><td class="num mono">R 600 000</td><td class="num mono">&mdash;</td><td class="num mono">R 1 500 000</td></tr>
+        <tr><td>Governance (Steering Committee, mediator, arbitrator)</td><td class="num mono">R 200 000</td><td class="num mono">R 100 000</td><td class="num mono">R 100 000</td><td class="num mono">R 400 000</td></tr>
+        <tr><td>Contingency (10 per cent)</td><td class="num mono">R 890 000</td><td class="num mono">R 310 000</td><td class="num mono">R 470 000</td><td class="num mono">R 1 670 000</td></tr>
+        <tr class="total"><td>TOTAL</td><td class="mono">R 9 790 000</td><td class="mono">R 3 410 000</td><td class="mono">R 5 970 000</td><td class="mono">R 19 170 000</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="subsection">D.2 The in-kind contributions</h2>
+  <p>The in-kind contributions &mdash; the facility (NMU), the municipal site engineer's time (municipality) and the NMU senior academic's time (NMU) &mdash; are recorded at their notional cost. They are not cash transfers; they are the commitment of resources that the parties would otherwise deploy elsewhere. The in-kind contributions are subject to the same audit and reporting requirements as the cash contributions.</p>
+
+  <h2 class="subsection">D.3 The contingency</h2>
+  <p>The contingency is held by VVU and is released only on the approval of the Steering Committee. The contingency is intended to cover cost overruns, scope changes, and any unforeseen events. Any unspent contingency at the end of the study is returned to the parties in proportion to their contribution.</p>
+
+  <div class="callout">
+    <div class="co-label">Funding Principle</div>
+    <div class="co-body">The cost split is indicative and is negotiated under a separate funding agreement drafted after the Frame Review process. In-kind contributions &mdash; facility, municipal site engineer time, NMU senior academic time &mdash; are recorded at notional cost and are subject to the same audit and reporting requirements as cash contributions. The contingency is held by VVU and released only on Steering Committee approval; any unspent contingency is returned in proportion to contribution.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     APPENDIX E — Voice Law
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="appendix-banner">
+    <span class="app-id">APPENDIX E</span>
+    <span class="app-title">Voice Law</span>
+  </div>
+
+  <h2 class="subsection">E.1 The banned words</h2>
+  <p>The VVU stack refuses, by mechanical enforcement, the following words and phrases in any output it produces: unassailable, fully operational, production-ready, certified. The refusal is implemented in the <code>voiceLawViolation</code> function in the VVU shared library (<code>src/lib/vvu-utils.ts</code>), which is called by every environment before any output is emitted. The refusal is a constraint on the writers of the system, not on the readers; the readers are entitled to language that does not over-claim.</p>
+
+  <h2 class="subsection">E.2 The reasons</h2>
+  <p>Each banned word is banned for a defined reason:</p>
+  <ul>
+    <li>unassailable &mdash; over-claims the strength of the evidence; the evidence is recomputable, which is a weaker and more useful property than unassailability.</li>
+    <li>fully operational &mdash; over-claims the completeness of the system; the system is operated under defined conditions, not fully.</li>
+    <li>production-ready &mdash; over-claims the maturity of the system; the system is study-ready, which is a different and more honest property.</li>
+    <li>certified &mdash; over-claims the authority of the verifier; the verifier recomputes, which is a different and more verifiable act than certifying.</li>
+  </ul>
+
+  <h2 class="subsection">E.3 The enforcement</h2>
+  <p>The enforcement is mechanical: the function checks, case-insensitively, for the presence of the banned words in any string passed to it, and returns a violation record if any are present. The function is called by every environment's publication path, by every environment's self-test suite, and by the BENCH verification path. A violation in any of these paths blocks the operation that would have produced the banned word, and the violation is recorded in the operation log. The enforcement is not a guideline; it is a precondition.</p>
+
+  <div class="mono-block"><span class="key">voiceLaw.banned-words:</span> <span class="val">["unassailable", "fully operational", "production-ready", "certified"]</span>
+<span class="key">voiceLaw.enforcement:</span>  <span class="val">"mechanical · case-insensitive · blocks publication path"</span>
+<span class="key">voiceLaw.called-by:</span>     <span class="val">["PRESS publication path", "every env self-test", "BENCH verification path"]</span>
+<span class="key">voiceLaw.on-violation:</span>  <span class="val">"block operation · record in operation log"</span>
+<span class="key">voiceLaw.exceptions:</span>    <span class="val">"none"</span></div>
+
+  <h2 class="subsection">E.4 The exceptions</h2>
+  <p>There are no exceptions. The banned words are banned in all outputs, in all environments, at all times. Where a banned word appears in an input &mdash; for example, in a sensor reading envelope whose operator-authored provenance includes a comment field &mdash; the input is accepted, but the comment field is stripped from any downstream output. Where a banned word appears in a quoted text &mdash; for example, in a PRESS draft that quotes a regulatory text &mdash; the quoted text is permitted, but the quotation is marked as a quotation in the PRESS environment's extraction rules, and the quotation is not classified as a CONCLUSION by the rule engine.</p>
+
+  <div class="callout">
+    <div class="co-label">Voice Law Principle</div>
+    <div class="co-body">The banned words are banned in all outputs, in all environments, at all times. There are no exceptions. Where a banned word appears in an input, the input is accepted but the offending field is stripped from downstream output. Where a banned word appears in a quotation, the quotation is permitted but is marked as such and is not classified as a CONCLUSION by the rule engine. The constraint sits on the writers, not on the readers &mdash; readers are entitled to language that does not over-claim.</div>
+  </div>
+
+  <div class="end-marker">
+    End of Framework &nbsp;·&nbsp; <span class="ref">VVU-NMU-BSP-FRAMEWORK-2026-001</span> &nbsp;·&nbsp; Version 1.0 &nbsp;·&nbsp; Status PROPOSED
+  </div>
+
+  <p class="signature">Submitted for institutional review by Venture Vision Ubuntu (VVU).<br>Recipients: Nelson Mandela University · Department of Water and Sanitation · Nelson Mandela Bay Metropolitan Municipality · CSIR · Water Research Commission.</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,175 @@
+.pwa-install {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  /* Estate touch rhythm (R54): 44px minimum on mobile, 36px from sm: —
+     matches the DAYSHIFT / palette-trigger buttons in VvuHeader. */
+  min-height: 44px;
+  min-width: 44px;
+  padding: 6px 10px;
+  border: 1px solid rgba(200, 255, 0, 0.5);
+  background: rgba(200, 255, 0, 0.06);
+  color: #c8ff00;
+  border-radius: 3px;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+.pwa-install:hover {
+  border-color: #c8ff00;
+  background: rgba(200, 255, 0, 0.12);
+}
+.pwa-install:active {
+  transform: translateY(1px);
+}
+.pwa-install:focus-visible {
+  outline: 1px solid #c8ff00;
+  outline-offset: 2px;
+}
+.pwa-install-glyph {
+  font-size: 13px;
+  line-height: 1;
+}
+.pwa-install-label {
+  font-weight: 700;
+}
+/* Mobile: icon-only (the header is a fixed 44px-tall row at 390px — the
+   INSTALL wordmark appears from sm: up, where the row has headroom). */
+.pwa-install-label {
+  display: none;
+}
+@media (min-width: 640px) {
+  .pwa-install {
+    min-height: 36px;
+    min-width: 0;
+  }
+  .pwa-install-label {
+    display: inline;
+  }
+}
+
+.pwa-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  padding: 6px 10px;
+  min-height: 44px;
+  border: 1px solid rgba(107, 138, 64, 0.4);
+  color: #7a8a6e;
+  border-radius: 3px;
+}
+@media (min-width: 640px) {
+  .pwa-chip {
+    min-height: 36px;
+  }
+}
+
+.pwa-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* Mobile safe area: the sheet clears the iOS home indicator. */
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 640px) {
+  .pwa-sheet-backdrop {
+    align-items: center;
+  }
+}
+
+.pwa-sheet {
+  width: 100%;
+  max-width: 440px;
+  background: #0b0f0a;
+  border: 1px solid rgba(200, 255, 0, 0.35);
+  border-radius: 6px;
+  padding: 16px;
+  color: #d6e2e8;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+}
+.pwa-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.pwa-sheet-head h2 {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: #c8ff00;
+  margin: 0;
+}
+.pwa-sheet-close {
+  background: transparent;
+  border: 0;
+  color: #7a8a6e;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  min-height: 44px;
+  min-width: 44px;
+}
+.pwa-sheet-close:hover {
+  color: #c8ff00;
+}
+.pwa-sheet-close:focus-visible {
+  outline: 1px solid #c8ff00;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.pwa-steps {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: #b8c4b0;
+}
+.pwa-steps li {
+  margin-bottom: 6px;
+}
+.pwa-steps b {
+  color: #c8ff00;
+  font-weight: 700;
+}
+
+.pwa-sheet-note {
+  font-size: 10px;
+  line-height: 1.55;
+  color: #7a8a6e;
+  margin: 0 0 12px;
+  padding: 8px;
+  border-left: 2px solid #e0a030;
+  background: rgba(224, 160, 48, 0.05);
+}
+.pwa-sheet-note b {
+  color: #e0a030;
+}
+
+.pwa-sheet-foot {
+  border-top: 1px solid rgba(107, 138, 64, 0.2);
+  padding-top: 10px;
+  font-size: 10px;
+  color: #7a8a6e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwa-install {
+    transition: none;
+  }
+  .pwa-install:active {
+    transform: none;
+  }
+}

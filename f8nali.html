@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>VVU // SPATIAL TWIN</title>
+<!-- MapLibre for 3D Vector Maps -->
+<script src="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.js"></script>
+<link href="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.css" rel="stylesheet" />
+<!-- Puter.js for User-Pays AI -->
+<script src="https://js.puter.com/v2/"></script>
+
+<style>
+:root{
+  --bg:#060806;--sage:#6b8a40;--sage2:#8fb35a;--lime:#c8ff00;
+  --cyan:#00ffcc;--amber:#ffaa00;--rose:#e5484d;--teal:#4fa8a0;
+  --ink:#e0e0e0;--dim:#7a8a6e;--mute:#4a5a3e;--panel:rgba(8,12,8,.88);
+  --mono:'SF Mono','JetBrains Mono',ui-monospace,Menlo,monospace;
+  --hairline:1px solid rgba(143,179,90,0.15);
+  --hairline-strong:1px solid rgba(143,179,90,0.24);
+  --highlight-top:inset 0 1px 0 rgba(255,255,255,0.05);
+  --shadow-md:0 2px 6px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.22);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.4),0 16px 48px rgba(0,0,0,.28);
+  --ease-apple:cubic-bezier(.32,.72,0,1);
+  --ease-apple-out:cubic-bezier(.16,1,.3,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --track-caps:.08em;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:11px;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;letter-spacing:-0.01em}
+#map3d {position:fixed;inset:0;z-index:1;}
+:focus-visible{outline:2px solid var(--lime);outline-offset:2px;border-radius:6px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:2;
+  background:radial-gradient(circle at 80% -10%,rgba(200,255,0,.04),transparent 45%),
+             radial-gradient(circle at 10% 110%,rgba(0,255,204,.03),transparent 50%)}
+
+/* HUD PANELS - DEFAULT HIDDEN */
+.hud{position:fixed;z-index:10;pointer-events:none;
+  opacity:0; transform:translateY(10px); 
+  transition: opacity 0.3s var(--ease-apple), transform 0.3s var(--ease-apple);
+}
+.hud.visible {opacity:1; transform:translateY(0); pointer-events:auto;}
+
+.hud .panel{
+  background:var(--panel);
+  backdrop-filter:blur(30px) saturate(180%);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);
+  border:var(--hairline);border-radius:12px;padding:14px 16px;
+  box-shadow:var(--shadow-md),var(--highlight-top);pointer-events:auto;
+}
+.hud .title{
+  color:var(--sage2);font-size:9px;letter-spacing:var(--track-caps);
+  margin-bottom:10px;font-weight:700;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+.hud .title::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--sage2);
+  box-shadow:0 0 6px var(--sage2);flex-shrink:0}
+.hud .row{display:flex;justify-content:space-between;gap:12px;margin:4px 0;font-size:10px;}
+.hud .lbl{color:var(--mute)}
+.hud .val{color:var(--cyan);font-variant-numeric:tabular-nums;}
+.hud .val.lime{color:var(--lime)} .hud .val.amber{color:var(--amber)}
+.hud .val.rose{color:var(--rose)} .hud .val.sage{color:var(--sage2)}
+
+#sys02{top:14px;left:14px;width:250px; transform:translateY(-10px);}
+#sys03{top:14px;right:14px;width:230px; transform:translateY(-10px);}
+#nodes{bottom:70px;left:14px;width:250px; transform:translateY(10px);}
+#fsm{bottom:70px;right:14px;width:230px; transform:translateY(10px);}
+#sys02.visible, #sys03.visible, #nodes.visible, #fsm.visible { transform:translateY(0); }
+
+.nodeRow{display:flex;justify-content:space-between;padding:5px 0;
+  border-bottom:1px solid rgba(107,138,64,0.08);font-size:10px;}
+.nodeRow:last-child{border-bottom:none}
+.nodeRow .id{color:var(--sage2);font-weight:700;letter-spacing:var(--track-caps)}
+.nodeRow .v{color:var(--cyan);font-variant-numeric:tabular-nums;}
+.nodeRow .v.rose{color:var(--rose)} .nodeRow .v.amber{color:var(--amber)}
+
+.fsmbtn{
+  background:rgba(255,255,255,.02);border:var(--hairline-strong);color:var(--sage2);
+  padding:6px 10px;font-family:var(--mono);font-size:9px;font-weight:600;
+  letter-spacing:var(--track-caps);text-transform:uppercase;cursor:pointer;
+  border-radius:6px;box-shadow:var(--highlight-top);
+  transition:transform .4s var(--ease-spring),border-color .25s var(--ease-apple),color .25s var(--ease-apple);
+}
+.fsmbtn:hover{border-color:rgba(200,255,0,.5);color:var(--lime);background:rgba(200,255,0,.06)}
+.fsmbtn:active{transform:scale(.94);transition-duration:.08s}
+
+#leakBanner{
+  position:fixed;top:64px;left:50%;z-index:12;
+  background:rgba(229,72,77,.14);backdrop-filter:blur(20px);
+  border:1px solid var(--rose);color:var(--rose);padding:10px 22px;
+  font-size:11px;letter-spacing:var(--track-caps);font-weight:600;
+  text-transform:uppercase;border-radius:10px;
+  opacity:0;pointer-events:none;transform:translateX(-50%) translateY(-10px) scale(.94);
+  transition:opacity .3s var(--ease-apple),transform .5s var(--ease-spring);
+}
+#leakBanner.on{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+
+/* WORM Ticker */
+#ticker{
+  position:fixed;bottom:0;left:0;right:0;height:30px;background:rgba(8,12,8,.82);
+  backdrop-filter:blur(30px) saturate(180%);border-top:var(--hairline-strong);
+  overflow:hidden;z-index:10;display:flex;align-items:center;box-shadow:var(--highlight-top);
+}
+#ticker .label{
+  background:var(--sage);color:#000;padding:0 14px;height:100%;
+  display:flex;align-items:center;font-size:9px;font-weight:700;
+  letter-spacing:var(--track-caps);text-transform:uppercase;flex-shrink:0;
+}
+#ticker .scroll{flex:1;overflow:hidden;position:relative;height:100%;display:flex;align-items:center}
+#ticker .scroll-inner{display:flex;gap:0;animation:marquee 60s linear infinite;will-change:transform}
+#ticker .scroll-inner > div{
+  flex-shrink:0;padding-right:60px;white-space:nowrap;
+  font-size:10px;font-variant-numeric:tabular-nums;
+}
+#ticker .scroll-inner span{margin-right:36px;color:var(--sage2)}
+#ticker .scroll-inner span b{color:var(--cyan);font-weight:600}
+@keyframes marquee{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+
+/* MapLibre Overrides */
+.maplibregl-map { font-family: var(--mono) !important; }
+.maplibregl-ctrl-group { background: rgba(8,12,8,.82) !important; border: var(--hairline-strong) !important; }
+.maplibregl-ctrl-group button span { filter: invert(1) sepia(1) hue-rotate(50deg) saturate(3); }
+</style>
+</head>
+<body>
+
+<div id="map3d"></div>
+
+<!-- Hidden HUD Elements -->
+<div class="hud" id="sys02">
+  <div class="panel">
+    <div class="title">SYS.02 · GIS SPATIAL TRUTH</div>
+    <div class="row"><span class="lbl">MAP_SYNC</span><span class="val lime">TRUE</span></div>
+    <div class="row"><span class="lbl">LAYERS</span><span class="val">VECTOR 3D</span></div>
+    <div class="row"><span class="lbl">ACCURACY</span><span class="val">GPS_LOCK</span></div>
+    <div class="row"><span class="lbl">DATA_SOURCE</span><span class="val sage" id="mapProvider">OPENFREEMAP</span></div>
+    <div class="row"><span class="lbl">ANCHOR USR</span><span class="val sage" id="userCoords" style="font-size:9px">LOCATING...</span></div>
+  </div>
+</div>
+
+<div class="hud" id="sys03">
+  <div class="panel">
+    <div class="title">SYS.03 · CUBOT AI</div>
+    <div class="row"><span class="lbl">ENGINE</span><span class="val lime" id="aiStatus">PUTER.JS</span></div>
+    <div class="row"><span class="lbl">MODEL</span><span class="val sage">GPT-4o</span></div>
+    <div class="row"><span class="lbl">COST</span><span class="val">USER-PAYS</span></div>
+    <div class="row"><span class="lbl">LATENCY</span><span class="val" id="aiLatency">-- ms</span></div>
+  </div>
+</div>
+
+<div class="hud" id="nodes">
+  <div class="panel">
+    <div class="title">NODE ARRAY · N01–N06</div>
+    <div id="nodeList"></div>
+  </div>
+</div>
+
+<div class="hud" id="fsm">
+  <div class="panel">
+    <div class="title">FSM CONSOLE</div>
+    <div class="row"><span class="lbl">STATE</span><span class="val lime" id="fsmState">STEADY_LOCKED</span></div>
+    <div class="row"><span class="lbl">SINCE</span><span class="val" id="fsmSince">0:00</span></div>
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px;">
+      <button class="fsmbtn" data-cmd="CLICK">CLICK</button>
+      <button class="fsmbtn" data-cmd="CLEAR">CLEAR</button>
+      <button class="fsmbtn" data-cmd="WARN">WARN</button>
+      <button class="fsmbtn" data-cmd="CRIT">CRIT</button>
+      <button class="fsmbtn" data-cmd="RESET">RESET</button>
+    </div>
+  </div>
+</div>
+
+<div id="leakBanner">⚠ LEAK · N04 PRESSURE PIPE DN300 · INTENSITY 0.67</div>
+
+<div id="ticker">
+  <div class="label">WORM · APPEND-ONLY</div>
+  <div class="scroll"><div class="scroll-inner" id="tickerInner"></div></div>
+</div>
+
+<script>
+// ---------------------------------------------------------
+// 1. WORM & FSM CORE LOGIC
+// ---------------------------------------------------------
+const wormEvents = [];
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(16).padStart(8,'0')}
+function addWorm(event,details){
+  const seq=wormEvents.length+1;
+  const prev=seq>1?wormEvents[seq-2].hash:'0000000000000000';
+  const payload=seq+'|'+event+'|'+(details||'')+'|'+Date.now();
+  const h=prev+hash(payload);
+  wormEvents.push({seq,event,details:details||'',hash:h,ts:new Date().toISOString().slice(11,19)});
+  renderTicker();
+}
+function renderTicker(){
+  const el=document.getElementById('tickerInner');
+  const recent=wormEvents.slice(-15).reverse();
+  const html=recent.map(e=>`<span>#${String(e.seq).padStart(3,'0')} <b>${e.event}</b> · <b>${e.hash.slice(-8)}</b> · ${e.ts}</span>`).join('')||'<span>AWAITING FIRST EVENT</span>';
+  el.innerHTML=`<div>${html}</div><div aria-hidden="true">${html}</div>`;
+}
+
+let fsmState='STEADY_STATE_LOCKED';
+let fsmSince=Date.now();
+const transitions={
+  STEADY_STATE_LOCKED:{CLICK:'LEAK_ACTIVE',WARN:'WARN'},
+  LEAK_ACTIVE:{CLEAR:'STEADY_STATE_LOCKED',WARN:'WARN',RESET:'STEADY_STATE_LOCKED'},
+  WARN:{CLICK:'LEAK_ACTIVE',CLEAR:'STEADY_STATE_LOCKED',CRIT:'CRITICAL'},
+  CRITICAL:{RESET:'STEADY_STATE_LOCKED'},
+  FAIL_CLOSED:{RESET:'STEADY_STATE_LOCKED'}
+};
+function sendFsm(cmd){
+  const to=transitions[fsmState]?.[cmd];
+  if(!to){addWorm('FSM_ERROR','ILLEGAL δ: '+cmd+' in '+fsmState);return false}
+  fsmState=to;fsmSince=Date.now();
+  const el=document.getElementById('fsmState');
+  el.textContent=to;
+  el.className='val '+(to.includes('LOCKED')?'lime':to.includes('LEAK')?'rose':to.includes('WARN')?'amber':'rose');
+  document.getElementById('leakBanner').classList.toggle('on', fsmState==='LEAK_ACTIVE');
+  addWorm('FSM_'+cmd+'_'+to.slice(0,8),'δ '+cmd+' → '+to);
+  return true;
+}
+document.querySelectorAll('.fsmbtn').forEach(b=>b.addEventListener('click',(e)=>{
+  e.stopPropagation();
+  sendFsm(b.dataset.cmd);
+  resetHideTimer(); 
+}));
+
+const NODE_BASE={N01:42.5,N02:58.3,N03:68.1,N04:42.5,N05:47.2,N06:3.82};
+function getNodeDisplay(id){
+  const base=NODE_BASE[id]||0;
+  if(fsmState==='FAIL_CLOSED'||fsmState==='CRITICAL') return {val:'--',cls:'rose'};
+  if(fsmState==='LEAK_ACTIVE'&&id==='N04') return {val:(base*3.4).toFixed(1),cls:'rose'};
+  if(fsmState==='WARN'&&id==='N04') return {val:(base*1.6).toFixed(1),cls:'amber'};
+  return {val:base.toFixed(1),cls:''};
+}
+function renderNodeList(){
+  const el=document.getElementById('nodeList');
+  el.innerHTML=['N01','N02','N03','N04','N05','N06'].map(id=>{
+    const d=getNodeDisplay(id);
+    return `<div class="nodeRow"><span class="id">${id}</span><span class="v ${d.cls}">${d.val}</span></div>`;
+  }).join('');
+}
+renderNodeList();
+
+// ---------------------------------------------------------
+// 2. TAP INTERACTION LOGIC
+// ---------------------------------------------------------
+const hudEls = document.querySelectorAll('.hud');
+let tapCount = 0;
+let tapTimer = null;
+let hideTimer = null;
+
+function showHUD() {
+  hudEls.forEach(el => el.classList.add('visible'));
+  resetHideTimer();
+}
+function hideHUD() {
+  hudEls.forEach(el => el.classList.remove('visible'));
+}
+function resetHideTimer() {
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => { hideHUD(); }, 500); 
+}
+function handleScreenTap(e) {
+  if (e.target.closest('button')) return; 
+  tapCount++;
+  clearTimeout(tapTimer);
+  if (tapCount >= 3) {
+    tapCount = 0;
+    showHUD();
+  } else {
+    tapTimer = setTimeout(() => { tapCount = 0; }, 600);
+  }
+}
+document.body.addEventListener('pointerdown', handleScreenTap);
+
+// ---------------------------------------------------------
+// 3. MAPLIBRE 3D INTEGRATION (OpenFreeMap - No Key Required)
+// ---------------------------------------------------------
+let userLng = 27.8500; // Sishen Default
+let userLat = -25.7500;
+let map;
+
+function initMap() {
+  // Using OpenFreeMap Liberty style - free, no API key needed
+  map = new maplibregl.Map({
+    container: 'map3d',
+    style: 'https://tiles.openfreemap.org/styles/liberty',
+    center: [userLng, userLat],
+    zoom: 15.5,
+    pitch: 60,
+    bearing: -20,
+    antialias: true
+  });
+
+  map.on('load', () => {
+    addWorm('MAP_LOADED', 'OpenFreeMap Engine Online');
+    
+    // Inject 3D Building Extrusion on top of Liberty style
+    map.addLayer({
+      id: 'buildings-3d',
+      type: 'fill-extrusion',
+      source: 'openfreemap',
+      'source-layer': 'building',
+      minzoom: 14,
+      paint: {
+        'fill-extrusion-color': '#1a2416', // VVU Dark Sage
+        'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 10],
+        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+        'fill-extrusion-opacity': 0.85
+      }
+    });
+
+    // Add a glowing user marker
+    const el = document.createElement('div');
+    el.innerHTML = `<div style="width:12px;height:12px;background:#c8ff00;border-radius:50%;box-shadow:0 0 20px #c8ff00;border:2px solid #000;"></div>`;
+    new maplibregl.Marker(el).setLngLat([userLng, userLat]).addTo(map);
+  });
+
+  map.on('move', () => {
+    const c = map.getCenter();
+    document.getElementById('userCoords').textContent = `${c.lat.toFixed(4)}°, ${c.lng.toFixed(4)}°`;
+  });
+}
+
+function requestLocation() {
+  if (!navigator.geolocation) {
+    addWorm('GEO_ERROR', 'Geolocation API absent.');
+    initMap();
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      addWorm('GPS_LOCK', `Anchor set: ${userLat.toFixed(4)}°, ${userLng.toFixed(4)}°`);
+      initMap();
+    },
+    (err) => {
+      addWorm('GEO_DENIED', `Error: ${err.message}. Defaulting to Sishen.`);
+      initMap();
+    },
+    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+  );
+}
+
+// ---------------------------------------------------------
+// 4. PUTER.JS INTEGRATION (User-Pays AI)
+// ---------------------------------------------------------
+async function initCubot() {
+  try {
+    // Check if Puter is available
+    if (typeof puter === 'undefined') {
+      throw new Error('Puter SDK not loaded');
+    }
+
+    // We don't auto-login. We just check if the user is already signed in.
+    const isSignedIn = puter.auth.isSignedIn();
+    if (isSignedIn) {
+      document.getElementById('aiStatus').textContent = 'CONNECTED';
+      document.getElementById('aiStatus').className = 'val lime';
+      addWorm('AI_READY', 'Puter.js User-Pays Engine attached.');
+    } else {
+      document.getElementById('aiStatus').textContent = 'AWAITING LOGIN';
+      document.getElementById('aiStatus').className = 'val amber';
+      addWorm('AI_IDLE', 'User must click "Log in with Puter" to use AI.');
+    }
+
+    // Example: Test AI connection if signed in
+    if (isSignedIn) {
+      const t0 = performance.now();
+      const response = await puter.ai.chat("System check. Reply with 'OK'.", { model: "gpt-4o-mini" });
+      const t1 = performance.now();
+      document.getElementById('aiLatency').textContent = `${Math.round(t1 - t0)} ms`;
+      addWorm('AI_TEST', `Latency: ${Math.round(t1 - t0)}ms | Reply: ${response.message.content.substring(0, 20)}`);
+    }
+  } catch (e) {
+    document.getElementById('aiStatus').textContent = 'OFFLINE';
+    document.getElementById('aiStatus').className = 'val rose';
+    addWorm('AI_ERROR', e.message);
+  }
+}
+
+// Add a quick way to log in if they aren't
+window.togglePuterLogin = async () => {
+  if (!puter.auth.isSignedIn()) {
+    await puter.auth.signIn();
+  } else {
+    await puter.auth.signOut();
+  }
+  initCubot();
+};
+
+// ---------------------------------------------------------
+// 5. BOOT SEQUENCE
+// ---------------------------------------------------------
+addWorm('SYSTEM_BOOT','SPATIAL TRUTH v5 · Puter.js Integrated');
+addWorm('FSM_BOOT','STEADY_STATE_LOCKED');
+
+setTimeout(()=>document.body.classList.add('loaded'), 1200);
+
+// Start Map
+requestLocation();
+
+// Start AI Check
+initCubot();
+
+// Start FSM Clock
+setInterval(()=>{
+  const s=Math.floor((Date.now()-fsmSince)/1000);
+  document.getElementById('fsmSince').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+}, 1000);
+</script>
+</body>
+</html>

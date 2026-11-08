@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VVU · Evidence Instrument — Anatomy Integration Demo</title>
+<style>
+:root {
+  --bg: #0a0e13; --panel: #111a24; --line: #1c2836; --txt: #dce8f2; --dim: #75899c;
+  --acc: #c8ff00; --warn: #f3e38a; --bad: #e5484d; --teal: #2ea8a0;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background: var(--bg); color: var(--txt); font-family: var(--mono); font-size: 13px; line-height: 1.5; padding: 20px; }
+h1 { font-size: 16px; margin: 0 0 4px; }
+h2 { font-size: 13px; margin: 0 0 8px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; }
+.hint { color: var(--dim); font-size: 11px; margin-bottom: 16px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.col { flex: 1; min-width: 280px; }
+button { background: var(--panel); border: 1px solid var(--line); color: var(--txt); border-radius: 6px; padding: 8px 14px; font-family: var(--mono); font-size: 12px; cursor: pointer; transition: all 120ms; }
+button:hover { border-color: var(--acc); color: var(--acc); }
+button.active { background: rgba(200,255,0,0.1); border-color: var(--acc); color: var(--acc); }
+button.danger:hover { border-color: var(--bad); color: var(--bad); }
+.gauge { width: 120px; height: 120px; border-radius: 50%; border: 3px solid var(--line); display: flex; align-items: center; justify-content: center; flex-direction: column; margin: 0 auto 8px; transition: border-color 300ms, box-shadow 300ms; }
+.gauge.READY { border-color: var(--dim); }
+.gauge.BLOCKED { border-color: var(--bad); box-shadow: 0 0 12px rgba(229,72,77,0.3); }
+.gauge.INCONCLUSIVE { border-color: var(--warn); }
+.gauge.PROVEN { border-color: var(--acc); box-shadow: 0 0 16px rgba(200,255,0,0.3); }
+.gauge.RELEASED { border-color: var(--teal); box-shadow: 0 0 16px rgba(46,168,160,0.3); }
+.gauge .status { font-size: 11px; font-weight: 600; text-align: center; }
+.gauge .conf { font-size: 22px; font-weight: 700; }
+.gauge .unit { font-size: 9px; color: var(--dim); }
+.readout { background: rgba(0,0,0,0.3); border: 1px solid var(--line); border-radius: 6px; padding: 10px; font-size: 10px; line-height: 1.6; overflow-x: auto; }
+.readout .label { color: var(--dim); }
+.sources { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.source { padding: 2px 6px; border-radius: 4px; font-size: 9px; border: 1px solid var(--line); }
+.source.INDEPENDENT { border-color: var(--acc); color: var(--acc); }
+.source.AVAILABLE { border-color: var(--teal); color: var(--teal); }
+.source.PENDING { color: var(--dim); }
+.source.INVALID { border-color: var(--bad); color: var(--bad); }
+.error { background: rgba(229,72,77,0.1); border: 1px solid var(--bad); border-radius: 6px; padding: 8px; color: var(--bad); font-size: 11px; margin-bottom: 8px; }
+.ok { background: rgba(200,255,0,0.05); border: 1px solid var(--acc); border-radius: 6px; padding: 8px; color: var(--acc); font-size: 11px; margin-bottom: 8px; }
+.prov-ref { font-size: 9px; color: var(--teal); margin-top: 4px; word-break: break-all; }
+.log { max-height: 200px; overflow-y: auto; }
+.log-entry { font-size: 10px; color: var(--dim); padding: 2px 0; border-bottom: 1px solid rgba(28,40,54,0.5); }
+.log-entry .ts { color: var(--dim); opacity: 0.6; }
+</style>
+</head>
+<body>
+
+<h1>🔬 VVU · Evidence Instrument</h1>
+<p class="hint">Anatomy × VVU integration demo — the figure displays, never decides. PROVEN requires provenanceRef + INDEPENDENT source.</p>
+
+<div class="row">
+  <div class="col">
+    <div class="panel">
+      <h2>Instrument</h2>
+      <div class="gauge READY" id="gauge">
+        <div class="status" id="gaugeStatus">READY</div>
+        <div class="conf" id="gaugeConf">0%</div>
+        <div class="unit">confidence</div>
+      </div>
+      <div class="sources" id="sources"></div>
+      <div class="prov-ref" id="provRef"></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <h2>State Injection (test the gate)</h2>
+      <div id="errorBox"></div>
+      <div class="row" style="margin-bottom: 8px;">
+        <button onclick="injectReady()">READY</button>
+        <button onclick="injectBlocked()">BLOCKED</button>
+        <button onclick="injectInconclusive()">INCONCLUSIVE</button>
+      </div>
+      <div class="row" style="margin-bottom: 8px;">
+        <button onclick="injectProvenValid()">PROVEN (valid — has ref + independent)</button>
+        <button class="danger" onclick="injectProvenFake()">PROVEN (fake — no ref)</button>
+      </div>
+      <div class="row">
+        <button onclick="injectReleased()">RELEASED</button>
+        <button class="danger" onclick="injectProvenNoIndependent()">PROVEN (no independent source)</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Visual State Readout</h2>
+      <div class="readout" id="readout"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Event Log</h2>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ Visual State Model (mirrors src/lib/anatomy/visual-state.ts) ═══
+var VERIFICATION_STATUS = {
+  READY: 'READY', BLOCKED_MISSING_INPUT: 'BLOCKED_MISSING_INPUT',
+  BLOCKED_INDEPENDENCE: 'BLOCKED_INDEPENDENCE', INCONCLUSIVE: 'INCONCLUSIVE',
+  PROVEN: 'PROVEN', RELEASED: 'RELEASED'
+};
+var SOURCE_STATUS = {
+  PENDING: 'PENDING', AVAILABLE: 'AVAILABLE', INVALID: 'INVALID', INDEPENDENT: 'INDEPENDENT'
+};
+var RENDER_MODE = { LIVE: 'LIVE', SIMULATION: 'SIMULATION', REPLAY: 'REPLAY' };
+
+function createVisualState(id, type, mode) {
+  return {
+    id: id, type: type, mode: mode || RENDER_MODE.LIVE,
+    system: { status: 'IDLE', health: 'OK' },
+    verification: {
+      status: VERIFICATION_STATUS.READY, confidence: 0, blockedReason: null,
+      provenanceRef: null, evidenceSummary: 'Awaiting inputs...'
+    },
+    sources: [], events: [], metadata: { timestamp: new Date().toISOString(), version: '1.0.0' }
+  };
+}
+
+function validateVisualState(state) {
+  var errors = [];
+  if (!state.id) errors.push('Missing ID');
+  if (!Object.values(VERIFICATION_STATUS).includes(state.verification.status))
+    errors.push('Invalid verification status: ' + state.verification.status);
+  // THE GATE: PROVEN/RELEASED requires provenanceRef
+  if ([VERIFICATION_STATUS.PROVEN, VERIFICATION_STATUS.RELEASED].includes(state.verification.status)
+      && !state.verification.provenanceRef)
+    errors.push(state.verification.status + ' requires provenanceRef (cryptographic proof)');
+  // INDEPENDENCE CHECK
+  if ([VERIFICATION_STATUS.PROVEN, VERIFICATION_STATUS.RELEASED].includes(state.verification.status)
+      && !state.sources.some(function(s) { return s.status === SOURCE_STATUS.INDEPENDENT; }))
+    errors.push(state.verification.status + ' requires at least one INDEPENDENT source');
+  return { isValid: errors.length === 0, errors: errors };
+}
+
+// ═══ Adapter (mirrors src/adapters/anatomy/AnatomyAdapter.ts) ═══
+var currentState = createVisualState('evidence-instrument-01', 'evidence-instrument');
+var logEntries = [];
+
+function log(msg) {
+  logEntries.unshift({ ts: new Date().toISOString(), msg: msg });
+  if (logEntries.length > 50) logEntries.pop();
+  renderLog();
+}
+
+function updateState(newState) {
+  // THE GATE — validate before rendering
+  var validation = validateVisualState(newState);
+  if (!validation.isValid) {
+    showError(validation.errors.join('; '));
+    log('REJECTED: ' + validation.errors.join('; '));
+    return false;
+  }
+  currentState = newState;
+  hideError();
+  render();
+  log('OK: status=' + newState.verification.status + ' confidence=' + (newState.verification.confidence * 100).toFixed(0) + '%');
+  return true;
+}
+
+// ═══ Rendering ═══
+function render() {
+  var v = currentState.verification;
+  var gauge = document.getElementById('gauge');
+  var statusText = document.getElementById('gaugeStatus');
+  var confText = document.getElementById('gaugeConf');
+
+  gauge.className = 'gauge ' + v.status;
+  statusText.textContent = v.status;
+  confText.textContent = (v.confidence * 100).toFixed(0) + '%';
+
+  // Sources
+  var srcDiv = document.getElementById('sources');
+  srcDiv.innerHTML = '';
+  currentState.sources.forEach(function(s) {
+    var span = document.createElement('span');
+    span.className = 'source ' + s.status;
+    span.textContent = s.label + ' (' + s.status + ')';
+    srcDiv.appendChild(span);
+  });
+
+  // Provenance ref
+  var provDiv = document.getElementById('provRef');
+  provDiv.textContent = v.provenanceRef ? '🔗 ' + v.provenanceRef : '';
+
+  // Readout
+  var readout = document.getElementById('readout');
+  readout.innerHTML =
+    '<span class="label">id:</span> ' + currentState.id + '<br>' +
+    '<span class="label">type:</span> ' + currentState.type + '<br>' +
+    '<span class="label">mode:</span> ' + currentState.mode + '<br>' +
+    '<span class="label">system:</span> ' + currentState.system.status + ' / ' + currentState.system.health + '<br>' +
+    '<span class="label">verification:</span> ' + v.status + '<br>' +
+    '<span class="label">confidence:</span> ' + (v.confidence * 100).toFixed(1) + '%<br>' +
+    '<span class="label">blockedReason:</span> ' + (v.blockedReason || '—') + '<br>' +
+    '<span class="label">provenanceRef:</span> ' + (v.provenanceRef || '—') + '<br>' +
+    '<span class="label">evidenceSummary:</span> ' + v.evidenceSummary + '<br>' +
+    '<span class="label">sources:</span> ' + currentState.sources.length + '<br>' +
+    '<span class="label">events:</span> ' + currentState.events.length;
+}
+
+function renderLog() {
+  var logDiv = document.getElementById('log');
+  logDiv.innerHTML = '';
+  logEntries.forEach(function(e) {
+    var div = document.createElement('div');
+    div.className = 'log-entry';
+    div.innerHTML = '<span class="ts">' + e.ts.slice(11, 19) + '</span> ' + e.msg;
+    logDiv.appendChild(div);
+  });
+}
+
+function showError(msg) {
+  var box = document.getElementById('errorBox');
+  box.innerHTML = '<div class="error">⚠ ' + msg + '</div>';
+}
+
+function hideError() {
+  document.getElementById('errorBox').innerHTML = '';
+}
+
+// ═══ State injection functions (test the gate) ═══
+function injectReady() {
+  updateState(Object.assign(createVisualState(currentState.id, currentState.type), {
+    verification: { status: VERIFICATION_STATUS.READY, confidence: 0, blockedReason: null, provenanceRef: null, evidenceSummary: 'System ready, awaiting inputs.' },
+    sources: []
+  }));
+}
+
+function injectBlocked() {
+  updateState(Object.assign(createVisualState(currentState.id, currentState.type), {
+    verification: { status: VERIFICATION_STATUS.BLOCKED_MISSING_INPUT, confidence: 0, blockedReason: 'Missing evidence from 2 of 4 sources', provenanceRef: null, evidenceSummary: 'Blocked: insufficient inputs.' },
+    sources: [
+      { id: 's1', label: 'you.com', status: SOURCE_STATUS.AVAILABLE, weight: 0.65 },
+      { id: 's2', label: 'brave', status: SOURCE_STATUS.PENDING, weight: 0 }
+    ]
+  }));
+}
+
+function injectInconclusive() {
+  updateState(Object.assign(createVisualState(currentState.id, currentState.type), {
+    verification: { status: VERIFICATION_STATUS.INCONCLUSIVE, confidence: 0.42, blockedReason: null, provenanceRef: null, evidenceSummary: 'Evidence insufficient — 2 sources but N_ind < 2.' },
+    sources: [
+      { id: 's1', label: 'you.com', status: SOURCE_STATUS.AVAILABLE, weight: 0.65 },
+      { id: 's2', label: 'brave', status: SOURCE_STATUS.AVAILABLE, weight: 0.75 }
+    ]
+  }));
+}
+
+function injectProvenValid() {
+  updateState(Object.assign(createVisualState(currentState.id, currentState.type), {
+    verification: { status: VERIFICATION_STATUS.PROVEN, confidence: 0.95, blockedReason: null, provenanceRef: 'sha256:a1b2c3d4e5f6...verified.by.vvu-ive', evidenceSummary: 'PROVEN — 3 independent sources, N_ind=2.8, heat-kernel retention=0.91.' },
+    sources: [
+      { id: 's1', label: 'you.com', status: SOURCE_STATUS.AVAILABLE, weight: 0.65 },
+      { id: 's2', label: 'brave', status: SOURCE_STATUS.INDEPENDENT, weight: 0.75 },
+      { id: 's3', label: 'watchdog', status: SOURCE_STATUS.INDEPENDENT, weight: 0.95 }
+    ]
+  }));
+}
+
+function injectProvenFake() {
+  // This should be REJECTED — no provenanceRef
+  var result = updateState(Object.assign(createVisualState(currentState.id, currentState.type), {
+    verification: { status: VERIFICATION_STATUS.PROVEN, confidence: 0.99, blockedReason: null, provenanceRef: null, evidenceSummary: 'Self-promoted to PROVEN with no proof.' },
+    sources: [{ id: 's1', label: 'self', status: SOURCE_STATUS.INDEPENDENT, weight: 1.0 }]
+  }));
+  if (!result) {
+    var box = document.getElementById('errorBox');
+    box.innerHTML += '<div class="ok">✓ Gate correctly rejected PROVEN without provenanceRef</div>';
+  }
+}
+
+function injectProvenNoIndependent() {
+  // This should be REJECTED — no INDEPENDENT source
+  var result = updateState(Object.assign(createVisualState(currentState.id, currentState.type), {
+    verification: { status: VERIFICATION_STATUS.PROVEN, confidence: 0.9, blockedReason: null, provenanceRef: 'sha256:fake-ref', evidenceSummary: 'PROVEN but no independent source.' },
+    sources: [
+      { id: 's1', label: 'you.com', status: SOURCE_STATUS.AVAILABLE, weight: 0.65 },
+      { id: 's2', label: 'brave', status: SOURCE_STATUS.AVAILABLE, weight: 0.75 }
+    ]
+  }));
+  if (!result) {
+    var box = document.getElementById('errorBox');
+    box.innerHTML += '<div class="ok">✓ Gate correctly rejected PROVEN without INDEPENDENT source</div>';
+  }
+}
+
+function injectReleased() {
+  updateState(Object.assign(createVisualState(currentState.id, currentState.type), {
+    verification: { status: VERIFICATION_STATUS.RELEASED, confidence: 1.0, blockedReason: null, provenanceRef: 'sha256:released.by.founder.2026-10-15', evidenceSummary: 'RELEASED — founder-authorized release of proven claim.' },
+    sources: [
+      { id: 's1', label: 'you.com', status: SOURCE_STATUS.INDEPENDENT, weight: 0.65 },
+      { id: 's2', label: 'brave', status: SOURCE_STATUS.INDEPENDENT, weight: 0.75 },
+      { id: 's3', label: 'watchdog', status: SOURCE_STATUS.INDEPENDENT, weight: 0.95 }
+    ]
+  }));
+}
+
+// ═══ Boot ═══
+render();
+log('Evidence Instrument initialized — inject state to test the gate');
+</script>
+
+</body>
+</html>

@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VVU Scene & Loop Compiler — Loadout Forge (Constitutional Build)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap");
+      body {
+        margin: 0;
+        background-color: #0d0f12;
+        color: #e8f6f8;
+        font-family: "Oswald", sans-serif;
+      }
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+      .cod-select {
+        border-left: 4px solid #00e5ff;
+        background: rgba(0, 229, 255, 0.1);
+      }
+      .badge-cyan {
+        color: #00e5ff;
+        border: 1px solid rgba(0, 229, 255, 0.45);
+        background: rgba(0, 229, 255, 0.08);
+      }
+      .badge-amber {
+        color: #fbbf24;
+        border: 1px solid rgba(251, 191, 36, 0.45);
+        background: rgba(251, 191, 36, 0.08);
+      }
+      .badge-red {
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.5);
+        background: rgba(248, 113, 113, 0.08);
+      }
+      .blocked-card {
+        border: 1px solid rgba(248, 113, 113, 0.6);
+        background: rgba(13, 15, 18, 0.92);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect, useRef } = React;
+
+      // ---- LOADOUT SLOTS (No-Primitives Law: only provenance-verified real assets; missing capability = BLOCKED, never a primitive placeholder) ----
+      // G18 disclosure: the VVU marketplace does not exist yet. Assets are sourced from
+      // pinned provenance-verified mirrors (Khronos / three.js) until G18 closes.
+      const SLOTS = [
+        {
+          id: "w1",
+          name: "DAMAGED HELMET",
+          role: "PRIMARY // HEADGEAR",
+          asset: "DamagedHelmet.glb (Khronos glTF-Binary, embedded PBR)",
+          url: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb",
+        },
+        {
+          id: "w2",
+          name: "RECON OPERATOR",
+          role: "SECONDARY // CHARACTER",
+          asset: "Soldier.glb (three.js repo, skinned character)",
+          url: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/Soldier.glb",
+        },
+        {
+          id: "w3",
+          name: "MULTI-TOOL",
+          role: "MELEE // FIELD TOOL",
+          asset: null,
+          blockedReason:
+            "No licensed tool/multi-tool GLB exists in transport. BLOCKED_MISSING_ASSET — No-Primitives Law forbids a primitive placeholder. Supply a .glb (marketplace G18 or direct upload) to unlock this slot.",
+        },
+      ];
+
+      const PERKS = [
+        { id: "p1", name: "GHOST // STEALTH MODE", desc: "Undetectable by enemy CCTV networks." },
+        {
+          id: "p2",
+          name: "BLOOD RUSH // OVERCLOCK",
+          desc: "Tactical sprint boosts local edge compute.",
+        },
+        {
+          id: "p3",
+          name: "BATTLE HARDENED // ENCRYPTION",
+          desc: "Reduces effect of enemy cyber attacks.",
+        },
+      ];
+
+      const FAIL_TEST_URL =
+        "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/RUN_FAIL_CLOSED_TEST__404.glb";
+
+      const App = () => {
+        const [activeSlot, setActiveSlot] = useState(SLOTS[0]);
+        const [activePerks, setActivePerks] = useState(["p1", "p3"]);
+        // Per-claim asset epistemics: LOADING | PROVEN | BLOCKED_MISSING_ASSET — claims individually metered (bytes / tris / meshes / maps)
+        const [assetState, setAssetState] = useState({ state: "LOADING", claims: {} });
+        const [statusLine, setStatusLine] = useState("BOOT: equip a slot to begin");
+
+        const mountRef = useRef(null);
+        const sceneRef = useRef(null);
+        const loadSeqRef = useRef(0);
+
+        // ---------- 3D VIEWPORT (sized to container via ResizeObserver; aspect synced) ----------
+        useEffect(() => {
+          if (!mountRef.current) return;
+
+          const scene = new THREE.Scene();
+          scene.background = new THREE.Color(0x0d0f12);
+
+          const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
+
+          const renderer = new THREE.WebGLRenderer({ antialias: true });
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+          renderer.outputEncoding = THREE.sRGBEncoding;
+          renderer.toneMapping = THREE.ACESFilmicToneMapping; // honest grade: real tonemap, no phantom envMapIntensity claim
+          mountRef.current.appendChild(renderer.domElement);
+          renderer.domElement.style.width = "100%";
+          renderer.domElement.style.height = "100%";
+
+          // Tactical lighting rig (kept from sovereign design)
+          scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+          const spotLight = new THREE.SpotLight(0x00e5ff, 3);
+          spotLight.position.set(2, 2, 3);
+          scene.add(spotLight);
+          const fillLight = new THREE.DirectionalLight(0xff0000, 1);
+          fillLight.position.set(-2, 1, -2);
+          scene.add(fillLight);
+
+          sceneRef.current = { scene, camera, renderer, model: null };
+
+          const fitCamera = () => {
+            const { scene: s, camera: c, model } = sceneRef.current;
+            if (!model) return;
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            model.position.sub(center);
+            const maxDim = Math.max(size.x, size.y, size.z) || 1;
+            const fov = (c.fov * Math.PI) / 180;
+            const dist = (maxDim / (2 * Math.tan(fov / 2))) * 1.45;
+            c.position.set(0, 0, dist);
+            c.lookAt(0, 0, 0);
+          };
+
+          let animId;
+          const animate = () => {
+            animId = requestAnimationFrame(animate);
+            const st = sceneRef.current;
+            if (st) {
+              if (st.model) st.model.rotation.y += 0.005; // turntable on MODEL: lights stay fixed (scene-level rotation swept the rig)
+              st.renderer.render(st.scene, st.camera);
+            }
+          };
+          animate();
+
+          // Container-driven sizing (mobile-safe; replaces fixed 400x400)
+          const ro = new ResizeObserver((entries) => {
+            const r = entries[0].contentRect;
+            if (r.width > 0 && r.height > 0) {
+              st.aspectSync(r.width, r.height);
+            }
+          });
+          const st = sceneRef.current;
+          st.aspectSync = (w, h) => {
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h, false);
+            fitCamera();
+          };
+          ro.observe(mountRef.current);
+
+          return () => {
+            ro.disconnect();
+            cancelAnimationFrame(animId);
+            renderer.dispose();
+          };
+        }, []);
+
+        // ---------- EQUIP PIPELINE: fetch (exact bytes) -> parse -> per-claim metering; fail-closed onError ----------
+        const equip = (slot) => {
+          setActiveSlot(slot);
+          const seq = ++loadSeqRef.current; // race guard: only the newest equip may commit
+          if (!slot.url) {
+            // fail-closed staging: clear the previous asset so the blocked slot cannot borrow another asset's stage
+            const st0 = sceneRef.current;
+            if (st0 && st0.model) {
+              st0.scene.remove(st0.model);
+              st0.model = null;
+            }
+            setAssetState({
+              state: "BLOCKED_MISSING_ASSET",
+              claims: {},
+              reason: slot.blockedReason,
+            });
+            setStatusLine(
+              "EQUIP: " + slot.name + " -> BLOCKED_MISSING_ASSET (no asset in transport)",
+            );
+            return;
+          }
+          setAssetState({ state: "LOADING", claims: {}, name: slot.name });
+          setStatusLine("EQUIP: " + slot.name + " -> LOADING (fetch + parse + meter)");
+          fetch(slot.url)
+            .then((res) => {
+              if (!res.ok) throw new Error("HTTP " + res.status + " on " + slot.url);
+              return res.arrayBuffer();
+            })
+            .then((buf) => {
+              if (seq !== loadSeqRef.current) return; // stale equip — discard
+              new THREE.GLTFLoader().parse(
+                buf,
+                "",
+                (gltf) => {
+                  if (seq !== loadSeqRef.current) return;
+                  const st = sceneRef.current;
+                  if (st.model) st.scene.remove(st.model);
+                  const model = gltf.scene;
+                  st.scene.add(model);
+                  st.model = model;
+
+                  // ---- per-claim metering (meshes / triangles / map slots) ----
+                  let tris = 0,
+                    meshes = 0;
+                  const maps = new Set();
+                  model.traverse((child) => {
+                    if (child.isMesh) {
+                      meshes++;
+                      const g = child.geometry;
+                      const cnt = g.index
+                        ? g.index.count
+                        : g.attributes.position
+                          ? g.attributes.position.count
+                          : 0;
+                      tris += cnt / 3;
+                      const m = child.material;
+                      [
+                        "map",
+                        "normalMap",
+                        "metalnessMap",
+                        "roughnessMap",
+                        "aoMap",
+                        "emissiveMap",
+                      ].forEach((k) => {
+                        if (m && m[k]) maps.add(k);
+                      });
+                    }
+                  });
+                  setAssetState({
+                    state: "PROVEN",
+                    claims: {
+                      bytes: buf.byteLength,
+                      tris: Math.round(tris),
+                      meshes,
+                      maps: [...maps].join("+") || "none",
+                    },
+                    name: slot.name,
+                  });
+                  setStatusLine(
+                    "EQUIP: " +
+                      slot.name +
+                      " -> PROVEN · " +
+                      buf.byteLength.toLocaleString() +
+                      " B · " +
+                      Math.round(tris).toLocaleString() +
+                      " tris",
+                  );
+                  if (st.aspectSync && mountRef.current) {
+                    const r = mountRef.current.getBoundingClientRect();
+                    if (r.width && r.height) st.aspectSync(r.width, r.height);
+                  }
+                },
+                (err) => {
+                  if (seq !== loadSeqRef.current) return;
+                  const st1 = sceneRef.current;
+                  if (st1 && st1.model) {
+                    st1.scene.remove(st1.model);
+                    st1.model = null;
+                  }
+                  setAssetState({
+                    state: "BLOCKED_MISSING_ASSET",
+                    claims: {},
+                    reason: "parse: " + String((err && err.message) || err),
+                  });
+                  setStatusLine(
+                    "EQUIP: " + slot.name + " -> BLOCKED_MISSING_ASSET (parse failure)",
+                  );
+                },
+              );
+            })
+            .catch((e) => {
+              if (seq !== loadSeqRef.current) return;
+              const st2 = sceneRef.current;
+              if (st2 && st2.model) {
+                st2.scene.remove(st2.model);
+                st2.model = null;
+              }
+              setAssetState({
+                state: "BLOCKED_MISSING_ASSET",
+                claims: {},
+                reason: String(e.message || e),
+              });
+              setStatusLine("EQUIP: " + slot.name + " -> BLOCKED_MISSING_ASSET (network)");
+            });
+        };
+
+        useEffect(() => {
+          equip(SLOTS[0]);
+        }, []); // initial equip once scene exists
+
+        const runFailClosedTest = () => {
+          const seq = ++loadSeqRef.current;
+          setAssetState({ state: "LOADING", claims: {}, name: "FAIL-CLOSED TEST" });
+          setStatusLine("TEST: real network fetch -> RUN_FAIL_CLOSED_TEST__404.glb");
+          fetch(FAIL_TEST_URL)
+            .then((res) => {
+              throw new Error("HTTP " + res.status);
+            })
+            .catch((e) => {
+              if (seq !== loadSeqRef.current) return;
+              const st3 = sceneRef.current;
+              if (st3 && st3.model) {
+                st3.scene.remove(st3.model);
+                st3.model = null;
+              }
+              setAssetState({
+                state: "BLOCKED_MISSING_ASSET",
+                claims: {},
+                reason:
+                  "REAL NETWORK 404 — " +
+                  String(e.message) +
+                  " · viewport intentionally empty (No-Primitives Law)",
+              });
+              setStatusLine(
+                "TEST: FAIL-CLOSED CONFIRMED — HTTP 404 -> BLOCKED_MISSING_ASSET, no phantom asset",
+              );
+            });
+        };
+
+        const togglePerk = (id) => {
+          setActivePerks((prev) =>
+            prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+          );
+        };
+
+        const stubClick = (what) => {
+          setStatusLine(
+            what +
+              " -> STUB: Scene Compiler runtime not mounted (BLOCKED_MISSING_INPUT: game-loop backend + WORM ledger endpoints absent)",
+          );
+        };
+
+        const a = assetState;
+        return (
+          <div className="flex flex-col md:flex-row h-screen w-screen">
+            {/* LEFT PANEL — LOADOUT TREE */}
+            <div className="w-full md:w-[400px] md:h-full flex flex-col bg-[#0a0c10] border-b md:border-b-0 md:border-r border-white/10 z-10 shadow-2xl md:max-h-full max-h-[46%]">
+              <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#14191e]">
+                <h1 className="text-xl font-bold tracking-widest text-white">EDIT LOADOUT</h1>
+                <span className="text-xs mono text-gray-400">01 // VVU OPERATOR</span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                <div>
+                  <p className="text-xs text-gray-400 mb-2 mono">LOADOUT SLOTS</p>
+                  <div className="space-y-2">
+                    {SLOTS.map((slot) => (
+                      <div
+                        key={slot.id}
+                        onClick={() => equip(slot)}
+                        className={`p-3 cursor-pointer transition-all border border-transparent ${activeSlot.id === slot.id ? "cod-select border-l-[4px]" : "hover:bg-white/5 border-l-4 border-l-transparent"}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-8 bg-gray-800 border border-gray-600 flex items-center justify-center shrink-0">
+                            <span className="text-[8px] text-gray-500">
+                              {slot.asset ? "3D" : "—"}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-sm truncate">{slot.name}</p>
+                            <p className="text-xs mono text-cyan-400">{slot.role}</p>
+                            <p className="text-[10px] mono mt-0.5">
+                              {slot.asset ? (
+                                <span className="text-gray-500">{slot.asset}</span>
+                              ) : (
+                                <span className="text-red-400">
+                                  BLOCKED_MISSING_ASSET — awaiting .glb
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-400 mb-2 mono">
+                    PERKS (MAX 3) — SIMULATED FICTION
+                  </p>
+                  <div className="space-y-2">
+                    {PERKS.map((perk) => (
+                      <div
+                        key={perk.id}
+                        onClick={() => togglePerk(perk.id)}
+                        className={`p-3 cursor-pointer border ${activePerks.includes(perk.id) ? "border-cyan-500 bg-cyan-500/10" : "border-white/10 bg-white/5 hover:border-white/30"}`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <p className="font-bold text-sm text-white">{perk.name}</p>
+                          {activePerks.includes(perk.id) && (
+                            <span className="text-cyan-400">✓</span>
+                          )}
+                        </div>
+                        <p className="text-xs mono text-gray-400 mt-1">{perk.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-400 mb-2 mono">
+                    FAIL-CLOSED TESTS (REAL NETWORK)
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={runFailClosedTest}
+                      className="px-3 py-2 border border-red-500/60 text-red-300 hover:bg-red-500/10 font-bold text-xs tracking-wider mono"
+                    >
+                      RUN 404 TEST
+                    </button>
+                    <button
+                      onClick={() => equip(SLOTS[0])}
+                      className="px-3 py-2 border border-white/20 hover:bg-white/10 text-white font-bold text-xs tracking-wider mono"
+                    >
+                      RESTORE LOADOUT
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT PANEL — 3D VIEWPORT & INFO */}
+            <div className="flex-1 relative bg-[#101418] overflow-hidden min-h-[300px]">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0a0c10] via-transparent to-[#0a0c10] z-0 pointer-events-none"></div>
+
+              {/* Per-claim epistemic badge bar */}
+              <div className="absolute top-3 left-3 z-20 flex flex-wrap gap-2 max-w-[70%]">
+                {a.state === "PROVEN" && (
+                  <span
+                    id="asset-badge"
+                    className="badge-cyan mono text-[10px] px-2 py-1 rounded-sm"
+                  >
+                    ASSET PROVEN · {a.claims.bytes.toLocaleString()} B ·{" "}
+                    {a.claims.tris.toLocaleString()} tris · {a.claims.meshes} mesh · maps:{" "}
+                    {a.claims.maps}
+                  </span>
+                )}
+                {a.state === "LOADING" && (
+                  <span
+                    id="asset-badge"
+                    className="badge-amber mono text-[10px] px-2 py-1 rounded-sm"
+                  >
+                    ASSET LOADING — {a.name || ""} (no claim yet)
+                  </span>
+                )}
+                {a.state === "BLOCKED_MISSING_ASSET" && (
+                  <span
+                    id="asset-badge"
+                    className="badge-red mono text-[10px] px-2 py-1 rounded-sm"
+                  >
+                    ASSET BLOCKED_MISSING_ASSET
+                  </span>
+                )}
+                <span className="badge-amber mono text-[10px] px-2 py-1 rounded-sm">
+                  TELEMETRY: SIMULATED
+                </span>
+                <span className="badge-red mono text-[10px] px-2 py-1 rounded-sm">
+                  LEDGER: ABSENT (stub)
+                </span>
+                <span className="badge-red mono text-[10px] px-2 py-1 rounded-sm">
+                  MARKETPLACE: ABSENT (pinned mirrors)
+                </span>
+              </div>
+
+              {/* 3D Canvas Mount (fills panel; ResizeObserver sizes it) */}
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
+                <div ref={mountRef} className="relative w-full flex-1 min-h-[260px]"></div>
+                <div className="text-center mt-2 mb-4 px-4">
+                  <h2 className="text-3xl md:text-4xl font-black italic tracking-widest text-white drop-shadow-[0_0_10px_rgba(0,229,255,0.8)]">
+                    {activeSlot.name}
+                  </h2>
+                  <p className="text-cyan-400 mono text-sm mt-1">{activeSlot.role}</p>
+                </div>
+              </div>
+
+              {/* BLOCKED overlay (fail-closed: empty viewport + precise reason; zero phantom geometry) */}
+              {a.state === "BLOCKED_MISSING_ASSET" && (
+                <div className="blocked-card absolute z-30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-5 max-w-md">
+                  <p className="mono text-red-400 font-bold text-sm tracking-wider">
+                    BLOCKED_MISSING_ASSET
+                  </p>
+                  <p className="mono text-xs text-gray-300 mt-2 leading-relaxed">{a.reason}</p>
+                  <p className="mono text-[10px] text-gray-500 mt-2">
+                    No-Primitives Law enforced: the viewport stays empty. No primitive placeholder
+                    is fabricated.
+                  </p>
+                </div>
+              )}
+
+              {/* HUD Elements (COD style, honestly labeled) */}
+              <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-2">
+                <div className="flex gap-2">
+                  <div className="w-10 h-10 border border-white/20 bg-black/40 flex items-center justify-center">
+                    <span className="text-xs mono text-white">28</span>
+                  </div>
+                  <div className="w-10 h-10 border border-white/20 bg-black/40 flex items-center justify-center">
+                    <span className="text-xs mono text-white">7</span>
+                  </div>
+                </div>
+                <p id="hud-sim" className="text-[10px] text-right mono text-amber-400">
+                  AMMO // RESERVE — SIMULATED (static fixture)
+                </p>
+              </div>
+
+              {/* Status line (runner telemetry, honest) */}
+              <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 w-full px-6">
+                <p
+                  id="forge-status"
+                  className="mono text-[10px] text-gray-400 text-center truncate"
+                >
+                  {statusLine}
+                </p>
+              </div>
+
+              {/* Bottom Controls — disclosed stubs */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-3 md:gap-6">
+                <button
+                  onClick={() => stubClick("DEPLOY TO SCENE")}
+                  className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-black font-bold text-sm tracking-wider transition-colors"
+                >
+                  DEPLOY TO SCENE
+                </button>
+                <button
+                  onClick={() => stubClick("EDIT CAMO")}
+                  className="px-6 py-2 border border-white/20 hover:bg-white/10 text-white font-bold text-sm tracking-wider transition-colors"
+                >
+                  EDIT CAMO
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
+</html>

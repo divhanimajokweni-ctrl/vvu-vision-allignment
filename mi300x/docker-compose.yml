@@ -1,0 +1,35 @@
+# ==============================================================================
+# VVU vLLM / MI300X Docker Compose
+# Source: architect-provided extraction, preserved verbatim.
+# Document ID: VVU-MI300X-VLLM-1.0 · Status: NORMATIVE
+#
+# Enables 750k token KV caching using AMD Instinct MI300X hardware.
+# Image: rocm/vllm:rocm6.2_mi300_ubuntu20.04_py3.9_vllm_0.6.4
+# Model: meta-llama/Llama-3.1-70B-Instruct-FP8
+# Per the Preservation Law, this file is preserved exactly as received.
+# ==============================================================================
+version: "3.9"
+services:
+  vllm:
+    image: rocm/vllm:rocm6.2_mi300_ubuntu20.04_py3.9_vllm_0.6.4
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    security_opt:
+      - seccomp=unconfined
+    shm_size: "32g"
+    network_mode: host
+    environment:
+      - VLLM_ROCM_USE_AITER=1          # Enable AMD Optimized Kernels
+      - HSA_OVERRIDE_GFX_VERSION=9.4.2 # Target MI300X (gfx942)
+      - PYTORCH_HIP_ALLOC_CONF=expandable_segments:True
+    volumes:
+      - ./kv-cache-offload:/kv-offload
+    command: >
+      vllm serve meta-llama/Llama-3.1-70B-Instruct-FP8
+      --kv-cache-dtype fp8_e4m3
+      --gpu-memory-utilization 0.93
+      --max-model-len 131072
+      --enable-prefix-caching
+      --enable-chunked-prefill
+      --max-num-seqs 256

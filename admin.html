@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>VVU ADMIN // COMMAND CENTER</title>
+    <style>
+        :root {
+            --bg: #060806;
+            --panel: #0b0f0a;
+            --panel-hover: #111c14;
+            --border: #3a4530;
+            --text: #c9d4bd;
+            --text-dim: #7a8a6e;
+            --accent: #c8ff00;
+            --accent-dim: rgba(200, 255, 0, 0.1);
+            --alert: #e5484d;
+            --alert-dim: rgba(229, 72, 77, 0.1);
+            --amber: #e0a030;
+            --amber-dim: rgba(224, 160, 48, 0.1);
+            --teal: #2ea8a0;
+            --teal-dim: rgba(46, 168, 160, 0.1);
+            --font: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        
+        body, html { 
+            width: 100%; height: 100%; 
+            background: var(--bg); color: var(--text); 
+            font-family: var(--font); overflow: hidden; 
+        }
+
+        /* LAYOUT */
+        .app-container { display: flex; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px; background: var(--panel); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; transition: transform 0.3s ease;
+            z-index: 100; flex-shrink: 0;
+        }
+        .brand {
+            padding: 24px; font-size: 18px; font-weight: bold; color: var(--accent);
+            border-bottom: 1px solid var(--border); letter-spacing: 2px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .nav-links { display: flex; flex-direction: column; padding: 16px 0; flex: 1; }
+        .nav-btn {
+            background: none; border: none; text-align: left; padding: 16px 24px;
+            color: var(--text-dim); font-family: inherit; font-size: 13px; font-weight: bold;
+            cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent;
+            display: flex; align-items: center; gap: 12px; letter-spacing: 1px;
+        }
+        .nav-btn:hover { background: var(--panel-hover); color: var(--text); }
+        .nav-btn.active { color: var(--accent); background: var(--accent-dim); border-left-color: var(--accent); }
+        .sidebar-footer { padding: 20px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+        .avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; color: var(--accent); font-size: 16px;
+        }
+        .user-info span { display: block; font-size: 13px; font-weight: bold; color: var(--text); }
+        .user-info small { display: block; font-size: 10px; color: var(--accent); letter-spacing: 1px; margin-top: 2px;}
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg);
+        }
+        .topbar {
+            height: 64px; border-bottom: 1px solid var(--border); display: flex;
+            justify-content: space-between; align-items: center; padding: 0 32px;
+            background: var(--panel); flex-shrink: 0;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--text); cursor: pointer; padding: 8px; }
+        .topbar h1 { font-size: 16px; color: var(--text); letter-spacing: 2px; text-transform: uppercase; }
+        .ledger-status {
+            font-size: 11px; padding: 4px 12px; border: 1px solid var(--accent);
+            color: var(--accent); border-radius: 4px; font-weight: bold;
+            background: var(--accent-dim);
+        }
+
+        /* SCROLLABLE AREA */
+        .content-area { flex: 1; padding: 32px; overflow-y: auto; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ADMIN HUB */
+        .admin-hub { display: flex; flex-direction: column; gap: 24px; max-width: 1400px; margin: 0 auto; }
+        
+        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 24px; }
+        .card h3 { font-size: 13px; color: var(--accent); letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;}
+        .card-subtitle { font-size: 12px; color: var(--text-dim); margin-bottom: 16px; }
+
+        .directive-box { border-left: 4px solid var(--accent); }
+        .input-row { display: flex; gap: 12px; }
+        .input-field {
+            flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text);
+            padding: 12px 16px; font-family: inherit; font-size: 13px; border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 8px var(--accent-dim); }
+        .btn-primary {
+            background: var(--accent); color: var(--bg); border: none; padding: 12px 24px;
+            font-family: inherit; font-weight: bold; font-size: 12px; border-radius: 4px;
+            cursor: pointer; transition: all 0.2s; letter-spacing: 1px;
+        }
+        .btn-primary:hover { background: #d4ff33; box-shadow: 0 0 12px var(--accent-dim); }
+
+        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        
+        /* ALERTS */
+        .alert-list { display: flex; flex-direction: column; gap: 12px; }
+        .alert-item {
+            padding: 16px; border-radius: 6px; border: 1px solid var(--border);
+            border-left: 4px solid var(--border); background: rgba(255,255,255,0.02);
+        }
+        .alert-item.critical { border-left-color: var(--alert); background: var(--alert-dim); }
+        .alert-item.high { border-left-color: var(--amber); background: var(--amber-dim); }
+        .alert-item.info { border-left-color: var(--teal); background: var(--teal-dim); }
+        
+        .alert-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 10px; font-weight: bold; }
+        .alert-agent { color: var(--accent); }
+        .alert-time { color: var(--text-dim); }
+        .alert-msg { font-size: 13px; line-height: 1.5; color: var(--text); margin-bottom: 12px; }
+        .btn-action {
+            background: transparent; border: 1px solid var(--border); color: var(--text);
+            padding: 6px 12px; font-family: inherit; font-size: 11px; cursor: pointer;
+            border-radius: 4px; transition: all 0.2s;
+        }
+        .btn-action:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* APPROVALS */
+        .approval-list { display: flex; flex-direction: column; gap: 12px; }
+        .approval-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 6px;
+        }
+        .approval-info h4 { font-size: 13px; margin-bottom: 4px; color: var(--text); }
+        .approval-info p { font-size: 11px; color: var(--text-dim); }
+        .approval-amount { color: var(--accent); font-weight: bold; font-size: 14px; margin-top: 8px; display: block;}
+        .approval-actions { display: flex; gap: 8px; }
+        .btn-approve { background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: inherit; font-weight: bold;}
+        .btn-approve:hover { background: var(--accent); color: var(--bg); }
+        .btn-deny { background: transparent; border: 1px solid var(--alert); color: var(--alert); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: inherit;}
+        .btn-deny:hover { background: var(--alert); color: white; }
+
+        /* TEAM & TABLES */
+        .team-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .team-header h2 { font-size: 18px; color: var(--text); }
+        .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        
+        .table-container { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 24px; }
+        .table-container h4 { font-size: 12px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 12px 8px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .data-table th { color: var(--text-dim); font-size: 10px; font-weight: normal; letter-spacing: 1px; text-transform: uppercase; }
+        .data-table tr:last-child td { border-bottom: none; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; }
+        .badge.active { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); }
+        .badge.pending { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber); }
+        .badge.admin { background: var(--alert-dim); color: var(--alert); border: 1px solid var(--alert); }
+        .badge.operator { background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal); }
+
+        /* BENCHES */
+        .bench-list { display: flex; flex-direction: column; gap: 12px; max-width: 800px; margin: 0 auto; }
+        .bench-item { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; }
+        .bench-status { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 12px; }
+        .bench-status.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .bench-status.maintenance { background: var(--amber); }
+        .sequence-select { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 4px; font-family: inherit; outline: none; }
+
+        /* TOAST */
+        .toast-container { position: fixed; bottom: 32px; right: 32px; display: flex; flex-direction: column; gap: 12px; z-index: 1000; }
+        .toast {
+            background: var(--accent); color: var(--bg); padding: 16px 24px; border-radius: 6px;
+            font-size: 13px; font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .admin-grid, .team-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { position: absolute; height: 100%; transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .mobile-menu-btn { display: block; }
+            .topbar { padding: 0 16px; }
+            .content-area { padding: 16px; }
+            .input-row { flex-direction: column; }
+            .approval-item { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .approval-actions { width: 100%; justify-content: flex-end; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                VVU ADMIN
+            </div>
+            
+            <nav class="nav-links">
+                <button class="nav-btn active" onclick="switchTab('admin-hub', this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Admin Hub
+                </button>
+                <button class="nav-btn" onclick="switchTab('benches', this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                    Bench Manager
+                </button>
+                <button class="nav-btn" onclick="switchTab('comms', this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    Internal Comms
+                </button>
+                <button class="nav-btn" onclick="switchTab('team', this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Team & Access
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="avatar">D</div>
+                <div class="user-info">
+                    <span>Divhani</span>
+                    <small>ADMIN ACCESS</small>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                    <h1 id="page-title">Admin Hub</h1>
+                </div>
+                <div class="ledger-status">WORM: SECURE</div>
+            </header>
+
+            <div class="content-area">
+                
+                <!-- TAB: ADMIN HUB -->
+                <section id="tab-admin-hub" class="tab-content active">
+                    <div class="admin-hub">
+                        
+                        <!-- DIRECTIVE INPUT -->
+                        <div class="card directive-box">
+                            <h3>ISSUE DIRECTIVE TO AGENTS</h3>
+                            <p class="card-subtitle">Directives are signed with Ed25519 and appended to the immutable WORM Ledger.</p>
+                            <form onsubmit="handleDirective(event)" class="input-row">
+                                <input type="text" id="directive-input" class="input-field" placeholder="e.g., 'Pause Bench 07 for maintenance', 'Investigate OOD anomaly...'" required>
+                                <button type="submit" class="btn-primary">TRANSMIT</button>
+                            </form>
+                        </div>
+
+                        <div class="admin-grid">
+                            <!-- AGENT ALERTS -->
+                            <div class="card">
+                                <h3>AGENT ALERTS & RECEIPTS</h3>
+                                <div class="alert-list" id="alert-list">
+                                    <!-- Rendered via JS -->
+                                </div>
+                            </div>
+
+                            <!-- APPROVALS -->
+                            <div class="card">
+                                <h3>PENDING APPROVALS</h3>
+                                <div class="approval-list" id="approval-list">
+                                    <!-- Rendered via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: BENCHES -->
+                <section id="tab-benches" class="tab-content">
+                    <div class="bench-list">
+                        <div class="bench-item">
+                            <div>
+                                <span class="bench-status active"></span>
+                                <strong>B-07</strong> - CELL 07 / DUAL-ARM
+                            </div>
+                            <select class="sequence-select" onchange="updateSequence('B-07', this.value)">
+                                <option value="SEQ-PICK-PLACE-01">SEQ-PICK-PLACE-01</option>
+                                <option value="SEQ-PICK-PLACE-02">SEQ-PICK-PLACE-02</option>
+                                <option value="SEQ-MAINTENANCE">SEQ-MAINTENANCE</option>
+                            </select>
+                        </div>
+                        <div class="bench-item">
+                            <div>
+                                <span class="bench-status active"></span>
+                                <strong>B-02</strong> - HBK MK-II / WATER BENCH
+                            </div>
+                            <select class="sequence-select" onchange="updateSequence('B-02', this.value)">
+                                <option value="SEQ-HYDRO-TEST-04">SEQ-HYDRO-TEST-04</option>
+                                <option value="SEQ-HYDRO-TEST-05">SEQ-HYDRO-TEST-05</option>
+                            </select>
+                        </div>
+                        <div class="bench-item">
+                            <div>
+                                <span class="bench-status maintenance"></span>
+                                <strong>B-09</strong> - ISUZU DRIVETRAIN
+                            </div>
+                            <select class="sequence-select" onchange="updateSequence('B-09', this.value)">
+                                <option value="SEQ-ENGINE-SYNC-02">SEQ-ENGINE-SYNC-02</option>
+                                <option value="SEQ-OFFLINE">SEQ-OFFLINE</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: COMMS -->
+                <section id="tab-comms" class="tab-content">
+                    <div class="team-grid">
+                        <div class="card">
+                            <h3>INTERNAL OPERATIONS MAILER</h3>
+                            <p class="card-subtitle">Emails sent here are cryptographically hashed and logged to the WORM Ledger.</p>
+                            <form onsubmit="handleEmail(event)">
+                                <div style="margin-bottom: 16px;">
+                                    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:8px;">To:</label>
+                                    <select id="email-to" class="input-field" style="width:100%;" required>
+                                        <option value="Dev Team A">Dev Team A (OPERATOR)</option>
+                                        <option value="Security Auditor">Security Auditor (VIEWER)</option>
+                                        <option value="all@vvu.internal">ALL CONTRIBUTORS</option>
+                                    </select>
+                                </div>
+                                <div style="margin-bottom: 16px;">
+                                    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:8px;">Subject:</label>
+                                    <input type="text" id="email-subject" class="input-field" style="width:100%;" required>
+                                </div>
+                                <div style="margin-bottom: 16px;">
+                                    <label style="font-size:11px; color:var(--text-dim); display:block; margin-bottom:8px;">Message:</label>
+                                    <textarea id="email-body" class="input-field" style="width:100%; height:100px; resize:none;" required></textarea>
+                                </div>
+                                <button type="submit" class="btn-primary" style="width:100%;">SEND SECURE EMAIL</button>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h3>RECENT LEDGER COMMS</h3>
+                            <div class="alert-list">
+                                <div class="alert-item info">
+                                    <div class="alert-header"><span class="alert-agent">ADMIN</span><span class="alert-time">10:42 AM</span></div>
+                                    <div class="alert-msg">To: Dev Team A - "DB migration finished. Check Bench 02."</div>
+                                </div>
+                                <div class="alert-item info">
+                                    <div class="alert-header"><span class="alert-agent">ADMIN</span><span class="alert-time">09:15 AM</span></div>
+                                    <div class="alert-msg">To: Security Auditor - "New static analysis rules deployed."</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: TEAM -->
+                <section id="tab-team" class="tab-content">
+                    <div class="team-header">
+                        <h2>Access Control</h2>
+                    </div>
+                    <div class="team-grid">
+                        <div class="table-container">
+                            <h4>USERS</h4>
+                            <form onsubmit="handleInvite(event)" style="display:flex; gap:8px; margin-bottom:16px;">
+                                <input type="email" id="invite-email" class="input-field" placeholder="Invite via email..." required>
+                                <button type="submit" class="btn-primary" style="padding: 8px 16px;">INVITE</button>
+                            </form>
+                            <table class="data-table" id="user-table">
+                                <thead>
+                                    <tr><th>NAME</th><th>ROLE</th><th>STATUS</th><th>ACTION</th></tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rendered via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-container">
+                            <h4>GROUPS</h4>
+                            <form onsubmit="handleCreateGroup(event)" style="display:flex; gap:8px; margin-bottom:16px;">
+                                <input type="text" id="group-name" class="input-field" placeholder="New group name..." required>
+                                <button type="submit" class="btn-primary" style="padding: 8px 16px;">CREATE</button>
+                            </form>
+                            <table class="data-table" id="group-table">
+                                <tbody>
+                                    <!-- Rendered via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // --- MOCK DATA ---
+        let alerts = [
+            { id: '1', agent: 'SECURITY', priority: 'CRITICAL', message: 'OOD Detection triggered on Bench 02. Anomalous flow rate detected. Fail-closed initiated.', time: '2 mins ago' },
+            { id: '2', agent: 'FINANCE', priority: 'HIGH', message: 'Refund request #RC-9902 for Client Gqeberha Water requires Admin approval.', time: '15 mins ago' },
+            { id: '3', agent: 'WATCHDOG', priority: 'INFO', message: 'All 3 Benches telemetry nominal. 4,218 WORM events verified.', time: '1 hr ago' }
+        ];
+
+        let approvals = [
+            { id: 'A1', type: 'ACCESS', requester: 'New Dev (dev@vvu.internal)', details: 'Requesting OPERATOR access to Bench 07.' },
+            { id: 'A2', type: 'REFUND', requester: 'Client Gqeberha', details: 'Parametric insurance trigger misfire. Refund requested.', amount: 'R 15,000' }
+        ];
+
+        let users = [
+            { id: 'U1', name: 'Divhani (You)', role: 'ADMIN', status: 'ACTIVE', email: 'divhani@vvu.internal' },
+            { id: 'U2', name: 'Security Auditor', role: 'VIEWER', status: 'PENDING', email: 'auditor@vvu.internal' }
+        ];
+
+        let groups = [
+            { id: 'G1', name: 'Core Devs', members: 2 },
+            { id: 'G2', name: 'QA Bench 07', members: 1 }
+        ];
+
+        // --- RENDER FUNCTIONS ---
+        function renderAlerts() {
+            const container = document.getElementById('alert-list');
+            container.innerHTML = alerts.length === 0 ? '<p style="color:var(--text-dim); font-size:13px;">No pending alerts.</p>' : '';
+            
+            alerts.forEach(alert => {
+                const el = document.createElement('div');
+                el.className = `alert-item ${alert.priority.toLowerCase()}`;
+                el.innerHTML = `
+                    <div class="alert-header">
+                        <span class="alert-agent">${alert.agent} AGENT</span>
+                        <span class="alert-time">${alert.time}</span>
+                    </div>
+                    <div class="alert-msg">${alert.message}</div>
+                    ${alert.priority !== 'INFO' ? `<button class="btn-action" onclick="resolveAlert('${alert.id}', 'ACKNOWLEDGED')">ACKNOWLEDGE</button>` : ''}
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function renderApprovals() {
+            const container = document.getElementById('approval-list');
+            container.innerHTML = approvals.length === 0 ? '<p style="color:var(--text-dim); font-size:13px;">No pending approvals.</p>' : '';
+            
+            approvals.forEach(app => {
+                const el = document.createElement('div');
+                el.className = 'approval-item';
+                el.innerHTML = `
+                    <div class="approval-info">
+                        <h4>${app.requester}</h4>
+                        <p>${app.details}</p>
+                        ${app.amount ? `<span class="approval-amount">${app.amount}</span>` : ''}
+                    </div>
+                    <div class="approval-actions">
+                        <button class="btn-approve" onclick="resolveApproval('${app.id}', 'APPROVED')">APPROVE</button>
+                        <button class="btn-deny" onclick="resolveApproval('${app.id}', 'DENIED')">DENY</button>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function renderUsers() {
+            const tbody = document.querySelector('#user-table tbody');
+            tbody.innerHTML = '';
+            users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${u.name}</td>
+                    <td><span class="badge ${u.role.toLowerCase()}">${u.role}</span></td>
+                    <td><span class="badge ${u.status.toLowerCase()}">${u.status}</span></td>
+                    <td>
+                        ${u.status === 'PENDING' 
+                            ? `<button class="btn-action" onclick="approveUser('${u.id}')">APPROVE</button>` 
+                            : `<button class="btn-action">MANAGE</button>`}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderGroups() {
+            const tbody = document.querySelector('#group-table tbody');
+            tbody.innerHTML = '';
+            groups.forEach(g => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color:var(--accent); font-weight:bold;">${g.name}</td>
+                    <td style="color:var(--text-dim);">${g.members} Members</td>
+                    <td><button class="btn-action">MANAGE</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- ACTIONS ---
+        function showToast(msg, isError = false) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if (isError) {
+                toast.style.background = 'var(--alert)';
+                toast.style.color = '#fff';
+            }
+            toast.innerText = msg;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            btn.classList.add('active');
+            
+            const title = btn.innerText.trim();
+            document.getElementById('page-title').innerText = title;
+
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        function handleDirective(e) {
+            e.preventDefault();
+            const input = document.getElementById('directive-input');
+            const msg = input.value;
+            // Simulate API call
+            setTimeout(() => {
+                showToast(`Directive signed and sent to agents.`);
+                input.value = '';
+            }, 500);
+        }
+
+        function resolveAlert(id, action) {
+            alerts = alerts.filter(a => a.id !== id);
+            renderAlerts();
+            showToast(`Alert ${action}. Logged to WORM Ledger.`);
+        }
+
+        function resolveApproval(id, action) {
+            approvals = approvals.filter(a => a.id !== id);
+            renderApprovals();
+            showToast(`Approval ${action}. Logged to WORM Ledger.`);
+        }
+
+        function handleEmail(e) {
+            e.preventDefault();
+            const to = document.getElementById('email-to').value;
+            setTimeout(() => {
+                showToast(`Email sent to ${to} & logged to WORM.`);
+                e.target.reset();
+            }, 500);
+        }
+
+        function handleInvite(e) {
+            e.preventDefault();
+            const email = document.getElementById('invite-email').value;
+            users.push({ id: Date.now().toString(), name: email.split('@')[0], role: 'OPERATOR', status: 'PENDING', email });
+            renderUsers();
+            showToast(`Invite sent to ${email}.`);
+            e.target.reset();
+        }
+
+        function approveUser(id) {
+            users = users.map(u => u.id === id ? { ...u, status: 'ACTIVE' } : u);
+            renderUsers();
+            showToast(`User access granted. WORM Ledger updated.`);
+        }
+
+        function handleCreateGroup(e) {
+            e.preventDefault();
+            const name = document.getElementById('group-name').value;
+            groups.push({ id: Date.now().toString(), name, members: 0 });
+            renderGroups();
+            showToast(`Group "${name}" created.`);
+            e.target.reset();
+        }
+
+        function updateSequence(benchId, seq) {
+            showToast(`Sequence updated for ${benchId}. WORM Ledger updated.`);
+        }
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAlerts();
+            renderApprovals();
+            renderUsers();
+            renderGroups();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+name = "divhanimajokweni-ctrl-vvu-control-migration-momentum-maker-main-migration-momentum-maker-main"
+compatibility_date = "2026-11-06"
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+persist = true
+
+[observability.traces]
+enabled = false
+head_sampling_rate = 1
+persist = true

@@ -1,0 +1,33 @@
+$ORIGIN venturevisionubuntu.co.za.
+$TTL 3600
+
+; Zone for venturevisionubuntu.co.za
+@	IN	SOA	ns1.venturevisionubuntu.co.za. hostmaster.venturevisionubuntu.co.za. (
+		2025110401	; serial (YYYYMMDDNN)
+		3600		; refresh
+		1800		; retry
+		604800		; expire
+		3600 )		; minimum TTL
+
+; Nameservers - update to your actual nameservers
+@	IN	NS	ns1.venturevisionubuntu.co.za.
+@	IN	NS	ns2.venturevisionubuntu.co.za.
+
+; A/AAAA records - point to Vercel
+@	IN	A	76.76.21.21
+www	IN	A	76.76.21.21
+@	IN	AAAA	2606:4700:3030::6815:1515
+www	IN	AAAA	2606:4700:3030::6815:1515
+
+; Vercel domain verification
+_vercel	IN	TXT	"vc-domain-verify=www.venturevisionubuntu.co.za,1e925b87765f7ab2190b"
+_vercel	IN	TXT	"vc-domain-verify=venturevisionubuntu.co.za,e908774a1f51f92388ff"
+
+; CNAME for www (alternative to A records)
+; www	IN	CNAME	cname.vercel-dns.com.
+
+; MX records (if needed)
+; @	IN	MX	10	mx.yourmailprovider.com.
+
+; SPF, DKIM, DMARC etc (add as needed)
+; @	IN	TXT	"v=spf1 include:_spf.yourmailprovider.com ~all"

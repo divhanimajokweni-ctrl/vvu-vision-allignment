@@ -1,0 +1,264 @@
+/* ==========================================================================
+   pools/pools.css — WINTER POOLS · shared base styles for the surface family.
+   ==========================================================================
+   Role (8-file contract, file 8 of the wildfire landing):
+     The shared foundation across ALL Winter Pools surfaces — the emergency
+     view (pools/wildfire/), the upcoming pools dashboard, and the profile
+     page. One typography scale, one colour-token set, one panel chrome, one
+     grid primitive. The emergency view must look like the same product as
+     the rest of the family.
+
+   Discipline (non-negotiable, same as every VVU surface):
+     · Zero dependencies. No framework, no CDN, no build step.
+     · Runs from a USB stick with the network physically unplugged.
+     · Colour tokens are CSS variables driven by state — never restyled
+       per-surface except through the theme classes defined here.
+     · The evidence text scale (9px) is the smallest on any surface and is
+       reserved for evidence/provenance lines. Never larger, never decorative.
+
+   Theme classes:
+     .pools-theme--coop        amber accent  (community / co-op surfaces)
+     .pools-theme--municipal   blue accent   (municipal / civic surfaces)
+     .pools-theme--emergency   red accent    (declared-event surfaces)
+   ========================================================================== */
+
+/* ---- colour + type tokens ------------------------------------------------ */
+
+:root {
+  /* ink & ground */
+  --pools-bg: #0a0e17;
+  --pools-bg-panel: rgba(5, 10, 18, 0.86);
+  --pools-bg-raised: rgba(5, 10, 18, 0.94);
+  --pools-border: #1f3a4a;
+  --pools-ink: #e0e6ed;
+  --pools-ink-dim: #7f95a5;
+  --pools-ink-faint: #52616e;
+
+  /* semantic accents (estate palette — same as the twin) */
+  --pools-amber: #f2b84b; /* co-op / attention / head-hash */
+  --pools-blue: #58a6ff; /* municipal / verify */
+  --pools-red: #ff5a3d; /* active fire / danger */
+  --pools-red-deep: #c4422a; /* declared disaster */
+  --pools-green: #52b788; /* safe / routes / clear */
+  --pools-purple: #a371f7; /* municipal sensor */
+  --pools-sage: #8fae94; /* stand-down / demobilising */
+
+  /* the ACTIVE accent — themes override this one variable */
+  --pools-accent: var(--pools-amber);
+
+  /* typography scale — px, monospace-first (estate discipline) */
+  --pools-fs-evidence: 9px; /* the rail. never larger. */
+  --pools-fs-label: 10px;
+  --pools-fs-body: 11px;
+  --pools-fs-title: 10px;
+
+  /* rhythm */
+  --pools-pad: 10px 12px;
+  --pools-gap: 10px;
+  --pools-radius: 10px;
+}
+
+.pools-theme--coop {
+  --pools-accent: var(--pools-amber);
+}
+.pools-theme--municipal {
+  --pools-accent: var(--pools-blue);
+}
+.pools-theme--emergency {
+  --pools-accent: var(--pools-red);
+}
+
+/* ---- document shell ------------------------------------------------------ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.pools-doc,
+.pools-doc body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--pools-bg);
+  color: var(--pools-ink);
+  font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+  font-size: var(--pools-fs-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.pools-doc {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- panel chrome (the family face — shared everywhere) ------------------ */
+
+.pools-panel {
+  background: var(--pools-bg-panel);
+  border: 1px solid var(--pools-border);
+  border-radius: var(--pools-radius);
+  padding: var(--pools-pad);
+  backdrop-filter: blur(6px);
+  font-size: var(--pools-fs-body);
+  line-height: 1.5;
+  min-width: 0; /* grid child overflow guard */
+}
+
+.pools-panel__title {
+  font-size: var(--pools-fs-title);
+  letter-spacing: 1.5px;
+  color: var(--pools-accent);
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.pools-row {
+  color: #b8c7d2;
+}
+.pools-row b {
+  color: var(--pools-amber);
+  font-weight: bold;
+}
+.pools-row .fire {
+  color: var(--pools-red);
+  font-weight: bold;
+}
+.pools-row .ok {
+  color: var(--pools-green);
+}
+.pools-row .warn {
+  color: var(--pools-amber);
+}
+.pools-row .dim {
+  color: var(--pools-ink-dim);
+}
+
+/* evidence reference marker: every claim carries one, or says UNVERIFIED */
+.evref {
+  color: var(--pools-ink-faint);
+  font-size: var(--pools-fs-evidence);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* ---- chips (honest labels) ------------------------------------------------ */
+
+.pools-chip {
+  display: inline-block;
+  border: 1px solid var(--pools-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: var(--pools-fs-evidence);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--pools-ink-dim);
+  white-space: nowrap;
+}
+.pools-chip--seed {
+  color: var(--pools-amber);
+  border-color: rgba(242, 184, 75, 0.4);
+}
+.pools-chip--live {
+  color: var(--pools-green);
+  border-color: rgba(82, 183, 136, 0.4);
+}
+.pools-chip--cached {
+  color: var(--pools-blue);
+  border-color: rgba(88, 166, 255, 0.4);
+}
+.pools-chip--stale {
+  color: var(--pools-amber);
+  border-color: rgba(242, 184, 75, 0.4);
+}
+.pools-chip--off {
+  color: var(--pools-ink-faint);
+}
+.pools-chip--fire {
+  color: var(--pools-red);
+  border-color: rgba(196, 66, 42, 0.6);
+}
+
+/* ---- grid primitives ------------------------------------------------------ */
+
+.pools-grid {
+  display: grid;
+  gap: var(--pools-gap);
+  min-width: 0;
+}
+.pools-grid--2col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* ---- buttons (operator console) ------------------------------------------- */
+
+.pools-btn {
+  font-family: inherit;
+  font-size: var(--pools-fs-label);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: var(--pools-bg-raised);
+  border: 1px solid var(--pools-border);
+  color: var(--pools-ink-dim);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
+  min-height: 44px; /* touch target — operator gloves at 03:00 */
+}
+.pools-btn:hover:not(:disabled) {
+  border-color: var(--pools-accent);
+  color: var(--pools-ink);
+}
+.pools-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.pools-btn:focus-visible {
+  outline: 2px solid var(--pools-accent);
+  outline-offset: 2px;
+}
+
+.pools-btn--arm {
+  border-color: var(--pools-amber);
+  color: var(--pools-amber);
+}
+.pools-btn--confirm {
+  border-color: var(--pools-red);
+  color: var(--pools-red);
+  background: rgba(196, 66, 42, 0.12);
+}
+
+/* ---- the evidence text scale (9pt discipline) ------------------------------ */
+
+.pools-evidence {
+  font-size: var(--pools-fs-evidence);
+  letter-spacing: 1px;
+  color: var(--pools-ink-dim);
+}
+
+/* ---- scrollbar (family standard) ------------------------------------------- */
+
+.pools-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.pools-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.pools-scroll::-webkit-scrollbar-thumb {
+  background: var(--pools-border);
+  border-radius: 4px;
+}
+.pools-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--pools-ink-faint);
+}

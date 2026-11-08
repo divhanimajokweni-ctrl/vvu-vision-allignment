@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- public/icons/source-monochrome.svg — purpose:"monochrome" source
+       (Android 13+ themed icons use the alpha channel only): identical
+       geometry, pure white on transparent. -->
+  <path d="M96 176 L256 96 L416 176 L416 336 L256 416 L96 336 Z"
+        fill="none" stroke="#ffffff" stroke-width="20" stroke-linejoin="round"/>
+  <circle cx="256" cy="256" r="52" fill="#ffffff"/>
+  <path d="M256 96 L256 204 M256 308 L256 416" fill="none" stroke="#ffffff" stroke-width="14"/>
+  <path d="M96 176 L204 232 M308 280 L416 336" fill="none" stroke="#ffffff" stroke-width="10"/>
+</svg>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VVU · UNIFIED COMMAND CENTER</title>
+<style>
+:root{--bg:#0a0e13;--bg2:#0e141c;--panel:#111a24;--panel2:#0d151e;--line:#1c2836;--line2:#26374a;
+--txt:#dce8f2;--dim:#75899c;--dim2:#4e6172;--acc:#37d6a0;--acc2:#3aa9f5;--warn:#f5b944;--bad:#f2607a;--pur:#a78bfa;
+--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
+#app{display:grid;grid-template-columns:230px 1fr;height:100vh}
+#nav{background:linear-gradient(180deg,#0d141d,#0a0f15);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+#brand{padding:14px 14px 12px;border-bottom:1px solid var(--line)}
+#brand b{font-size:13px;letter-spacing:.18em}
+#brand span{display:block;font-size:9px;color:var(--dim2);letter-spacing:.12em;margin-top:4px}
+#navlist{flex:1;overflow-y:auto;padding:8px 0}
+.ngroup{font-size:9px;letter-spacing:.18em;color:var(--dim2);padding:12px 14px 5px;text-transform:uppercase}
+.nitem{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;color:var(--dim);border-left:2px solid transparent;font-size:12px;user-select:none;min-height:36px}
+.nitem:hover{background:#121c27;color:var(--txt)}
+.nitem.on{background:linear-gradient(90deg,rgba(55,214,160,.13),transparent);color:var(--txt);border-left-color:var(--acc)}
+.nitem .ic{width:16px;text-align:center;font-size:13px}
+.nitem .ct{margin-left:auto;font-size:9.5px;color:var(--dim2);background:#16212d;border:1px solid var(--line);border-radius:20px;padding:0 6px;line-height:15px}
+.nitem .dot{width:6px;height:6px;border-radius:50%;background:var(--dim2);flex:none}
+.nitem.live .dot{background:var(--acc);box-shadow:0 0 6px var(--acc)}
+#navfoot{padding:10px 12px;border-top:1px solid var(--line);font-size:9.5px;color:var(--dim2);line-height:1.75}
+#main{display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);background:var(--bg2);flex-wrap:wrap}
+#topbar h1{font-size:13px;margin:0;font-weight:600;white-space:nowrap}
+#topbar .sub{font-size:10px;color:var(--dim2);letter-spacing:.1em;white-space:nowrap}
+.spacer{flex:1}
+.btn{background:#16222e;border:1px solid var(--line);color:var(--dim);border-radius:7px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.p{background:rgba(55,214,160,.1);border-color:rgba(55,214,160,.4);color:var(--acc)}
+.btn.sm{padding:3px 8px;font-size:10px}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+#stage{flex:1;overflow:hidden;position:relative;background:#080b10}
+iframe{width:100%;height:100%;border:0;display:block}
+#fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:40px;text-align:center}
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:11px;margin-bottom:14px;overflow:hidden}
+.ph{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ph h2{margin:0;font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--acc);font-weight:600}
+.ph .hint{font-size:10px;color:var(--dim2)}
+.pb{padding:13px}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
+.g21{grid-template-columns:2fr 1fr}
+@media(max-width:1100px){.g2,.g3,.g21{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:14px}
+.kpi{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.kpi .l{font-size:9.5px;letter-spacing:.14em;color:var(--dim2);text-transform:uppercase}
+.kpi .v{font-size:21px;margin-top:5px;line-height:1}
+.kpi .d{font-size:10px;color:var(--dim);margin-top:4px}
+.kpi.a .v{color:var(--acc)}.kpi.b .v{color:var(--acc2)}.kpi.w .v{color:var(--warn)}.kpi.r .v{color:var(--bad)}
+.twrap{overflow:auto;max-height:340px}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;padding:7px 11px;color:var(--dim2);font-weight:600;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--panel2)}
+td{padding:7px 11px;border-bottom:1px solid #16202b;white-space:nowrap}
+td.wrap{white-space:normal;min-width:200px}
+.mono{font-family:var(--mono);color:var(--dim);font-size:10.5px;word-break:break-all}
+.b{display:inline-block;padding:1px 7px;border-radius:20px;font-size:9.5px;letter-spacing:.06em;border:1px solid}
+.b.ok{color:var(--acc);border-color:rgba(55,214,160,.35);background:rgba(55,214,160,.09)}
+.b.info{color:var(--acc2);border-color:rgba(58,169,245,.35);background:rgba(58,169,245,.09)}
+.b.warn{color:var(--warn);border-color:rgba(245,185,68,.35);background:rgba(245,185,68,.09)}
+.b.bad{color:var(--bad);border-color:rgba(242,96,122,.35);background:rgba(242,96,122,.09)}
+.b.mut{color:var(--dim2);border-color:var(--line);background:#131c26}
+.b.pur{color:var(--pur);border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.09)}
+.hint{font-size:10.5px;color:var(--dim2);line-height:1.8}
+.code{background:#0a1017;border:1px solid var(--line);border-radius:8px;padding:11px;font-size:10.5px;color:#9fd0e8;white-space:pre-wrap;word-break:break-all;line-height:1.65;max-height:300px;overflow:auto}
+.gate{border:1px solid var(--acc);border-radius:10px;padding:13px;background:rgba(55,214,160,.06);margin-bottom:14px}
+.gate.no{border-color:var(--bad);background:rgba(242,96,122,.06)}
+.gate.warn{border-color:var(--warn);background:rgba(245,185,68,.06)}
+.gate .gt{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc);margin-bottom:6px;font-weight:600}
+.gate.no .gt{color:var(--bad)}.gate.warn .gt{color:var(--warn)}
+.route{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid #16202b;font-size:11.5px}
+.route:last-child{border-bottom:0}
+.route .frm{color:var(--pur);min-width:64px}
+.route .to{color:var(--acc2);min-width:64px}
+.route .what{color:var(--dim2);font-size:10.5px;margin-left:auto;text-align:right}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:#0a0f15}
+::-webkit-scrollbar-thumb{background:#22323f;border-radius:6px;border:2px solid #0a0f15}
+</style>
+</head>
+<body>
+<div id="app">
+<aside id="nav">
+<div id="brand"><b>VVU · UNIFIED</b><span>COMMAND CENTER · ONE DATA LAYER</span></div>
+<div id="navlist"></div>
+<div id="navfoot">
+<span style="color:var(--acc)">●</span> <span id="footcount">0 events</span> on the bus<br>
+bridge: <span id="footbridge">probing…</span><br>
+spec: VVU-SF-2026-001
+</div>
+</aside>
+<div id="main">
+<header id="topbar">
+<h1 id="vtitle">Overview</h1><span class="sub" id="vsub"></span>
+<div class="spacer"></div>
+<button class="btn p" id="btnBridge">⟳ re-inject bridge</button>
+<button class="btn" id="btnExport">⬇ export bus log</button>
+<button class="btn danger" id="btnClear">clear log</button>
+</header>
+<div id="stage">
+<iframe id="frame" title="environment"></iframe>
+<div id="fallback">
+<div class="gate no" style="max-width:560px">
+<div class="gt">Environment file not found</div>
+<div class="hint" id="fbmsg"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="pageview" style="display:none"></div>
+<script>
+(function(){
+'use strict';
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function ago(ts){var s=Math.max(0,(Date.now()-ts)/1000);if(s<60)return Math.floor(s)+'s';if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h';}
+function hhmmss(ts){var d=new Date(ts);return isNaN(d)?'—':d.toTimeString().slice(0,8);}
+function download(n,t,m){var b=new Blob([t],{type:m||'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},400);}
+
+/* ==========================================================================
+   THE ENVIRONMENTS
+   ========================================================================== */
+var ENVS=[
+ {id:'forge',file:'FORGE.html',t:'Forge',g:'environments',i:'⬡',desc:'create · claim · model'},
+ {id:'bench',file:'BENCH.html',t:'Bench',g:'environments',i:'⚖',desc:'verify · policy · receipt'},
+ {id:'fire',file:'FIRE.html',t:'Fire',g:'environments',i:'▲',desc:'challenge · threat · counterexample'},
+ {id:'field',file:'FIELD.html',t:'Field',g:'environments',i:'◉',desc:'observe · queue · sync'},
+ {id:'press',file:'PRESS.html',t:'Press',g:'environments',i:'✎',desc:'communicate · extract · approve'},
+ {id:'bus',file:null,t:'Unified Log',g:'system',i:'≡',desc:'cross-environment operation log'},
+ {id:'routes',file:null,t:'Routes & Contract',g:'system',i:'⇄',desc:'what may flow where'},
+ {id:'arch',file:null,t:'Architecture',g:'system',i:'§',desc:'one data layer, five surfaces'}
+];
+
+/* ==========================================================================
+   THE BUS — real postMessage, real injection
+   ========================================================================== */
+var BUS={events:[],listeners:[],max:400};
+BUS.push=function(env,type,detail){
+  var e={t:Date.now(),env:env,type:type,detail:detail,id:'ev-'+Math.random().toString(36).slice(2,10)};
+  this.events.unshift(e);
+  if(this.events.length>this.max)this.events.length=this.max;
+  this.listeners.forEach(function(f){f(e);});
+  return e;};
+BUS.on=function(f){this.listeners.push(f);return f;};
+
+/* the bridge injected into each environment iframe.
+   It hooks the environment's own Store.commit so EVERY write the environment
+   makes is mirrored to the parent bus. No polling, no interception of logic. */
+var BRIDGE_SRC='(function(){'+
+'try{'+
+'  var posted=0;'+
+'  function hook(){'+
+'    var found=false;'+
+'    /* the environments all expose a Store object with a commit method */'+
+'    for(var k in window){'+
+'      try{'+
+'        var v=window[k];'+
+'        if(v&&typeof v==="object"&&typeof v.commit==="function"&&typeof v.all==="function"&&v.d){'+
+'          var orig=v.commit;'+
+'          if(!orig.__bridged){'+
+'            var bridged=function(type,detail){'+
+'              var r=orig.apply(this,arguments);'+
+'              try{parent.postMessage({__vvu:1,env:"'+'"+"'+"'"+'",type:String(type),detail:String(detail)},"*");posted++;}catch(e){}'+
+'              return r;'+
+'            };'+
+'            bridged.__bridged=true;'+
+'            v.commit=bridged;'+
+'            found=true;'+
+'          }'+
+'        }'+
+'      }catch(e){}'+
+'    }'+
+'    return found;'+
+'  }'+
+'  var attempts=0;'+
+'  var iv=setInterval(function(){'+
+'    attempts++;'+
+'    if(hook()||attempts>20){clearInterval(iv);'+
+'      try{parent.postMessage({__vvu:1,env:"BRIDGE",type:"bridge.ready",detail:"hooks installed"},"*");}catch(e){}}'+
+'  },120);'+
+'}catch(e){'+
+'  try{parent.postMessage({__vvu:1,env:"BRIDGE",type:"bridge.error",detail:String(e)},"*");}catch(e2){}'+
+'}'+
+'})();';
+
+window.addEventListener('message',function(ev){
+  var d=ev.data;
+  if(!d||!d.__vvu)return;
+  if(d.env==='BRIDGE'){
+    BUS.push('bridge',d.type,d.detail);
+    return;}
+  BUS.push(d.env,d.type,d.detail);
+});
+
+var frame=$('#frame');
+var bridgeState='probing';
+
+function injectBridge(){
+  try{
+    var w=frame.contentWindow;
+    if(!w)throw new Error('iframe not accessible');
+    var s=w.document.createElement('script');
+    s.textContent=BRIDGE_SRC;
+    w.document.head.appendChild(s);
+    bridgeState='injected';
+  }catch(e){
+    bridgeState='blocked';
+    BUS.push('bridge','bridge.blocked',e.message);
+  }
+  paintFoot();}
+
+$('#btnBridge').onclick=function(){
+  injectBridge();
+  BUS.push('bridge','bridge.reinject','manual re-injection requested');
+  toast('bridge re-injected');};
+
+function toast(m,k){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:16px;right:16px;background:#121b26;border:1px solid var(--acc);'+
+    'border-left-width:3px;border-radius:8px;padding:9px 13px;font-size:11.5px;z-index:99;box-shadow:0 8px 26px rgba(0,0,0,.55)';
+  if(k==='warn')t.style.borderColor='var(--warn)';
+  if(k==='bad')t.style.borderColor='var(--bad)';
+  t.textContent=m;document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';},2200);
+  setTimeout(function(){t.remove();},2600);}
+
+/* ==========================================================================
+   RENDERERS
+   ========================================================================== */
+var pageview=null;
+function showFrame(file){
+  pageview=null;
+  $('#stage').style.display='';
+  frame.style.display='';
+  if(frame.getAttribute('data-src')!==file){
+    frame.setAttribute('data-src',file);
+    frame.src=file;}
+  $('#fallback').style.display='none';
+  frame.style.display='';
+  setTimeout(injectBridge,600);}
+function showPage(){
+  frame.style.display='none';
+  $('#stage').style.display='';
+  if(!pageview){
+    pageview=document.createElement('div');
+    pageview.style.cssText='height:100%;overflow-y:auto;padding:16px';
+    $('#stage').appendChild(pageview);}
+  pageview.style.display='';}
+
+/* ---------- UNIFIED LOG ---------- */
+function renderBus(){
+  showPage();
+  var c={};
+  BUS.events.forEach(function(e){c[e.env]=(c[e.env]||0)+1;});
+  var envs=Object.keys(c).sort(function(a,b){return c[b]-c[a];});
+  var host=document.createElement('div');
+  host.innerHTML=
+   '<div class="kpis">'+
+   ['forge','bench','fire','field','press','bridge'].map(function(e){
+     return '<div class="kpi '+(c[e]?'a':'')+'"><div class="l">'+e+'</div><div class="v">'+(c[e]||0)+
+       '</div><div class="d">'+(c[e]?'live':'silent')+'</div></div>';}).join('')+
+   '<div class="kpi b"><div class="l">total</div><div class="v">'+BUS.events.length+'</div>'+
+   '<div class="d">bridge: '+bridgeState+'</div></div>'+
+   '</div>';
+  var gate=document.createElement('div');
+  gate.className='gate'+(BUS.events.length?'':' no');
+  gate.innerHTML='<div class="gt">'+(BUS.events.length?'Bridge is live':'No events yet')+'</div>'+
+    '<div class="hint">'+(BUS.events.length?
+      'Every write made inside any of the five environments is mirrored here through the injected bridge. '+
+      'Open an environment, perform an action, and the event appears in this log with its source environment.'
+      :'Open one of the five environments from the nav and perform any action — create an artefact, issue a '+
+      'receipt, run a test, capture an observation, approve a draft. The event will appear here.')+'</div>';
+  host.appendChild(gate);
+  var p=document.createElement('div');p.className='panel';
+  p.innerHTML='<div class="ph"><h2>Cross-environment operation log</h2>'+
+    '<span class="hint">'+BUS.events.length+' events · newest first</span></div>'+
+    '<div class="twrap"><table><thead><tr><th>Time</th><th>Environment</th><th>Operation</th>'+
+    '<th>Detail</th></tr></thead><tbody id="busbody"></tbody></table></div>';
+  host.appendChild(p);
+  pageview.innerHTML='';pageview.appendChild(host);
+  var tb=$('#busbody',p);
+  function paint(){
+    tb.innerHTML='';
+    if(!BUS.events.length){
+      tb.innerHTML='<tr><td colspan="4" class="hint" style="padding:18px;text-align:center">'+
+        'no events yet — act inside an environment</td></tr>';return;}
+    BUS.events.slice(0,120).forEach(function(e){
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td class="mono">'+hhmmss(e.t)+'</td>'+
+        '<td><span class="b '+(e.env==='bridge'?'mut':'info')+'">'+esc(e.env)+'</span></td>'+
+        '<td class="mono">'+esc(e.type)+'</td>'+
+        '<td class="wrap">'+esc(e.detail)+'</td>';
+      tb.appendChild(tr);});}
+  paint();
+  BUS.on(paint);
+  $('#footcount').textContent=BUS.events.length+' events';}
+
+/* ---------- ROUTES ---------- */
+function renderRoutes(){
+  showPage();
+  var R=[
+   ['Field','Bench','observation → verification_receipt','Route A'],
+   ['Field','Fire','observation dataset → adversarial test','Route B'],
+   ['Forge','Fire','claim / model → challenge','Route C'],
+   ['Forge','Bench','proposed_claim → verification','Route C2'],
+   ['Bench','Press','verification_receipt → publication','Route D'],
+   ['Forge','Bench','validation_payload → evidence','Route C3'],
+   ['Press','Outside','publication package with references','Route E']
+  ];
+  var host=document.createElement('div');
+  host.innerHTML='<div class="panel"><div class="ph"><h2>Work routes</h2>'+
+    '<span class="hint">five possible · none mandatory · any can be cut</span></div><div class="pb">'+
+    R.map(function(r){
+      return '<div class="route"><span class="frm mono">'+esc(r[0])+'</span><span>→</span>'+
+        '<span class="to mono">'+esc(r[1])+'</span><span>'+esc(r[2])+'</span>'+
+        '<span class="what">'+esc(r[3])+'</span></div>';}).join('')+
+    '</div></div>';
+  var p=document.createElement('div');p.className='panel';
+  p.innerHTML='<div class="ph"><h2>The independence rule</h2></div><div class="pb">'+
+    '<div class="hint">Every environment must be capable of completing its own job independently. '+
+    'It may exchange work with other environments, but it must never <b>require</b> another environment '+
+    'to be available to perform its primary function.<br><br>'+
+    'In this shell that rule is testable: each environment is a separate document in a separate iframe '+
+    'with its own store. Close one and the other four keep working. Cut a route and the originating '+
+    'environment continues.</div></div>';
+  host.appendChild(p);
+  var q=document.createElement('div');q.className='panel';
+  q.innerHTML='<div class="ph"><h2>Shared foundation</h2><span class="hint">VVU-SF-2026-001</span></div>'+
+    '<div class="pb"><div class="hint">Five things are shared and nothing else: the artefact envelope, '+
+    'the status vocabulary, identity fields, cryptographic primitives, and the chain client. '+
+    'Business logic, data stores, UI, services, deployment configs and schedules are <b>not</b> shared.</div></div>';
+  host.appendChild(q);
+  pageview.innerHTML='';pageview.appendChild(host);}
+
+/* ---------- ARCHITECTURE ---------- */
+function renderArch(){
+  showPage();
+  var host=document.createElement('div');
+  var box=document.createElement('div');box.className='code';
+  box.textContent=
+'  ┌──────────────────────────────────────────────────────────────┐\n'+
+'  │  SURFACES  (thin, swappable, independently operable)          │\n'+
+'  │                                                              │\n'+
+'  │   FORGE ⬡    create      claims · models · submissions        │\n'+
+'  │   BENCH ⚖    verify      policies · receipts · chain          │\n'+
+'  │   FIRE  ▲    challenge   threats · cases · counterexamples    │\n'+
+'  │   FIELD ◉    observe     observations · queue · sync          │\n'+
+'  │   PRESS ✎    communicate drafts · receipts · publications     │\n'+
+'  │                                                              │\n'+
+'  └──────────────────────────┬───────────────────────────────────┘\n'+
+'                             │ artefact envelope only\n'+
+'  ┌──────────────────────────▼───────────────────────────────────┐\n'+
+'  │  SHARED FOUNDATION  (VVU-SF-2026-001)                         │\n'+
+'  │                                                              │\n'+
+'  │   artefact envelope      status vocabulary                    │\n'+
+'  │   identity fields        SHA-256 · Ed25519 · JCS              │\n'+
+'  │   chain client                                               │\n'+
+'  │                                                              │\n'+
+'  └──────────────────────────┬───────────────────────────────────┘\n'+
+'                             │ operations, mirrored\n'+
+'  ┌──────────────────────────▼───────────────────────────────────┐\n'+
+'  │  THIS SHELL                                                  │\n'+
+'  │                                                              │\n'+
+'  │   five iframes, one injected bridge per environment          │\n'+
+'  │   every Store.commit mirrored to the unified log             │\n'+
+'  │   no polling · no interception of environment logic          │\n'+
+'  │                                                              │\n'+
+'  └──────────────────────────────────────────────────────────────┘\n\n'+
+'WHAT THE BRIDGE DOES\n'+
+'  It wraps each environment\'s own Store.commit so that every write the\n'+
+'  environment already makes is ALSO posted to this shell. It does not\n'+
+'  change what the environment does. It only observes it.\n\n'+
+'WHAT THE BRIDGE DOES NOT DO\n'+
+'  It does not share state. Each environment keeps its own store.\n'+
+'  It does not grant authority. A receipt in Bench is not a claim in Press.\n'+
+'  It does not make any environment depend on another.';
+  host.appendChild(box);
+  var g=document.createElement('div');g.className='grid g2';
+  var a=document.createElement('div');a.className='panel';
+  a.innerHTML='<div class="ph"><h2>Envelope</h2></div><div class="pb"><div class="hint">'+
+    'envelope_version · artefact_id · artefact_type · produced_by · produced_at · '+
+    'content · provenance · integrity · status · limitations<br><br>'+
+    'The envelope is a wrapper, not a claim. It asserts structure, origin and integrity. '+
+    'It never asserts that the content is true.</div></div>';
+  var b=document.createElement('div');b.className='panel';
+  b.innerHTML='<div class="ph"><h2>Outcome vocabularies</h2></div><div class="pb"><div class="hint">'+
+    '<b>Bench</b> PROVEN · INCONCLUSIVE · NOT_PROVEN · BLOCKED<br>'+
+    '<b>Fire</b> PASSED-UNDER-CONDITIONS · FAILED · INCONCLUSIVE · BLOCKED · SKIPPED-BY-ASSET-ABSENCE<br>'+
+    '<b>Field</b> RECORDED_LOCALLY → QUEUED_FOR_EXPORT → TRANSMITTED → ACCEPTED_BY_RECEIVER → VALIDATED_BY_RECEIVER<br>'+
+    '<b>Forge</b> PROPOSED (the only claim status Forge may write)<br>'+
+    '<b>Press</b> DRAFT · APPROVED · PUBLISHED · HELD · CORRECTED · RETRACTED<br><br>'+
+    'They are five separate vocabularies describing five different things. '+
+    'They must never be merged.</div></div>';
+  g.appendChild(a);g.appendChild(b);host.appendChild(g);
+  pageview.innerHTML='';pageview.appendChild(host);}
+
+/* ==========================================================================
+   ROUTER
+   ========================================================================== */
+function buildNav(){
+  var nl=$('#navlist');nl.innerHTML='';var lastG=null;
+  ENVS.forEach(function(m){
+    if(m.g!==lastG){var g=document.createElement('div');g.className='ngroup';g.textContent=m.g;nl.appendChild(g);lastG=m.g;}
+    var it=document.createElement('div');it.className='nitem';it.setAttribute('data-id',m.id);
+    it.innerHTML='<span class="ic">'+m.i+'</span><span>'+esc(m.t)+'</span>'+
+      '<span class="ct mono">'+esc(m.desc)+'</span>';
+    it.onclick=function(){go(m.id);};nl.appendChild(it);});}
+function refreshCounts(){
+  var c={};
+  BUS.events.forEach(function(e){c[e.env]=(c[e.env]||0)+1;});
+  $$('#navlist .nitem').forEach(function(it){
+    var id=it.getAttribute('data-id');
+    var v=id==='bus'?BUS.events.length:c[id];
+    $('.ct',it).textContent=v==null?(id==='bus'?'0':ENVS.filter(function(e){return e.id===id;})[0].desc):
+      (v+' events');});}
+function paintFoot(){
+  $('#footbridge').textContent=bridgeState;
+  $('#footbridge').style.color=bridgeState==='injected'?'var(--acc)':
+    bridgeState==='blocked'?'var(--bad)':'var(--dim2)';}
+var ACTIVE='bus';
+function go(id){
+  var m=ENVS.filter(function(x){return x.id===id;})[0]||ENVS[0];
+  ACTIVE=id;
+  $$('#navlist .nitem').forEach(function(it){it.classList.toggle('on',it.getAttribute('data-id')===id);});
+  $('#vtitle').textContent=m.t;
+  $('#vsub').textContent='· '+m.g+(m.file?' · '+m.file:' · shell view');
+  if(m.file)showFrame(m.file);
+  else if(id==='bus')renderBus();
+  else if(id==='routes')renderRoutes();
+  else if(id==='arch')renderArch();
+  refreshCounts();}
+
+$('#btnExport').onclick=function(){
+  download('vvu-bus-log.json',JSON.stringify({
+    exported:new Date().toISOString(),events:BUS.events,
+    perEnvironment:BUS.events.reduce(function(a,e){a[e.env]=(a[e.env]||0)+1;return a;},{})},null,2),'application/json');
+  BUS.push('shell','export','bus log exported · '+BUS.events.length+' events');};
+$('#btnClear').onclick=function(){
+  BUS.events=[];BUS.push('shell','clear','log cleared');go(ACTIVE);};
+
+frame.addEventListener('error',function(){
+  $('#fbmsg').textContent='Could not load '+frame.getAttribute('data-src')+
+    '. Place FORGE.html, BENCH.html, FIRE.html, FIELD.html and PRESS.html in the same folder as this file.';
+  $('#fallback').style.display='flex';});
+
+paintFoot();
+buildNav();
+BUS.push('shell','boot','unified command centre initialised · 5 environments mounted');
+go('bus');
+})();
+</script>
+</body>
+</html>

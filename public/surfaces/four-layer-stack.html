@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a0e13">
+<title>VVU · Four-Layer Stack</title>
+<style>
+:root{
+  --bg:#0a0e13;--panel:#0f1a24;--line:#1c3a4a;--line2:#2a5468;
+  --txt:#dce8f2;--dim:#7a94a8;--dim2:#4e6478;
+  --cyan:#3ac8d8;--gold:#e8b850;--ok:#7fe8b0;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;padding:16px;min-height:100dvh;background-image:linear-gradient(rgba(58,200,216,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(58,200,216,.05) 1px,transparent 1px);background-size:42px 42px}
+.wrap{max-width:1200px;margin:0 auto}
+.layer{border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px;background:linear-gradient(180deg,rgba(15,26,36,.9),rgba(10,14,19,.9));position:relative}
+.layer .lbl{font-size:11px;letter-spacing:.18em;color:var(--cyan);text-transform:uppercase;font-weight:700;margin-bottom:14px}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.node{background:#0a1219;border:1px solid var(--line);border-radius:6px;padding:12px;text-align:center;font-size:11px;color:var(--dim)}
+.node b{display:block;color:var(--txt);font-size:12px;margin-bottom:6px}
+.node .ic{font-size:20px;color:var(--cyan);margin-bottom:6px}
+.tx-strip{display:flex;justify-content:center;gap:16px;margin-top:10px;font-size:11px;color:var(--dim);flex-wrap:wrap}
+.tx-strip b{color:var(--cyan)}
+.chain{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:6px 0}
+.block{width:44px;height:44px;border:2px solid var(--cyan);border-radius:6px;background:rgba(58,200,216,.08);display:grid;place-items:center;font-size:14px;color:var(--cyan)}
+.chain-info{text-align:center;font-size:10.5px;color:var(--dim);margin-top:10px;letter-spacing:.04em}
+.chain-info b{color:var(--ok)}
+.bottom{margin-top:16px;padding:14px;border:1px solid var(--cyan);border-radius:8px;text-align:center;color:var(--cyan);font-size:12px;letter-spacing:.03em;background:rgba(58,200,216,.04)}
+@media(max-width:640px){.flow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="layer">
+    <div class="lbl">Physical Device Layer</div>
+    <div class="flow">
+      <div class="node"><div class="ic">◈</div><b>FLOW: 12.5 L/min</b>sensor pod</div>
+      <div class="node"><div class="ic">▣</div><b>GPS: 34.0522°N, 118.2437°W</b>positioned asset</div>
+      <div class="node"><div class="ic">⬡</div><b>ENG_RPM: 2458, VIN: 1G1JF…</b>vehicle bus</div>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="lbl">Hardware Crypto &amp; Signing</div>
+    <div class="flow">
+      <div class="node"><div class="ic">▤</div><b>Sensor Read</b>raw input</div>
+      <div class="node"><div class="ic">◷</div><b>ISO Timestamp</b>monotonic time</div>
+      <div class="node"><div class="ic">✳</div><b>SHA-256 Hash + Key Signature</b>sealed</div>
+    </div>
+    <div class="tx-strip">
+      <span>[ Sensor Read ] → [ ISO Timestamp ] → [ <b>SHA-256 Hash + Key Signature</b> ]</span>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="lbl">WORM Chain Log</div>
+    <div class="chain">
+      <div class="block">◈</div><div class="block">◈</div><div class="block">◈</div>
+      <div class="block">◈</div><div class="block">◈</div><div class="block">◈</div>
+    </div>
+    <div class="chain-info">
+      prevHash: 0x4d1a…e7f2 ← hash: 0x1c8e…6d9b → wormHead: <b>0x1c8e…6d9b</b>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="lbl">User-Facing App</div>
+    <div class="flow">
+      <div class="node"><div class="ic">▤</div><b>SENSOR: WATER FLOW</b>VAL: 13.5 L/min<br>TIME: 14:38:02Z</div>
+      <div class="node"><div class="ic">⚠</div><b>IF FLOW &gt; 10</b>THEN<br>ALERT: HIGH USAGE DETECTED</div>
+      <div class="node"><div class="ic">◉</div><b>ACTION: CLOSE VALVE</b>STATUS: EXECUTED</div>
+    </div>
+    <div class="tx-strip">
+      <span><b>Observed Fact</b></span><span>·</span>
+      <span><b>Derived Event</b></span><span>·</span>
+      <span><b>Decision</b></span>
+    </div>
+  </div>
+
+  <div class="bottom">
+    One master primitive. Infinite realities. Every Skylanten product is merely a<br>
+    reconfiguration of this exact four-layer stack.
+  </div>
+</div>
+</body>
+</html>

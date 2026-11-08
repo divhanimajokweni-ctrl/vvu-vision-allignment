@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#050505" />
+<meta name="description" content="VVU Platform — Venture Vision Ubuntu Ecosystem" />
+<title>VVU // COMMAND</title>
+
+
+<style>
+:root{
+  --bg:#050505; --panel:#0a0a0a; --panel-2:#0f0f0f;
+  --line:#1a1a1a; --line-bright:#2a2a2a;
+  --ink:#e8e8e8; --ink-dim:#888; --ink-mute:#555; --ink-faint:#333;
+  --cyan:#00ffcc; --lime:#ccff00; --amber:#ffaa00; --red:#ff3b3b;
+  --paper:#f4f4f0; --paper-ink:#0a0a0a; --paper-line:#c8c8c2;
+  --mono:'SF Mono','JetBrains Mono','Fira Code','Courier New',ui-monospace,monospace;
+  --display:'Helvetica Neue',Arial,sans-serif;
+  --MEASURED:var(--cyan); --REPORTED:var(--amber); --DERIVED:var(--lime); --SPEC_D:var(--amber); --STUBBED:var(--ink-mute);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:13px;line-height:1.55;-webkit-font-smoothing:antialiased;height:100%}
+::selection{background:var(--cyan);color:#000}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:inherit}
+
+/* ============ SHELL LAYOUT ============ */
+.shell{display:grid;grid-template-columns:260px 1fr;grid-template-rows:52px 1fr 28px;grid-template-areas:"sidebar topbar" "sidebar main" "sidebar footer";height:100vh;overflow:hidden}
+.shell.sidebar-collapsed{grid-template-columns:60px 1fr}
+
+/* ============ SIDEBAR ============ */
+.sidebar{
+  grid-row:1/-1;background:var(--panel);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:thin;scrollbar-color:var(--line-bright) transparent;
+}
+.sidebar::-webkit-scrollbar{width:6px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--line-bright)}
+.brand{
+  padding:16px 18px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.brand-ring{
+  width:22px;height:22px;border:2px solid var(--cyan);border-radius:50%;
+  position:relative;flex-shrink:0;animation:heartbeat 2.4s ease-in-out infinite;
+}
+.brand-ring::after{
+  content:'';position:absolute;inset:4px;border:1px solid var(--cyan);border-radius:50%;opacity:.5;
+}
+@keyframes heartbeat{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.88);opacity:.7}}
+.brand-text{display:flex;flex-direction:column;line-height:1.15;overflow:hidden}
+.brand-title{font-size:13px;font-weight:800;letter-spacing:1px;color:#fff;white-space:nowrap}
+.brand-sub{font-size:9px;color:var(--ink-mute);letter-spacing:.5px;white-space:nowrap}
+.shell.sidebar-collapsed .brand-text{display:none}
+
+.nav-group{padding:14px 0 8px;border-bottom:1px solid var(--line)}
+.nav-label{font-size:9px;color:var(--ink-faint);letter-spacing:2.5px;padding:0 18px 8px;font-weight:700;text-transform:uppercase}
+.shell.sidebar-collapsed .nav-label{text-align:center;padding:0 0 8px;font-size:8px}
+.nav-item{
+  display:flex;align-items:center;gap:12px;padding:8px 18px;
+  font-size:12px;color:var(--ink-dim);cursor:pointer;transition:all .12s;
+  border-left:2px solid transparent;white-space:nowrap;position:relative;
+}
+.nav-item:hover{color:var(--ink);background:var(--panel-2)}
+.nav-item.active{color:var(--cyan);background:rgba(0,255,204,.05);border-left-color:var(--cyan)}
+.nav-item.active .nav-icon{color:var(--cyan)}
+.nav-icon{width:16px;height:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink-mute)}
+.nav-item.locked .nav-icon::after{content:'🔒';font-size:9px;position:absolute;left:26px;top:4px}
+.shell.sidebar-collapsed .nav-item{padding:10px 0;justify-content:center;gap:0}
+.shell.sidebar-collapsed .nav-item span{display:none}
+.nav-count{margin-left:auto;font-size:9px;color:var(--ink-faint);border:1px solid var(--line-bright);padding:1px 5px}
+.shell.sidebar-collapsed .nav-count{display:none}
+
+.sidebar-footer{
+  margin-top:auto;padding:14px 18px;border-top:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--panel);
+}
+.avatar{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(from 0deg,var(--cyan),var(--lime),var(--amber),var(--cyan));
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;color:#000;position:relative;
+}
+.avatar::after{content:'';position:absolute;inset:3px;background:var(--panel);border-radius:50%;z-index:0}
+.avatar span{position:relative;z-index:1;color:var(--ink);font-size:10px}
+.sidebar-user{display:flex;flex-direction:column;line-height:1.2;overflow:hidden;flex:1}
+.sidebar-user .uid{font-size:10px;font-weight:700;color:var(--ink)}
+.sidebar-user .tier{font-size:9px;color:var(--cyan);letter-spacing:1px}
+.shell.sidebar-collapsed .sidebar-user{display:none}
+
+/* ============ TOPBAR ============ */
+.topbar{
+  grid-column:2;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:16px;padding:0 20px;flex-shrink:0;
+}
+.toggle-btn{
+  width:26px;height:26px;border:1px solid var(--line-bright);display:flex;
+  align-items:center;justify-content:center;color:var(--ink-dim);font-size:12px;
+}
+.toggle-btn:hover{color:var(--cyan);border-color:var(--cyan)}
+.search{
+  flex:1;max-width:420px;display:flex;align-items:center;gap:8px;
+  background:var(--bg);border:1px solid var(--line);padding:6px 12px;
+}
+.search input{background:none;border:none;outline:none;color:var(--ink);flex:1;font-size:12px}
+.search input::placeholder{color:var(--ink-faint)}
+.search-kbd{font-size:9px;color:var(--ink-faint);border:1px solid var(--line-bright);padding:1px 5px;border-radius:2px}
+.topbar-spacer{flex:1}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.icon-btn{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  color:var(--ink-dim);font-size:14px;position:relative;border:1px solid transparent;
+}
+.icon-btn:hover{color:var(--cyan);border-color:var(--line-bright)}
+.icon-btn .dot{
+  position:absolute;top:4px;right:4px;width:6px;height:6px;background:var(--amber);
+  border-radius:50%;box-shadow:0 0 6px var(--amber);
+}
+.clock{font-size:11px;color:var(--ink-mute);font-variant-numeric:tabular-nums}
+.chain-head{
+  font-size:9px;color:var(--ink-faint);border:1px solid var(--line-bright);padding:3px 8px;
+  letter-spacing:1px;display:flex;align-items:center;gap:6px;
+}
+.chain-head::before{content:'';width:5px;height:5px;background:var(--lime);border-radius:50%;box-shadow:0 0 4px var(--lime)}
+
+/* ============ MAIN ============ */
+.main{
+  grid-column:2;overflow-y:auto;overflow-x:hidden;position:relative;
+  scrollbar-width:thin;scrollbar-color:var(--line-bright) transparent;
+}
+.main::-webkit-scrollbar{width:8px}
+.main::-webkit-scrollbar-thumb{background:var(--line-bright)}
+.page{display:none;padding:32px 40px 80px;max-width:1200px;margin:0 auto;animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ============ TYPOGRAPHY PRIMITIVES ============ */
+.mega{font-family:var(--display);font-size:clamp(48px,8vw,110px);font-weight:900;letter-spacing:-4px;line-height:.9;text-transform:uppercase;color:#fff}
+.h1{font-size:24px;font-weight:800;letter-spacing:-.5px;color:#fff;margin-bottom:6px}
+.h2{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.kicker{font-size:10px;color:var(--ink-mute);letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:14px}
+.muted{color:var(--ink-dim)}
+.mono{font-family:var(--mono)}
+.hairline{height:1px;background:var(--line);margin:24px 0}
+
+/* ============ EDITORIAL BLOCKS ============ */
+.rule-block{border-top:1px solid var(--line-bright);padding-top:18px;margin-top:18px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line-bright)}
+.split > div{padding:24px}
+.split > div:first-child{border-right:1px solid var(--line-bright)}
+@media(max-width:800px){.split{grid-template-columns:1fr}.split > div:first-child{border-right:none;border-bottom:1px solid var(--line-bright)}}
+
+/* ============ CARDS ============ */
+.grid{display:grid;gap:14px}
+.grid-2{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.card{
+  background:var(--panel);border:1px solid var(--line);padding:20px;
+  transition:all .15s;position:relative;cursor:pointer;
+}
+.card:hover{border-color:var(--line-bright);background:var(--panel-2)}
+.card.locked{cursor:pointer}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.card-icon{font-size:26px;line-height:1}
+.card-status{font-size:9px;font-weight:700;letter-spacing:1px;text-align:right}
+.card-status.online{color:var(--cyan)}
+.card-status.syncing{color:var(--amber)}
+.card-status.offline{color:var(--red)}
+.card-version{font-size:9px;color:var(--ink-faint);font-weight:400;margin-top:2px}
+.card-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;letter-spacing:-.2px}
+.card-desc{font-size:11px;color:var(--ink-dim);margin-bottom:16px;line-height:1.5}
+.card-foot{display:flex;justify-content:space-between;align-items:center;font-size:9px;letter-spacing:1px}
+.badge{border:1px solid var(--line-bright);padding:2px 8px;color:var(--ink-mute);text-transform:uppercase}
+.badge.cyan{color:var(--cyan);border-color:rgba(0,255,204,.35)}
+.badge.lime{color:var(--lime);border-color:rgba(204,255,0,.35)}
+.badge.amber{color:var(--amber);border-color:rgba(255,170,0,.35)}
+.badge.red{color:var(--red);border-color:rgba(255,59,59,.35)}
+
+/* ============ DATA ROWS ============ */
+.data-table{border:1px solid var(--line);background:var(--panel)}
+.data-row{
+  display:grid;grid-template-columns:1fr auto;gap:16px;padding:14px 18px;
+  border-bottom:1px solid var(--line);align-items:center;
+}
+.data-row:last-child{border-bottom:none}
+.data-row:hover{background:var(--panel-2)}
+.data-label{font-size:11px;color:var(--ink-mute);letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
+.data-value{font-size:13px;color:var(--ink);font-weight:600}
+.data-value.big{font-size:20px;font-weight:800;color:#fff}
+.data-value.cyan{color:var(--cyan)}
+.data-value.lime{color:var(--lime)}
+.data-value.amber{color:var(--amber)}
+.data-value.right{text-align:right}
+.data-value .sub{font-size:10px;color:var(--ink-mute);font-weight:400;margin-top:2px}
+
+/* ============ BUTTONS ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 18px;
+  font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  border:1px solid var(--line-bright);color:var(--ink);background:var(--panel);transition:all .15s;
+}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn.primary{background:var(--cyan);color:#000;border-color:var(--cyan)}
+.btn.primary:hover{background:#00ccaa;box-shadow:0 0 20px rgba(0,255,204,.3);color:#000}
+.btn.ghost{background:none;border-color:var(--line-bright);color:var(--ink-dim)}
+.btn.danger:hover{border-color:var(--red);color:var(--red)}
+.btn.small{padding:6px 12px;font-size:10px}
+.btn.full{width:100%;justify-content:center}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ============ FORM ============ */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.field label{font-size:10px;letter-spacing:1.5px;color:var(--ink-mute);text-transform:uppercase;font-weight:700}
+.field input,.field select{
+  background:var(--bg);border:1px solid var(--line-bright);padding:10px 12px;
+  color:var(--ink);font-size:12px;outline:none;transition:border-color .15s;
+}
+.field input:focus,.field select:focus{border-color:var(--cyan)}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:12px;color:var(--ink)}
+.toggle-label .sub{font-size:10px;color:var(--ink-mute);margin-top:2px}
+.toggle{width:38px;height:20px;background:var(--line);border-radius:10px;position:relative;transition:background .2s;flex-shrink:0}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:var(--ink-mute);border-radius:50%;transition:all .2s}
+.toggle.on{background:rgba(0,255,204,.2)}
+.toggle.on::after{left:20px;background:var(--cyan)}
+
+/* ============ PILLS / TABS ============ */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:24px}
+.tab{
+  padding:10px 18px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--ink-mute);border-bottom:2px solid transparent;cursor:pointer;font-weight:700;
+}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+/* ============ VAGUELY COVER BLOCK ============ */
+.cover{border:1px solid var(--line-bright);background:var(--paper);color:var(--paper-ink);overflow:hidden}
+.cover-top{position:relative;border-bottom:1px solid var(--paper-ink);padding:20px 24px}
+.cover-mega{font-family:var(--display);font-size:clamp(60px,10vw,140px);font-weight:900;letter-spacing:-6px;line-height:.85;color:var(--paper-ink)}
+.cover-sub{margin-top:10px;font-size:12px;font-weight:600;max-width:60%}
+.cover-meta{position:absolute;top:20px;right:24px;font-size:9px;letter-spacing:1px;text-align:right;max-width:180px;color:var(--paper-ink);opacity:.7}
+.cover-grid{display:grid;grid-template-columns:1fr 1fr}
+.cover-grid > div{padding:20px 24px;border-right:1px solid var(--paper-ink);border-bottom:1px solid var(--paper-ink)}
+.cover-grid > div:last-child{border-right:none}
+.cover-quote{font-family:var(--display);font-size:18px;font-weight:600;line-height:1.25;letter-spacing:-.5px}
+@media(max-width:700px){.cover-grid{grid-template-columns:1fr}.cover-grid > div{border-right:none}.cover-sub{max-width:100%}}
+
+/* ============ TERMINAL ============ */
+.terminal{border:1px solid var(--line);background:#000;padding:14px;font-size:11px}
+.terminal-head{display:flex;gap:6px;align-items:center;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--line)}
+.tl{width:10px;height:10px;border-radius:50%}
+.tl.r{background:#ff5f56}.tl.y{background:#ffbd2e}.tl.g{background:#27c93f}
+.terminal-body{display:flex;flex-direction:column;gap:5px}
+.log-line{color:#888;word-break:break-word}
+.log-tag{font-weight:700}
+.log-tag.cyan{color:var(--cyan)}.log-tag.lime{color:var(--lime)}.log-tag.amber{color:var(--amber)}
+.cursor{display:inline-block;width:7px;height:12px;background:var(--cyan);animation:blink 1s step-end infinite;vertical-align:middle}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ============ HERO ============ */
+.hero{position:relative;border:1px solid var(--line-bright);padding:40px 36px;overflow:hidden;background:linear-gradient(135deg,#0a0a0a,#050505)}
+.hero::before{content:'';position:absolute;top:-30%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(0,255,204,.06),transparent 70%);pointer-events:none}
+.hero-tag{position:absolute;top:18px;right:18px;font-size:9px;color:var(--ink-faint);letter-spacing:2px}
+.hero p{color:var(--ink-dim);max-width:620px;font-size:12px;line-height:1.7;margin:12px 0 24px}
+
+/* ============ MODAL ============ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.active{display:flex}
+.modal{width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line-bright);padding:28px;animation:modalIn .22s ease;box-shadow:0 0 60px rgba(0,255,204,.08)}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal h2{font-size:16px;color:var(--cyan);letter-spacing:2px;margin-bottom:4px;font-weight:800}
+.modal .sub{font-size:11px;color:var(--ink-mute);margin-bottom:20px}
+.auth-method{display:flex;align-items:center;gap:14px;width:100%;padding:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:12px;text-align:left;margin-bottom:8px;transition:all .15s}
+.auth-method:hover{border-color:var(--cyan);background:var(--panel-2)}
+.auth-method .ic{font-size:18px}
+.auth-method .info{flex:1}
+.auth-method .info strong{display:block;font-weight:700;font-size:12px}
+.auth-method .info span{font-size:10px;color:var(--ink-mute)}
+.modal-status{font-size:10px;color:var(--ink-faint);text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+
+/* ============ TOAST ============ */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--panel);border:1px solid rgba(0,255,204,.4);padding:12px 18px;font-size:11px;color:var(--cyan);z-index:200;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;max-width:340px}
+.toast.active{opacity:1;transform:none}
+
+/* ============ MAINTENANCE ============ */
+.maint{position:fixed;inset:0;background:rgba(0,0,0,.95);backdrop-filter:blur(12px);z-index:150;display:none;align-items:center;justify-content:center;padding:24px}
+.maint.active{display:flex}
+.maint-card{text-align:center;padding:40px 32px;border:1px solid rgba(255,170,0,.4);background:#0a0a0a;max-width:460px;box-shadow:0 0 80px rgba(255,170,0,.15)}
+.maint-card h1{font-size:22px;color:var(--amber);letter-spacing:4px;margin-bottom:12px;font-weight:800}
+.maint-card p{font-size:12px;color:var(--ink-dim);margin-bottom:24px}
+.progress{height:4px;background:#111;overflow:hidden}
+.progress-fill{height:100%;background:var(--amber);animation:prog 2s ease-in-out infinite}
+@keyframes prog{0%,100%{width:30%;opacity:.6}50%{width:70%;opacity:1}}
+
+/* ============ UTILITY ============ */
+.row{display:flex;align-items:center;gap:12px}
+.row.between{justify-content:space-between}
+.row.wrap{flex-wrap:wrap}
+.mt-8{margin-top:8px}.mt-16{margin-top:16px}.mt-24{margin-top:24px}.mt-32{margin-top:32px}
+.mb-8{margin-bottom:8px}.mb-16{margin-bottom:16px}.mb-24{margin-bottom:24px}.mb-32{margin-bottom:32px}
+.section{margin-bottom:40px}
+
+/* Provenance tags */
+.prov{display:inline-block;padding:2px 8px;border:1px solid var(--line-bright);font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-radius:2px}
+.prov.MEASURED{color:var(--MEASURED);border-color:rgba(0,255,204,.35)}
+.prov.REPORTED{color:var(--REPORTED);border-color:rgba(255,170,0,.35)}
+.prov.DERIVED{color:var(--DERIVED);border-color:rgba(204,255,0,.35)}
+.prov.SPEC_D{color:var(--SPEC_D);border-color:rgba(255,170,0,.35)}
+.prov.STUBBED{color:var(--STUBBED);border-color:var(--line-bright)}
+
+/* Status chips */
+.status-chip{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.status-chip .dot{width:6px;height:6px;border-radius:50%}
+.status-chip.live .dot{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.status-chip.syncing .dot{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.status-chip.offline .dot{background:var(--red);box-shadow:0 0 6px var(--red)}
+.status-chip.dim .dot{background:var(--ink-mute)}
+.status-chip.live{color:var(--cyan)}.status-chip.syncing{color:var(--amber)}.status-chip.offline{color:var(--red)}.status-chip.dim{color:var(--ink-mute)}
+
+/* Footer */
+.shell-footer{grid-column:2;background:var(--panel);border-top:1px solid var(--line);padding:8px 20px;font-size:10px;color:var(--ink-mute);letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between}
+@media(max-width:860px){.shell-footer{grid-column:1/-1}}
+@media(max-width:860px){
+  .shell{grid-template-columns:0 1fr}
+  .shell.sidebar-open{grid-template-columns:260px 1fr}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;z-index:90;transform:translateX(-100%);transition:transform .2s}
+  .shell.sidebar-open .sidebar{transform:none}
+  .page{padding:24px 20px 80px}
+  .topbar{padding:0 14px;gap:10px}
+  .search{max-width:none}
+  .clock{display:none}
+  .chain-head{display:none}
+  .shell-footer{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<video autoplay muted loop playsinline poster="/poster.jpg" style="position:fixed;inset:0;width:100%;height:100%;object-fit:cover;opacity:.25;z-index:0;pointer-events:none;mix-blend-mode:screen"><source src="/landing-opt.mp4" type="video/mp4"></video>
+
+<div class="shell" id="shell" style="position:relative;z-index:1">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-ring"></div>
+      <div class="brand-text">
+        <div class="brand-title">VVU // COMMAND</div>
+        <div class="brand-sub">Venture Vision Ubuntu</div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" data-route="command"><span class="nav-icon">◉</span><span>Command Center</span></div>
+      <div class="nav-item" data-route="discover"><span class="nav-icon">⌕</span><span>Discover</span></div>
+      <div class="nav-item" data-route="manifesto"><span class="nav-icon">¶</span><span>Manifesto</span></div>
+      <div class="nav-item" data-route="registry"><span class="nav-icon">⛓</span><span>Registry</span></div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Surfaces</div>
+      <div class="nav-item" data-route="study"><span class="nav-icon">▤</span><span>Study Studio</span></div>
+      <div class="nav-item" data-route="trust"><span class="nav-icon">◈</span><span>Trust</span></div>
+      <div class="nav-item" data-route="vaguely"><span class="nav-icon">◫</span><span>Vaguely</span></div>
+      <div class="nav-item" data-route="pools"><span class="nav-icon">◐</span><span>Pools</span></div>
+      <div class="nav-item" data-route="proofbridge"><span class="nav-icon">⌘</span><span>Proofbridge</span><span class="nav-count">5</span></div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Estate</div>
+      <div class="nav-item" data-route="icsh"><span class="nav-icon">◈</span><span>ICSH</span></div>
+      <div class="nav-item" data-route="safegrid"><span class="nav-icon">▤</span><span>SafeGrid</span></div>
+      <div class="nav-item" data-route="holocom"><span class="nav-icon">◉</span><span>HoloCom</span></div>
+      <div class="nav-item" data-route="urllc"><span class="nav-icon">⌕</span><span>URLLC+</span></div>
+      <div class="nav-item" data-route="metro"><span class="nav-icon">◐</span><span>Metro</span></div>
+      <div class="nav-item" data-route="fieldkit"><span class="nav-icon">▤</span><span>Field Kit</span></div>
+      <div class="nav-item" data-route="support"><span class="nav-icon">◈</span><span>Support MK-I</span></div>
+      <div class="nav-item" data-route="capability"><span class="nav-icon">⌘</span><span>Capability</span></div>
+      <div class="nav-item" data-route="governance"><span class="nav-icon">◉</span><span>Governance</span></div>
+      <div class="nav-item" data-route="manifest-eis"><span class="nav-icon">¶</span><span>Manifest EIS</span></div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Account</div>
+      <div class="nav-item" data-route="dashboard"><span class="nav-icon">◐</span><span>My Hub</span></div>
+      <div class="nav-item" data-route="identity"><span class="nav-icon">◉</span><span>Identity</span></div>
+      <div class="nav-item" data-route="preferences"><span class="nav-icon">⚙</span><span>Preferences</span></div>
+      <div class="nav-item" data-route="wallet"><span class="nav-icon">▣</span><span>Wallet</span></div>
+      <div class="nav-item" data-route="subscription"><span class="nav-icon">✦</span><span>Subscription</span></div>
+      <div class="nav-item" data-route="security"><span class="nav-icon">⌂</span><span>Security</span></div>
+      <div class="nav-item" data-route="data"><span class="nav-icon">◇</span><span>Data Sovereignty</span></div>
+    </div>
+
+    <div class="sidebar-footer" id="sidebarFooter">
+      <div class="avatar"><span id="avatarInitial">?</span></div>
+      <div class="sidebar-user">
+        <div class="uid" id="sidebarUid">ANON-····</div>
+        <div class="tier" id="sidebarTier">OBSERVER</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ TOPBAR ============ -->
+  <header class="topbar">
+    <button class="toggle-btn" id="toggleSidebar">≡</button>
+    <div class="search">
+      <span style="color:var(--ink-mute)">⌕</span>
+      <input type="text" placeholder="Search surfaces, articles, registry…" />
+      <span class="search-kbd">⌘K</span>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <div class="chain-head">E965B01D</div>
+      <button class="icon-btn" id="notifBtn">◔<span class="dot"></span></button>
+      <div class="clock" id="clock">--:--:-- UTC+2</div>
+      <button class="icon-btn" id="signInBtn" title="Sign In">◉</button>
+    </div>
+  </header>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main" id="main">
+
+    <!-- ============ COMMAND CENTER ============ -->
+    <section class="page active" data-page="command">
+      <div class="hero mb-32">
+        <div class="hero-tag">EDGE:GQEBERHA · BLOCK 40921</div>
+        <h1 class="mega">Venture<br/>Vision <span style="color:var(--cyan)">Ubuntu</span></h1>
+        <p>Unified PWA Shell. Orchestrating five autonomous surfaces across a GitOps-driven monorepo. Public by default. Authenticated by necessity. Your data, your sovereignty.</p>
+        <div class="btn-row">
+          <button class="btn primary" data-action="enter">Enter Platform</button>
+          <button class="btn ghost" data-action="manifesto">Read Manifesto</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">Deployed Surfaces · 5</div>
+        <div class="grid grid-2" id="surfaceGrid"></div>
+      </div>
+
+      <div class="section grid grid-2" style="align-items:start">
+        <div class="terminal">
+          <div class="terminal-head"><span class="tl r"></span><span class="tl y"></span><span class="tl g"></span><span style="color:var(--ink-mute);margin-left:6px;font-size:10px">system.log</span></div>
+          <div class="terminal-body" id="terminalBody">
+            <div class="log-line"><span class="log-tag cyan">[ARGOCD]</span> Sync wave completed for services/shell</div>
+            <div class="log-line"><span class="log-tag lime">[FLUSH]</span> On-chain attestation verified for 1,402 non-paying users</div>
+            <div class="log-line"><span class="log-tag amber">[PAYMENT]</span> Stitch webhook received: 250 ZAR (User: ANON-8f2a)</div>
+            <div class="log-line"><span class="log-tag cyan">[K8S]</span> Ingress-nginx scaled to 3 replicas</div>
+            <div class="log-line"><span class="cursor"></span></div>
+          </div>
+        </div>
+
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-label">Root App of Apps</div></div><div class="data-value cyan right">HEALTHY</div></div>
+          <div class="data-row"><div><div class="data-label">ApplicationSet</div></div><div class="data-value cyan right">5 APPS DETECTED</div></div>
+          <div class="data-row"><div><div class="data-label">Cert-Manager</div></div><div class="data-value cyan right">VALID · 89 DAYS</div></div>
+          <div class="data-row"><div><div class="data-label">On-Chain Flush</div></div><div class="data-value lime right" id="flushCountdown">18H 12M</div></div>
+          <div class="data-row"><div><div class="data-label">Maintenance Window</div></div><div class="data-value amber right">BIWEEKLY TUE 02:00</div></div>
+          <div class="data-row"><div><div class="data-label">Auth Strategy</div></div><div class="data-value cyan right">PASSKEY · QR · 2PT</div></div>
+        </div>
+      </div>
+
+      <div class="section mt-32">
+        <div class="cover">
+          <div class="cover-top">
+            <div class="cover-mega">VAGUELY</div>
+            <div class="cover-sub">VOL. 1, NO. 1 — PILOT ISSUE (OCTOBER 2026)</div>
+            <div class="cover-meta">The Verifiable Infrastructure &amp; Estate Origin Master Release<br/>IEEE-Style Citable Archival Dossier &amp; Master Governance Record</div>
+          </div>
+          <div class="cover-grid">
+            <div style="font-size:10px;line-height:1.8">
+              <div><strong>Publisher</strong> Vaguely Vanity LLC (Pty) Ltd · Trading as Venture Vision Ubuntu</div>
+              <div style="margin-top:6px"><strong>Domicile</strong> 14 Bird Street, Central, Gqeberha, Eastern Cape, South Africa</div>
+              <div style="margin-top:6px"><strong>Registry</strong> CIPC Reg 2026/259853/07 · SARS Tax Ref 9106703292</div>
+              <div style="margin-top:6px"><strong>Banking</strong> Capitec Business Active</div>
+              <div style="margin-top:6px"><strong>WORM Head Anchor</strong> E965B01D</div>
+            </div>
+            <div class="cover-quote">"A person marginalized by opaque institutional decisions builds an institution where every decision must mathematically prove itself."</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section mt-32">
+        <div class="kicker">Estate Census · Layer 0–10</div>
+        <div class="data-table" id="censusTable"></div>
+      </div>
+
+      <div class="section mt-32">
+        <div class="kicker">Multi-Zone Rewrites</div>
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-label">/study/*</div></div><div class="data-value mono cyan right">vvu-study-studio.vercel.app/study/*</div></div>
+          <div class="data-row"><div><div class="data-label">/trust/*</div></div><div class="data-value mono cyan right">vvu-trust.vercel.app/trust/*</div></div>
+          <div class="data-row"><div><div class="data-label">/vaguely/*</div></div><div class="data-value mono cyan right">vvu-vaguely.vercel.app/vaguely/*</div></div>
+          <div class="data-row"><div><div class="data-label">/pools/*</div></div><div class="data-value mono cyan right">vvu-pools.vercel.app/pools/*</div></div>
+          <div class="data-row"><div><div class="data-label">/proofbridge/*</div></div><div class="data-value mono cyan right">proofbridge.venturevisionubuntu.co.za/proofbridge/*</div></div>
+        </div>
+        <p class="muted mt-8">Sub-apps must not carry html/body/head. They export a bare component the shell renders.</p>
+      </div>
+    </section>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="page" data-page="dashboard">
+      <div class="kicker">My Hub</div>
+      <h1 class="h1 mb-24">Welcome back, <span id="dashName" style="color:var(--cyan)">Observer</span>.</h1>
+
+      <div class="grid grid-3 mb-32">
+        <div class="card" style="cursor:default">
+          <div class="data-label mb-8">Balance</div>
+          <div class="data-value big">R 2,450.00</div>
+          <div class="data-value sub">$142.30 USD</div>
+        </div>
+        <div class="card" style="cursor:default">
+          <div class="data-label mb-8">Subscription</div>
+          <div class="data-value big" style="color:var(--cyan)">PREMIUM</div>
+          <div class="data-value sub">Renews 04 Nov 2026</div>
+        </div>
+        <div class="card" style="cursor:default">
+          <div class="data-label mb-8">Sovereignty</div>
+          <div class="data-value big" style="color:var(--lime)">ON-CHAIN</div>
+          <div class="data-value sub">Attested · Batch #4821</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="row between mb-16"><div class="kicker" style="margin:0">Recent Activity</div><button class="btn small ghost" data-route="wallet">View Ledger</button></div>
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-value">Study Studio Enrollment</div><div class="data-label">04 Oct 2026 · Stitch</div></div><div class="data-value right" style="color:var(--red)">−R 250.00</div></div>
+          <div class="data-row"><div><div class="data-value">Pools Contribution Payout</div><div class="data-label">03 Oct 2026 · Internal</div></div><div class="data-value right" style="color:var(--lime)">+R 180.00</div></div>
+          <div class="data-row"><div><div class="data-value">Vaguely Premium</div><div class="data-label">01 Oct 2026 · Paystack</div></div><div class="data-value right" style="color:var(--red)">−$12.00</div></div>
+          <div class="data-row"><div><div class="data-value">On-Chain Flush</div><div class="data-label">30 Sep 2026 · Batch #4803</div></div><div class="data-value right" style="color:var(--cyan)">ATTESTED ✓</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">Quick Access</div>
+        <div class="grid grid-3">
+          <div class="card" data-route="identity"><div class="card-title">Identity</div><div class="card-desc">Manage profile, passkeys, and unique ID.</div></div>
+          <div class="card" data-route="wallet"><div class="card-title">Wallet</div><div class="card-desc">Stitch &amp; Paystack integrations, balances, payouts.</div></div>
+          <div class="card" data-route="subscription"><div class="card-title">Subscription</div><div class="card-desc">Tier management, billing, invoices.</div></div>
+          <div class="card" data-route="security"><div class="card-title">Security</div><div class="card-desc">Sessions, devices, audit log.</div></div>
+          <div class="card" data-route="data"><div class="card-title">Data Sovereignty</div><div class="card-desc">On-chain attestations, flush status, exports.</div></div>
+          <div class="card" data-route="preferences"><div class="card-title">Preferences</div><div class="card-desc">Theme, notifications, language, region.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ IDENTITY ============ -->
+    <section class="page" data-page="identity">
+      <div class="kicker">Account</div>
+      <h1 class="h1 mb-24">Identity</h1>
+
+      <div class="split mb-24">
+        <div>
+          <div class="row mb-16">
+            <div class="avatar" style="width:56px;height:56px"><span id="idInitial" style="font-size:18px">?</span></div>
+            <div>
+              <div class="data-value big" id="idUid">USR-····</div>
+              <div class="data-label">Immutable Unique ID</div>
+            </div>
+          </div>
+          <div class="field"><label>Display Name</label><input type="text" id="idName" placeholder="Your name" /></div>
+          <div class="field"><label>Primary Email</label><input type="email" id="idEmail" placeholder="you@domain" /></div>
+          <div class="field"><label>Primary Cell</label><input type="tel" id="idCell" placeholder="+27 ..." /></div>
+          <button class="btn primary" data-action="save-identity">Save Changes</button>
+        </div>
+        <div>
+          <div class="data-table">
+            <div class="data-row"><div><div class="data-label">Tier</div></div><div class="data-value cyan right">PREMIUM</div></div>
+            <div class="data-row"><div><div class="data-label">Member Since</div></div><div class="data-value right">Oct 2026</div></div>
+            <div class="data-row"><div><div class="data-label">Passkeys</div></div><div class="data-value right">2 ACTIVE</div></div>
+            <div class="data-row"><div><div class="data-label">Linked Devices</div></div><div class="data-value right">3</div></div>
+            <div class="data-row"><div><div class="data-label">Sovereignty</div></div><div class="data-value lime right">ON-CHAIN</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PREFERENCES ============ -->
+    <section class="page" data-page="preferences">
+      <div class="kicker">Account</div>
+      <h1 class="h1 mb-24">Preferences</h1>
+
+      <div class="section">
+        <div class="kicker">Appearance</div>
+        <div class="data-table">
+          <div class="toggle-row"><div class="toggle-label">Theme<div class="sub">Dark · Light · HUD</div></div><select class="field" style="background:var(--bg);border:1px solid var(--line-bright);padding:8px;color:var(--ink)"><option>HUD (Default)</option><option>Dark</option><option>Light</option></select></div>
+          <div class="toggle-row"><div class="toggle-label">Accent Color</div><select style="background:var(--bg);border:1px solid var(--line-bright);padding:8px;color:var(--ink)"><option>Cyan</option><option>Lime</option><option>Amber</option></select></div>
+          <div class="toggle-row"><div class="toggle-label">Reduced Motion</div><div class="toggle" data-toggle></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">Notifications</div>
+        <div class="data-table">
+          <div class="toggle-row"><div class="toggle-label">Push (PWA)<div class="sub">On-chain flush, payments, maintenance</div></div><div class="toggle on" data-toggle></div></div>
+          <div class="toggle-row"><div class="toggle-label">Email</div><div class="toggle" data-toggle></div></div>
+          <div class="toggle-row"><div class="toggle-label">SMS</div><div class="toggle on" data-toggle></div></div>
+          <div class="toggle-row"><div class="toggle-label">In-app Toasts</div><div class="toggle on" data-toggle></div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">Language &amp; Region</div>
+        <div class="data-table">
+          <div class="toggle-row"><div class="toggle-label">Language</div><select style="background:var(--bg);border:1px solid var(--line-bright);padding:8px;color:var(--ink)"><option>English</option><option>isiXhosa</option><option>Afrikaans</option><option>isiZulu</option></select></div>
+          <div class="toggle-row"><div class="toggle-label">Default Currency</div><select style="background:var(--bg);border:1px solid var(--line-bright);padding:8px;color:var(--ink)"><option>ZAR (R)</option><option>USD ($)</option><option>EUR (€)</option></select></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">Privacy &amp; Data</div>
+        <div class="data-table">
+          <div class="toggle-row"><div class="toggle-label">Anonymous Browsing</div><div class="toggle" data-toggle></div></div>
+          <div class="toggle-row"><div class="toggle-label">Telemetry Opt-in</div><div class="toggle on" data-toggle></div></div>
+          <div class="toggle-row"><div class="toggle-label">Auto-Export Frequency</div><select style="background:var(--bg);border:1px solid var(--line-bright);padding:8px;color:var(--ink)"><option>Monthly</option><option>Weekly</option><option>Never</option></select></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ WALLET ============ -->
+    <section class="page" data-page="wallet">
+      <div class="kicker">Account</div>
+      <h1 class="h1 mb-24">Wallet</h1>
+
+      <div class="split mb-24">
+        <div>
+          <div class="data-label">Available Balance</div>
+          <div class="data-value big mt-8">R 2,450.00</div>
+          <div class="data-value sub">$142.30 USD · updated 2 min ago</div>
+          <div class="btn-row mt-16">
+            <button class="btn primary" data-action="topup">Top Up</button>
+            <button class="btn ghost" data-action="withdraw">Withdraw</button>
+          </div>
+        </div>
+        <div>
+          <div class="kicker">Payment Methods</div>
+          <div class="data-table">
+            <div class="data-row"><div><div class="data-value">🇿🇦 Stitch Instant EFT</div><div class="data-label">···· 4821 · ZAR</div></div><div class="data-value cyan right">DEFAULT</div></div>
+            <div class="data-row"><div><div class="data-value">🌍 Paystack Visa</div><div class="data-label">···· 7734 · USD</div></div><div class="data-value lime right">ACTIVE</div></div>
+            <div class="data-row"><div><div class="data-value">🌍 Paystack Apple Pay</div><div class="data-label">Not configured</div></div><div class="data-value right"><button class="btn small ghost">Add</button></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="row between mb-16"><div class="kicker" style="margin:0">Recent Transactions</div><button class="btn small ghost">Export CSV</button></div>
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-value">Study Studio Enrollment</div><div class="data-label">04 Oct 2026 · Stitch · Confirmed</div></div><div class="data-value right" style="color:var(--red)">−R 250.00</div></div>
+          <div class="data-row"><div><div class="data-value">Pools Contribution Payout</div><div class="data-label">03 Oct 2026 · Internal · Settled</div></div><div class="data-value right" style="color:var(--lime)">+R 180.00</div></div>
+          <div class="data-row"><div><div class="data-value">Vaguely Premium</div><div class="data-label">01 Oct 2026 · Paystack · Confirmed</div></div><div class="data-value right" style="color:var(--red)">−$12.00</div></div>
+          <div class="data-row"><div><div class="data-value">Trust Reputation Stake</div><div class="data-label">29 Sep 2026 · Stitch · Confirmed</div></div><div class="data-value right" style="color:var(--red)">−R 500.00</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SUBSCRIPTION ============ -->
+    <section class="page" data-page="subscription">
+      <div class="kicker">Account</div>
+      <h1 class="h1 mb-24">Subscription</h1>
+
+      <div class="grid grid-3 mb-32">
+        <div class="card" style="cursor:default">
+          <div class="card-title">Observer</div>
+          <div class="data-value big mt-8">Free</div>
+          <div class="card-desc mt-8">Public content · read-only. On-chain only. 24h local flush.</div>
+          <div class="badge">Current for new users</div>
+        </div>
+        <div class="card" style="cursor:default;border-color:var(--cyan)">
+          <div class="row between"><div class="card-title" style="color:var(--cyan)">Participant</div><div class="badge cyan">Current</div></div>
+          <div class="data-value big mt-8">R 99<span style="font-size:12px;color:var(--ink-mute)">/mo</span></div>
+          <div class="card-desc mt-8">All 5 surfaces. Post, enroll, participate. Persistent DB. On-chain attested.</div>
+          <button class="btn ghost full mt-8">Manage</button>
+        </div>
+        <div class="card" style="cursor:default">
+          <div class="card-title">Institutional</div>
+          <div class="data-value big mt-8">R 999<span style="font-size:12px;color:var(--ink-mute)">/mo</span></div>
+          <div class="card-desc mt-8">Multi-seat, API access, governance weight. Dedicated shard + full audit.</div>
+          <button class="btn primary full mt-8" data-action="upgrade">Upgrade</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">Billing</div>
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-label">Current Plan</div><div class="data-value">Participant · R 99/mo</div></div><div class="data-value cyan right">ACTIVE</div></div>
+          <div class="data-row"><div><div class="data-label">Next Charge</div><div class="data-value">04 Nov 2026</div></div><div class="data-value right">R 99.00</div></div>
+          <div class="data-row"><div><div class="data-label">Payment Method</div><div class="data-value">🇿🇦 Stitch Instant EFT ···· 4821</div></div><button class="btn small ghost">Change</button></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="row between mb-16"><div class="kicker" style="margin:0">Invoice History</div><button class="btn small ghost">Export All</button></div>
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-value">INV-2026-1004</div><div class="data-label">04 Oct 2026 · R 99.00</div></div><button class="btn small ghost">Download PDF</button></div>
+          <div class="data-row"><div><div class="data-value">INV-2026-0904</div><div class="data-label">04 Sep 2026 · R 99.00</div></div><button class="btn small ghost">Download PDF</button></div>
+          <div class="data-row"><div><div class="data-value">INV-2026-0804</div><div class="data-label">04 Aug 2026 · R 99.00</div></div><button class="btn small ghost">Download PDF</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SECURITY ============ -->
+    <section class="page" data-page="security">
+      <div class="kicker">Account</div>
+      <h1 class="h1 mb-24">Security</h1>
+
+      <div class="section">
+        <div class="row between mb-16"><div class="kicker" style="margin:0">Passkeys</div><button class="btn small primary">+ Add Passkey</button></div>
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-value">MacBook TouchID</div><div class="data-label">Added 12 Sep 2026 · Last used 2 min ago</div></div><div class="data-value cyan right">ACTIVE</div></div>
+          <div class="data-row"><div><div class="data-value">iPhone FaceID</div><div class="data-label">Added 20 Sep 2026 · Last used 1 hour ago</div></div><div class="data-value cyan right">ACTIVE</div></div>
+          <div class="data-row"><div><div class="data-value">Windows Hello</div><div class="data-label">Added 01 Oct 2026 · Last used 3 days ago</div></div><button class="btn small danger">Revoke</button></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">2-Point Fallback</div>
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-label">Cell</div><div class="data-value">+27 ·· ··· 4821</div></div><div class="data-value lime right">VERIFIED</div></div>
+          <div class="data-row"><div><div class="data-label">Email</div><div class="data-value">divhani@venturevisionubuntu.co.za</div></div><div class="data-value lime right">VERIFIED</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">Active Sessions</div>
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-value">MacBook · Gqeberha, ZA</div><div class="data-label">Chrome 131 · 192.168.1.42 · now</div></div><div class="data-value cyan right">CURRENT</div></div>
+          <div class="data-row"><div><div class="data-value">iPhone · Gqeberha, ZA</div><div class="data-label">Safari Mobile · 41.13.··.·· · 1h ago</div></div><button class="btn small danger">Revoke</button></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">Audit Log</div>
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-value">Passkey used · MacBook TouchID</div><div class="data-label">04 Oct 2026 · 12:41 · SUCCESS</div></div><div class="data-value cyan right">✓</div></div>
+          <div class="data-row"><div><div class="data-value">On-chain flush verified</div><div class="data-label">04 Oct 2026 · 00:00 · Batch #4821</div></div><div class="data-value lime right">✓</div></div>
+          <div class="data-row"><div><div class="data-value">QR handoff · iPhone</div><div class="data-label">03 Oct 2026 · 20:12 · SUCCESS</div></div><div class="data-value cyan right">✓</div></div>
+          <div class="data-row"><div><div class="data-value">Failed 2-point attempt</div><div class="data-label">02 Oct 2026 · 03:22 · BLOCKED</div></div><div class="data-value red right">✕</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DATA SOVEREIGNTY ============ -->
+    <section class="page" data-page="data">
+      <div class="kicker">Account</div>
+      <h1 class="h1 mb-24">Data Sovereignty</h1>
+
+      <div class="split mb-24">
+        <div>
+          <div class="data-label">Status</div>
+          <div class="data-value big" style="color:var(--lime)">ON-CHAIN ATTESTED</div>
+          <div class="data-label mt-16">Chain</div>
+          <div class="data-value">Polygon L2</div>
+          <div class="data-label mt-16">WORM Head Anchor</div>
+          <div class="data-value mono" style="color:var(--cyan)">E965B01D</div>
+        </div>
+        <div>
+          <div class="data-label">Last Flush</div>
+          <div class="data-value big">18H 12M ago</div>
+          <div class="data-label mt-16">Next Flush</div>
+          <div class="data-value big" style="color:var(--amber)" id="flushCountdown2">05H 48M</div>
+          <div class="data-label mt-16">Local Residency</div>
+          <div class="data-value">Encrypted · scheduled for purge</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">Your Attestations</div>
+        <div class="data-table">
+          <div class="data-row"><div><div class="data-value">Batch #4821</div><div class="data-label">04 Oct 2026 · 1,402 records</div></div><button class="btn small ghost">View Proof</button></div>
+          <div class="data-row"><div><div class="data-value">Batch #4803</div><div class="data-label">03 Oct 2026 · 1,388 records</div></div><button class="btn small ghost">View Proof</button></div>
+          <div class="data-row"><div><div class="data-value">Batch #4788</div><div class="data-label">02 Oct 2026 · 1,401 records</div></div><button class="btn small ghost">View Proof</button></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="kicker">Data Controls</div>
+        <div class="btn-row">
+          <button class="btn">Export My Data</button>
+          <button class="btn ghost">Revoke Consent</button>
+          <button class="btn danger">Migrate to New ID</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DISCOVER ============ -->
+    <section class="page" data-page="discover">
+      <div class="kicker">Explore</div>
+      <h1 class="h1 mb-24">Discover</h1>
+      <p class="muted mb-24" style="max-width:640px">Public content across all five surfaces. Reading is free. Interacting requires authentication.</p>
+      <div class="grid grid-2">
+        <div class="card"><div class="badge">Vaguely</div><div class="card-title mt-8">The Verifiable Infrastructure Release</div><div class="card-desc">Vol. 1, No. 1 · Pilot Issue · October 2026</div></div>
+        <div class="card"><div class="badge">Study Studio</div><div class="card-title mt-8">Foundations of On-Chain Governance</div><div class="card-desc">12 modules · 4 enrolled · public syllabus</div></div>
+        <div class="card"><div class="badge">Trust</div><div class="card-title mt-8">Reputation Oracle — Public Snapshot</div><div class="card-desc">Top 100 reputation holders, publicly verifiable</div></div>
+        <div class="card"><div class="badge">Pools</div><div class="card-title mt-8">Community Stokvel Registry</div><div class="card-desc">18 active pools · ZAR 124,400 pooled</div></div>
+      </div>
+    </section>
+
+    <!-- ============ MANIFESTO ============ -->
+    <section class="page" data-page="manifesto">
+      <div class="kicker">Thesis</div>
+      <h1 class="mega mb-24" style="font-size:clamp(36px,6vw,72px)">Manifesto</h1>
+      <div class="split mb-32">
+        <div>
+          <p style="font-size:14px;line-height:1.8;color:var(--ink)">A person marginalized by opaque institutional decisions builds an institution where every decision must mathematically prove itself.</p>
+          <p class="muted mt-16" style="font-size:12px;line-height:1.8">We operate as a verifiable infrastructure. Public by default, authenticated by necessity. Every decision is a WORM anchor. Every flush is an attestation. Every reputation is earned and provable.</p>
+        </div>
+        <div>
+          <div class="data-table">
+            <div class="data-row"><div><div class="data-label">Principle 01</div></div><div class="data-value right">The surface is never the source of truth.</div></div>
+            <div class="data-row"><div><div class="data-label">Principle 02</div></div><div class="data-value right">The contract defines what may exist.</div></div>
+            <div class="data-row"><div><div class="data-label">Principle 03</div></div><div class="data-value right">The pipeline defines what may happen.</div></div>
+            <div class="data-row"><div><div class="data-label">Principle 04</div></div><div class="data-value right">ProofBridge defines what may be established.</div></div>
+            <div class="data-row"><div><div class="data-label">Principle 05</div></div><div class="data-value right">The ledger defines what was recorded.</div></div>
+            <div class="data-row"><div><div class="data-label">Principle 06</div></div><div class="data-value right">The surface defines only how state is presented and interacted with.</div></div>
+            <div class="data-row"><div><div class="data-label">Principle 07</div></div><div class="data-value right">The ledger is the storage.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cover">
+        <div class="cover-top">
+          <div class="cover-mega">VAGUELY</div>
+          <div class="cover-sub">VOL. 1, NO. 1 — PILOT ISSUE (OCTOBER 2026)</div>
+          <div class="cover-meta">The Verifiable Infrastructure &amp; Estate Origin Master Release</div>
+        </div>
+        <div class="cover-grid">
+          <div style="font-size:10px;line-height:1.8">
+            <div><strong>Publisher</strong> Vaguely Vanity LLC (Pty) Ltd</div>
+            <div style="margin-top:6px"><strong>Domicile</strong> 14 Bird Street, Central, Gqeberha</div>
+            <div style="margin-top:6px"><strong>Registry</strong> CIPC Reg 2026/259853/07</div>
+            <div style="margin-top:6px"><strong>WORM Head Anchor</strong> E965B01D</div>
+          </div>
+          <div class="cover-quote">"Every decision must mathematically prove itself."</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ REGISTRY ============ -->
+    <section class="page" data-page="registry">
+      <div class="kicker">On-Chain</div>
+      <h1 class="h1 mb-24">Public Registry</h1>
+      <p class="muted mb-24" style="max-width:640px">Live WORM chain head and public attestations. Every entry is verifiable on Polygon L2.</p>
+      <div class="data-table mb-24">
+        <div class="data-row"><div><div class="data-label">WORM Chain Head</div></div><div class="data-value mono cyan right">E965B01D</div></div>
+        <div class="data-row"><div><div class="data-label">Current Block</div></div><div class="data-value right">#40921</div></div>
+        <div class="data-row"><div><div class="data-label">Last Flush</div></div><div class="data-value right" id="regFlush">—</div></div>
+        <div class="data-row"><div><div class="data-label">Total Attestations</div></div><div class="data-value right">14,872</div></div>
+        <div class="data-row"><div><div class="data-label">Network</div></div><div class="data-value right">Polygon L2</div></div>
+        <div class="data-row"><div><div class="data-label">Clock Bridge</div></div><div class="data-value right" id="regClock">—</div></div>
+        <div class="data-row"><div><div class="data-label">Chain Status</div></div><div class="data-value right" id="regChain"><span class="prov STUBBED">UNVERIFIED</span></div></div>
+      </div>
+      <div class="kicker mb-16">Recent Batches</div>
+      <div class="data-table">
+        <div class="data-row"><div><div class="data-value">Batch #4821</div><div class="data-label">04 Oct 2026 · 1,402 records · E965B01D</div></div><div class="data-value cyan right">VERIFIED</div></div>
+        <div class="data-row"><div><div class="data-value">Batch #4803</div><div class="data-label">03 Oct 2026 · 1,388 records · E965B01D</div></div><div class="data-value cyan right">VERIFIED</div></div>
+        <div class="data-row"><div><div class="data-value">Batch #4788</div><div class="data-label">02 Oct 2026 · 1,401 records · E965B01D</div></div><div class="data-value cyan right">VERIFIED</div></div>
+      </div>
+    </section>
+
+    <!-- ============ SURFACE PAGES (stubs routing into sub-apps) ============ -->
+    <section class="page" data-page="study">
+      <div class="kicker">Surface</div>
+      <h1 class="h1 mb-24">Study Studio</h1>
+      <p class="muted mb-24">Academic &amp; research protocol. Public syllabus. Auth required to enroll.</p>
+      <div class="hero"><h2 class="h2">Mount target: <span class="mono" style="color:var(--cyan)">/study/*</span></h2><p class="mt-8">In production, this route proxies to <span class="mono">vvu-study-studio.space-z.ai</span> via Multi-Zone rewrite. The shell remains mounted; only the content region changes.</p></div>
+    </section>
+
+    <section class="page" data-page="trust">
+      <div class="kicker">Surface</div>
+      <h1 class="h1 mb-24">Trust</h1>
+      <p class="muted mb-24">Governance &amp; reputation engine.</p>
+      <div class="hero"><h2 class="h2">Mount target: <span class="mono" style="color:var(--cyan)">/trust/*</span></h2><p class="mt-8">Proxies to <span class="mono">vvu-trust.space-z.ai</span>.</p></div>
+    </section>
+
+    <section class="page" data-page="vaguely">
+      <div class="kicker">Surface</div>
+      <h1 class="h1 mb-24">Vaguely</h1>
+      <p class="muted mb-24">Magazine &amp; editorial surface. Public reading.</p>
+      <div class="hero"><h2 class="h2">Mount target: <span class="mono" style="color:var(--cyan)">/vaguely/*</span></h2><p class="mt-8">Proxies to <span class="mono">vaguely.space-z.ai</span>.</p></div>
+    </section>
+
+    <section class="page" data-page="pools">
+      <div class="kicker">Surface</div>
+      <h1 class="h1 mb-24">Pools</h1>
+      <p class="muted mb-24">Community prosperity &amp; stokvel governance.</p>
+      <div class="hero"><h2 class="h2">Mount target: <span class="mono" style="color:var(--cyan)">/pools/*</span></h2><p class="mt-8">Proxies to <span class="mono">ubuntu-pools.vercel.app</span>.</p></div>
+    </section>
+
+    <section class="page" data-page="proofbridge">
+      <div class="kicker">Surface</div>
+      <h1 class="h1 mb-24">Proofbridge</h1>
+      <p class="muted mb-24">Verification & attestation workflows.</p>
+      <div class="hero"><h2 class="h2">Mount target: <span class="mono" style="color:var(--cyan)">/proofbridge/*</span></h2><p class="mt-8">Proxies to <span class="mono">proofbridge.venturevisionubuntu.co.za</span> (pending TLS repair).</p></div>
+    </section>
+
+    <!-- ============ ESTATE SURFACES ============ -->
+    <section class="page" data-page="icsh">
+      <div class="kicker">Estate</div>
+      <h1 class="h1 mb-24">ICSH</h1>
+      <p class="muted">4th state · contract on chain.</p>
+      <div class="hero"><h2 class="h2">Hash route <span class="mono" style="color:var(--cyan)">#/icsh</span></h2><p class="mt-8">Wired to shell. Own chain stays its own. No shared kernel.</p></div>
+    </section>
+
+    <section class="page" data-page="safegrid">
+      <div class="kicker">Estate</div>
+      <h1 class="h1 mb-24">SafeGrid</h1>
+      <p class="muted">Ordering / sequence semantics.</p>
+      <div class="hero"><h2 class="h2">Hash route <span class="mono" style="color:var(--cyan)">#/safegrid</span></h2><p class="mt-8">Wired to shell. Own chain stays its own.</p></div>
+    </section>
+
+    <section class="page" data-page="holocom">
+      <div class="kicker">Estate</div>
+      <h1 class="h1 mb-24">HoloCom</h1>
+      <p class="muted">6G split computing · server-authoritative.</p>
+      <div class="hero"><h2 class="h2">Hash route <span class="mono" style="color:var(--cyan)">#/holocom</span></h2><p class="mt-8">Wired to shell.</p></div>
+    </section>
+
+    <section class="page" data-page="urllc">
+      <div class="kicker">Estate</div>
+      <h1 class="h1 mb-24">URLLC+</h1>
+      <p class="muted">Finite-blocklength math.</p>
+      <div class="hero"><h2 class="h2">Hash route <span class="mono" style="color:var(--cyan)">#/urllc</span></h2><p class="mt-8">Wired to shell.</p></div>
+    </section>
+
+    <section class="page" data-page="metro">
+      <div class="kicker">Estate</div>
+      <h1 class="h1 mb-24">Metro</h1>
+      <p class="muted">8-bit city, 5 gates.</p>
+      <div class="hero"><h2 class="h2">Hash route <span class="mono" style="color:var(--cyan)">#/metro</span></h2><p class="mt-8">Wired to shell.</p></div>
+    </section>
+
+    <section class="page" data-page="fieldkit">
+      <div class="kicker">Estate</div>
+      <h1 class="h1 mb-24">Field Kit</h1>
+      <p class="muted">Campus walk interview kit.</p>
+      <div class="hero"><h2 class="h2">Hash route <span class="mono" style="color:var(--cyan)">#/fieldkit</span></h2><p class="mt-8">Wired to shell.</p></div>
+    </section>
+
+    <section class="page" data-page="support">
+      <div class="kicker">Estate</div>
+      <h1 class="h1 mb-24">Support MK-I</h1>
+      <p class="muted">5-state funding DFA.</p>
+      <div class="hero"><h2 class="h2">Hash route <span class="mono" style="color:var(--cyan)">#/support</span></h2><p class="mt-8">Wired to shell.</p></div>
+    </section>
+
+    <section class="page" data-page="capability">
+      <div class="kicker">Estate</div>
+      <h1 class="h1 mb-24">Capability</h1>
+      <p class="muted">Dossier.</p>
+      <div class="hero"><h2 class="h2">Hash route <span class="mono" style="color:var(--cyan)">#/capability</span></h2><p class="mt-8">Wired to shell.</p></div>
+    </section>
+
+    <section class="page" data-page="governance">
+      <div class="kicker">Estate</div>
+      <h1 class="h1 mb-24">Governance</h1>
+      <p class="muted">SIL kernel · real Ed25519.</p>
+      <div class="hero"><h2 class="h2">Hash route <span class="mono" style="color:var(--cyan)">#/governance</span></h2><p class="mt-8">Wired to shell.</p></div>
+    </section>
+
+    <section class="page" data-page="manifest-eis">
+      <div class="kicker">Estate</div>
+      <h1 class="h1 mb-24">Manifest EIS</h1>
+      <p class="muted">Spec layer.</p>
+      <div class="hero"><h2 class="h2">Hash route <span class="mono" style="color:var(--cyan)">#/manifest-eis</span></h2><p class="mt-8">Wired to shell.</p></div>
+    </section>
+
+    <section class="page" data-page="firstprinciples">
+      <div class="kicker">Foundation</div>
+      <h1 class="h1 mb-24">First Principles</h1>
+      <div class="split mb-32">
+        <div>
+          <p style="font-size:14px;line-height:1.8;color:var(--ink)">Four atoms + coupling matrix.</p>
+          <p class="muted mt-16" style="font-size:12px;line-height:1.8">State is finite, observable, sealed. Transition is guarded by contract. Proof is append-only, Ed25519. Observer is named, scoped, RLS.</p>
+        </div>
+        <div>
+          <div class="data-table">
+            <div class="data-row"><div><div class="data-label">Atom 01</div></div><div class="data-value right">State</div></div>
+            <div class="data-row"><div><div class="data-label">Atom 02</div></div><div class="data-value right">Transition</div></div>
+            <div class="data-row"><div><div class="data-label">Atom 03</div></div><div class="data-value right">Proof</div></div>
+            <div class="data-row"><div><div class="data-label">Atom 04</div></div><div class="data-value right">Observer</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cover">
+        <div class="cover-top">
+          <div class="cover-mega">FIRST</div>
+          <div class="cover-sub">PRINCIPLES</div>
+          <div class="cover-meta">Four atoms · coupling matrix · invariant</div>
+        </div>
+        <div class="cover-grid">
+          <div style="font-size:10px;line-height:1.8">
+            <div><strong>State</strong> Finite, observable, sealed.</div>
+            <div style="margin-top:6px"><strong>Transition</strong> Guarded by contract.</div>
+            <div style="margin-top:6px"><strong>Proof</strong> Append-only, Ed25519.</div>
+            <div style="margin-top:6px"><strong>Observer</strong> Named, scoped, RLS.</div>
+          </div>
+          <div class="cover-quote">"The surface is never the source of truth. The contract defines what may exist."</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="shell-footer"><span>authoritative only through proof</span><span id="footerRoute">#/command</span></footer>
+</div>
+
+<!-- ============ AUTH MODAL ============ -->
+<div class="overlay" id="authOverlay">
+  <div class="modal">
+    <h2>INITIALIZE SESSION</h2>
+    <div class="sub" id="authSub">Authenticate to continue.</div>
+    <button class="auth-method" data-auth="passkey"><span class="ic">🔐</span><span class="info"><strong>Passkey / Biometric</strong><span>FaceID · TouchID · Windows Hello</span></span></button>
+    <button class="auth-method" data-auth="qr"><span class="ic">📱</span><span class="info"><strong>QR Handoff</strong><span>Scan from an authenticated device</span></span></button>
+    <button class="auth-method" data-auth="twopoint"><span class="ic">✉️</span><span class="info"><strong>2-Point (Cell + Email)</strong><span>SMS OTP + Magic Link</span></span></button>
+    <button class="btn ghost full mt-16" id="authCancel">Cancel</button>
+    <div class="modal-status">SESSION: <span id="anonIdDisplay">ANON-····</span></div>
+  </div>
+</div>
+
+<!-- ============ MAINTENANCE ============ -->
+<div class="maint" id="maintOverlay">
+  <div class="maint-card">
+    <h1>SYSTEM MAINTENANCE</h1>
+    <p>Biweekly sync window active. Expected completion 02:30 AM SAST.</p>
+    <div class="progress"><div class="progress-fill"></div></div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   VVU PLATFORM SHELL — MASTER CONTROLLER
+   ============================================================ */
+
+const SURFACES = [
+  { id:'study', name:'Study Studio', desc:'Academic & research protocol', icon:'▤', access:'PUBLIC / AUTH', status:'ONLINE', version:'v2.4.1', prov:'MEASURED' },
+  { id:'trust', name:'Trust', desc:'Governance & reputation engine', icon:'◈', access:'PUBLIC / AUTH', status:'ONLINE', version:'v1.8.0', prov:'MEASURED' },
+  { id:'vaguely', name:'Vaguely', desc:'Magazine & editorial surface', icon:'◫', access:'PUBLIC', status:'ONLINE', version:'v3.1.2', prov:'MEASURED' },
+  { id:'pools', name:'Pools', desc:'Community prosperity & stokvels', icon:'◐', access:'PUBLIC / AUTH', status:'ONLINE', version:'v1.2.0', prov:'MEASURED' },
+  { id:'proofbridge', name:'Proofbridge', desc:'Verification & attestation', icon:'⌘', access:'PUBLIC / AUTH', status:'SYNCING', version:'v0.9.5', prov:'REPORTED' }
+];
+
+const ESTATE_LAYERS = [
+  { id:'L0', name:'Invariant', status:'ACTIVE', prov:'MEASURED', note:'Governance constraint, not code' },
+  { id:'L1', name:'Entity', status:'ACTIVE', prov:'MEASURED', note:'CIPC 2026/259853/07 · SARS 9106703292 · 14 Bird Street' },
+  { id:'L2', name:'Contracts', status:'ACTIVE', prov:'MEASURED', note:'gates.md · envelope.md · receipt.schema.json · MOI · SHA' },
+  { id:'L3', name:'Spine', status:'ACTIVE', prov:'MEASURED', note:'receipt.v1 · envelope.v1 · clock.v1 · manifest.v1 · 2 verifiers' },
+  { id:'L4', name:'Pipelines', status:'ACTIVE', prov:'MEASURED', note:'ProofBridge Mk-0 · Study Studio · VVU STUDIO · Dual-Route · vvu-trust' },
+  { id:'L5', name:'Surfaces', status:'ACTIVE', prov:'MEASURED', note:'Shell · 5 core · 13 estate · 15 watchdog instruments' },
+  { id:'L6', name:'Domains', status:'PENDING', prov:'SPEC_D', note:'NS conflict unresolved · 2 ACTIVE · 1 REJECTED' },
+  { id:'L7', name:'Verticals', status:'ACTIVE', prov:'MEASURED', note:'18 ACTIVE · 5 SPEC_D · not built' },
+  { id:'L8', name:'Credentials', status:'ACTIVE', prov:'MEASURED', note:'3 HMAC keys · operator box · never shared' },
+  { id:'L9', name:'Chains', status:'ACTIVE', prov:'MEASURED', note:'3 chains · sibling rule · Ed25519' },
+  { id:'L10', name:'Infrastructure', status:'ACTIVE', prov:'MEASURED', note:'Vercel · HostAfrica · Caddy :81 · 6 mini-services · Guardian' }
+];
+
+const MULTI_ZONE = [
+  { prefix:'/study/', target:'vvu-study-studio.vercel.app/study/', status:'DECLARED' },
+  { prefix:'/trust/', target:'vvu-trust.vercel.app/trust/', status:'DECLARED' },
+  { prefix:'/vaguely/', target:'vvu-vaguely.vercel.app/vaguely/', status:'DECLARED' },
+  { prefix:'/pools/', target:'vvu-pools.vercel.app/pools/', status:'DECLARED' },
+  { prefix:'/proofbridge/', target:'proofbridge.venturevisionubuntu.co.za/proofbridge/', status:'DECLARED' }
+];
+
+const state = {
+  session: null,
+  anonId: null,
+  pendingRoute: null,
+  currentRoute: 'command',
+  unlockedRoutes: new Set(['command','discover','manifesto','registry','firstprinciples','vaguely','study','trust','pools','proofbridge','icsh','safegrid','holocom','urllc','metro','fieldkit','support','capability','governance','manifest-eis','dashboard','identity','preferences','wallet','subscription','security','data'])
+};
+
+/* ---------- ANONYMOUS ID ---------- */
+function initAnonId(){
+  let id = localStorage.getItem('vvu_anon_id');
+  if(!id){ id = 'ANON-' + Math.random().toString(16).slice(2,10); localStorage.setItem('vvu_anon_id', id); }
+  state.anonId = id;
+  document.getElementById('anonIdDisplay').textContent = id;
+  document.getElementById('sidebarUid').textContent = id;
+  document.getElementById('avatarInitial').textContent = '?';
+}
+
+/* ---------- SURFACE GRID ---------- */
+function renderSurfaces(){
+  const grid = document.getElementById('surfaceGrid');
+  grid.innerHTML = SURFACES.map(s => `
+    <div class="card" data-route="${s.id}">
+      <div class="card-top">
+        <span class="card-icon">${s.icon}</span>
+        <div>
+          <div class="card-status ${s.status.toLowerCase()}">● ${s.status}</div>
+          <div class="card-version">${s.version}</div>
+        </div>
+      </div>
+      <div class="card-title">${s.name}</div>
+      <div class="card-desc">${s.desc}</div>
+      <div class="card-foot">
+        <span class="badge">${s.access}</span>
+        <span class="prov ${s.prov}">${s.prov}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ---------- CENSUS TABLE ---------- */
+function renderCensus(){
+  const table = document.getElementById('censusTable');
+  if(!table) return;
+  table.innerHTML = ESTATE_LAYERS.map(l => `
+    <div class="data-row">
+      <div>
+        <div class="data-label">${l.id} · ${l.name}</div>
+        <div class="data-value">${l.note}</div>
+      </div>
+      <div style="text-align:right">
+        <span class="status-chip ${l.status === 'ACTIVE' ? 'live' : l.status === 'PENDING' ? 'syncing' : 'offline'}"><span class="dot"></span>${l.status}</span>
+        <span class="prov ${l.prov}" style="margin-left:8px">${l.prov}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ---------- ROUTER ---------- */
+function navigate(route){
+  if(!route) route = 'command';
+  if(!state.unlockedRoutes.has(route) && !state.session){
+    state.pendingRoute = route;
+    openAuth(route);
+    return;
+  }
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.dataset.page === route));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.route === route));
+  state.currentRoute = route;
+  document.getElementById('main').scrollTop = 0;
+  const fr = document.getElementById('footerRoute'); if(fr) fr.textContent = '#' + route;
+  if(window.innerWidth < 860) document.getElementById('shell').classList.remove('sidebar-open');
+}
+
+/* ---------- AUTH ---------- */
+function openAuth(route){
+  const sub = document.getElementById('authSub');
+  const name = SURFACES.find(s => s.id === route)?.name || 'the platform';
+  sub.textContent = `Authenticate to access ${name}.`;
+  document.getElementById('authOverlay').classList.add('active');
+}
+function closeAuth(){ document.getElementById('authOverlay').classList.remove('active'); }
+
+function simulateAuth(method){
+  const labels = { passkey:'Passkey', qr:'QR Handoff', twopoint:'2-Point' };
+  toast(`▸ ${labels[method]} handshake initiated…`);
+  setTimeout(() => {
+    state.session = {
+      id: 'USR-' + Math.random().toString(16).slice(2,10).toUpperCase(),
+      method
+    };
+    const sid = state.session.id;
+    document.getElementById('sidebarUid').textContent = sid;
+    document.getElementById('sidebarTier').textContent = 'PREMIUM';
+    document.getElementById('avatarInitial').textContent = sid.slice(4,5);
+    document.getElementById('idUid').textContent = sid;
+    document.getElementById('idInitial').textContent = sid.slice(4,5);
+    document.getElementById('dashName').textContent = 'Participant';
+    toast(`✓ Session established · ${sid}`);
+    closeAuth();
+    if(state.pendingRoute){
+      const r = state.pendingRoute;
+      state.pendingRoute = null;
+      navigate(r);
+    } else {
+      navigate('dashboard');
+    }
+  }, 900);
+}
+
+/* ---------- TOAST ---------- */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('active');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('active'), 2600);
+}
+
+/* ---------- CLOCK ---------- */
+function tick(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-GB',{hour12:false}) + ' UTC+2';
+  const isTue = now.getDay() === 2;
+  const inWindow = now.getHours() === 2 && now.getMinutes() < 30;
+  document.getElementById('maintOverlay').classList.toggle('active', isTue && inWindow);
+}
+
+/* ---------- FLUSH COUNTDOWN ---------- */
+function updateFlush(){
+  const now = new Date();
+  const mid = new Date(now); mid.setHours(24,0,0,0);
+  const diff = mid - now;
+  const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+  const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+  const txt = `${h}H ${m}M`;
+  const a = document.getElementById('flushCountdown'); if(a) a.textContent = txt;
+  const b = document.getElementById('flushCountdown2'); if(b) b.textContent = txt;
+  const r = document.getElementById('regFlush'); if(r) r.textContent = `${h}H ${m}M ago`;
+}
+
+/* ---------- CHAIN / CLOCK POLL ---------- */
+async function pollRegistry(){
+  try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch('/api/vvu/clock', { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(tid);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const rc = document.getElementById('regClock');
+    if(rc) rc.textContent = data.revision || data.clock || '—';
+  } catch(e) {
+    const rc = document.getElementById('regClock');
+    if(rc) rc.textContent = 'UNREACHABLE';
+  }
+  try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch('/api/vvu/ledger?limit=1', { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(tid);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const hash = (data.entries && data.entries[0] && data.entries[0].sha256) || data.lastHash || '—';
+    const rc = document.getElementById('regChain');
+    if(rc) rc.innerHTML = `<span class="prov MEASURED">VALID · ${hash.slice(0,8)}</span>`;
+  } catch(e) {
+    const rc = document.getElementById('regChain');
+    if(rc) rc.innerHTML = `<span class="prov STUBBED">UNREACHABLE</span>`;
+  }
+}
+
+/* ---------- TERMINAL LOG ---------- */
+const LOGS = [
+  ['cyan','ARGOCD','ApplicationSet reconciled 5 services in vvu-platform'],
+  ['lime','FLUSH','Encrypted batch uploaded to Polygon L2 · batch #4821'],
+  ['amber','PAYMENT','Paystack webhook received: 49 USD (User: USR-7a31)'],
+  ['cyan','K8S','vvu-study-studio rolled out · 3/3 replicas ready'],
+  ['lime','PWA','Service Worker cache hit ratio 94.2%'],
+  ['cyan','TRUST','Reputation oracle sync complete · 0 anomalies'],
+  ['amber','MAINT','Next biweekly window · Tue 02:00 SAST'],
+  ['lime','AUTH','Passkey challenge issued · origin verified']
+];
+function pushLog(){
+  const [tone,tag,msg] = LOGS[Math.floor(Math.random()*LOGS.length)];
+  const body = document.getElementById('terminalBody');
+  const cursorLine = body.querySelector('.log-line:last-child');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-tag ${tone}">[${tag}]</span> ${msg}`;
+  body.insertBefore(line, cursorLine);
+  while(body.querySelectorAll('.log-line').length > 8) body.removeChild(body.querySelector('.log-line'));
+}
+
+/* ---------- TOGGLES ---------- */
+function initToggles(){
+  document.querySelectorAll('[data-toggle]').forEach(t => {
+    t.addEventListener('click', () => t.classList.toggle('on'));
+  });
+}
+
+/* ---------- SERVICE WORKER ---------- */
+function registerSW(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  }
+}
+
+/* ---------- BOOT ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  initAnonId();
+  renderSurfaces();
+  renderCensus();
+  initToggles();
+
+  tick(); setInterval(tick, 1000);
+  updateFlush(); setInterval(updateFlush, 60000);
+  pollRegistry(); setInterval(pollRegistry, 15000);
+  setInterval(pushLog, 4500);
+
+  // Sidebar toggle
+  document.getElementById('toggleSidebar').addEventListener('click', () => {
+    if(window.innerWidth < 860){
+      document.getElementById('shell').classList.toggle('sidebar-open');
+    } else {
+      document.getElementById('shell').classList.toggle('sidebar-collapsed');
+    }
+  });
+
+  // Nav
+  document.querySelectorAll('[data-route]').forEach(el => {
+    el.addEventListener('click', e => { e.stopPropagation(); navigate(el.dataset.route); });
+  });
+
+  // Auth buttons
+  document.getElementById('signInBtn').addEventListener('click', () => openAuth(state.currentRoute));
+  document.getElementById('authCancel').addEventListener('click', closeAuth);
+  document.querySelectorAll('[data-auth]').forEach(b => b.addEventListener('click', () => simulateAuth(b.dataset.auth)));
+
+  // Actions
+  document.querySelectorAll('[data-action]').forEach(b => {
+    b.addEventListener('click', () => {
+      const a = b.dataset.action;
+      if(a === 'enter') navigate(state.session ? 'dashboard' : 'study');
+      else if(a === 'manifesto') navigate('manifesto');
+      else if(a === 'save-identity') toast('✓ Identity saved');
+      else if(a === 'topup') toast('▸ Stitch Instant EFT initiated…');
+      else if(a === 'withdraw') toast('▸ Withdrawal queued to Stitch ···· 4821');
+      else if(a === 'upgrade') toast('▸ Institutional upgrade · route to Paystack');
+    });
+  });
+
+  // Escape
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeAuth(); });
+
+  // WORM head copy
+  document.querySelectorAll('.chain-head').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.title = 'Copy WORM head';
+    el.addEventListener('click', () => {
+      navigator.clipboard.writeText('E965B01D').then(() => toast('WORM head copied'));
+    });
+  });
+
+  /* SW stripped for static preview */
+});
+</script>
+</body>
+</html>

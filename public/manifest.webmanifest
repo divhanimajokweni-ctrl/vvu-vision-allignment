@@ -1,0 +1,38 @@
+{
+  "name": "VVU Validation Dashboard",
+  "short_name": "VVU Dashboard",
+  "description": "Customer-facing proof layer for the VVU HBK Mk-II Hydro-Gateway. Hash is Proof. Assertion ≠ Evidence.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06080c",
+  "theme_color": "#c8ff00",
+  "orientation": "any",
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Operator View",
+      "url": "/#operator",
+      "description": "Live telemetry + FSM state graph"
+    },
+    {
+      "name": "Evidence",
+      "url": "/#evidence",
+      "description": "WORM hash-chain explorer + SHA-256 verification"
+    },
+    {
+      "name": "Analytics",
+      "url": "/#analytics",
+      "description": "Live telemetry charts + site KPI rings"
+    }
+  ]
+}

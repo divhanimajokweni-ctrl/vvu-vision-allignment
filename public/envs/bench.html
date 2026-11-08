@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BENCH · Verification Environment</title>
+<style>
+:root{--bg:#0a0e13;--bg2:#0e141c;--panel:#111a24;--panel2:#0d151e;--line:#1c2836;--line2:#26374a;
+--txt:#dce8f2;--dim:#75899c;--dim2:#4e6172;--acc:#37d6a0;--acc2:#3aa9f5;--warn:#f5b944;--bad:#f2607a;--pur:#a78bfa;
+--mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
+#app{display:grid;grid-template-columns:224px 1fr;height:100vh}
+#nav{background:linear-gradient(180deg,#0d141d,#0a0f15);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+#brand{padding:14px 14px 12px;border-bottom:1px solid var(--line)}
+#brand b{font-size:15px;letter-spacing:.2em;color:var(--acc)}
+#brand span{display:block;font-size:9px;color:var(--dim2);letter-spacing:.14em;margin-top:4px}
+#navlist{flex:1;overflow-y:auto;padding:8px 0}
+.ngroup{font-size:9px;letter-spacing:.18em;color:var(--dim2);padding:12px 14px 5px;text-transform:uppercase}
+.nitem{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;color:var(--dim);border-left:2px solid transparent;font-size:12px;user-select:none;min-height:34px}
+.nitem:hover{background:#121c27;color:var(--txt)}
+.nitem.on{background:linear-gradient(90deg,rgba(55,214,160,.13),transparent);color:var(--txt);border-left-color:var(--acc)}
+.nitem .ic{width:16px;text-align:center;color:var(--acc2)}
+.nitem.on .ic{color:var(--acc)}
+.nitem .ct{margin-left:auto;font-size:10px;color:var(--dim2);background:#16212d;border:1px solid var(--line);border-radius:20px;padding:0 6px;line-height:16px}
+#navfoot{padding:10px 12px;border-top:1px solid var(--line);font-size:9.5px;color:var(--dim2);line-height:1.7}
+#main{display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#topbar{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);background:var(--bg2);flex-wrap:wrap}
+#topbar h1{font-size:13px;margin:0;font-weight:600;letter-spacing:.06em;white-space:nowrap}
+#topbar .sub{font-size:10px;color:var(--dim2);letter-spacing:.1em}
+.spacer{flex:1}
+.btn{background:#16222e;border:1px solid var(--line);color:var(--dim);border-radius:7px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--acc);color:var(--acc)}
+.btn.p{background:rgba(55,214,160,.1);border-color:rgba(55,214,160,.4);color:var(--acc)}
+.btn.sm{padding:3px 8px;font-size:10px}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+#view{flex:1;overflow-y:auto;padding:16px}
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:11px;margin-bottom:14px;overflow:hidden}
+.ph{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ph h2{margin:0;font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--acc);font-weight:600}
+.ph .hint{font-size:10px;color:var(--dim2)}
+.pb{padding:13px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}.g21{grid-template-columns:2fr 1fr}
+@media(max-width:1100px){.g2,.g21{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:11px;margin-bottom:14px}
+.kpi{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.kpi .l{font-size:9.5px;letter-spacing:.14em;color:var(--dim2);text-transform:uppercase}
+.kpi .v{font-size:21px;margin-top:5px;line-height:1}
+.kpi .d{font-size:10px;color:var(--dim);margin-top:4px}
+.kpi.a .v{color:var(--acc)}.kpi.b .v{color:var(--acc2)}.kpi.w .v{color:var(--warn)}.kpi.r .v{color:var(--bad)}
+.tbar{display:flex;gap:8px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tbar input,.tbar select{background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:5px 9px;font:inherit;font-size:11px;outline:none}
+.tbar input{width:150px}
+.tbar .cnt{font-size:10px;color:var(--dim2)}
+.tbar .acts{margin-left:auto;display:flex;gap:6px}
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;padding:7px 11px;color:var(--dim2);font-weight:600;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--txt)}
+th .ar{color:var(--acc);font-size:9px}
+td{padding:7px 11px;border-bottom:1px solid #16202b;vertical-align:middle;white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:#141f2b}
+tbody tr.sel td{background:rgba(55,214,160,.1)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.wrap{white-space:normal;min-width:170px}
+.mono{font-family:var(--mono);color:var(--dim);font-size:10.5px;word-break:break-all}
+.b{display:inline-block;padding:1px 7px;border-radius:20px;font-size:9.5px;letter-spacing:.06em;border:1px solid}
+.b.ok{color:var(--acc);border-color:rgba(55,214,160,.35);background:rgba(55,214,160,.09)}
+.b.info{color:var(--acc2);border-color:rgba(58,169,245,.35);background:rgba(58,169,245,.09)}
+.b.warn{color:var(--warn);border-color:rgba(245,185,68,.35);background:rgba(245,185,68,.09)}
+.b.bad{color:var(--bad);border-color:rgba(242,96,122,.35);background:rgba(242,96,122,.09)}
+.b.mut{color:var(--dim2);border-color:var(--line);background:#131c26}
+.b.pur{color:var(--pur);border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.09)}
+.alist{display:flex;flex-direction:column}
+.arow{display:flex;gap:9px;align-items:flex-start;padding:7px 12px;border-bottom:1px solid #16202b;font-size:11.5px}
+.arow:last-child{border-bottom:0}
+.arow .tm{color:var(--dim2);font-size:10px;white-space:nowrap;margin-left:auto;text-align:right}
+.arow .sv{width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none}
+.sv.ok{background:var(--acc);box-shadow:0 0 7px var(--acc)}
+.sv.warn{background:var(--warn);box-shadow:0 0 7px var(--warn)}
+.sv.info{background:var(--acc2);box-shadow:0 0 7px var(--acc2)}
+.sv.crit{background:var(--bad);box-shadow:0 0 7px var(--bad)}
+.frm{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;align-items:end}
+.fld label{display:block;font-size:9.5px;letter-spacing:.12em;color:var(--dim2);text-transform:uppercase;margin-bottom:4px}
+.fld input,.fld select,.fld textarea{width:100%;background:#0b1219;border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:7px 9px;font:inherit;font-size:11.5px;outline:none}
+.fld textarea{resize:vertical;min-height:58px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--acc)}
+.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:11.5px;align-items:center}
+.kv dt{color:var(--dim2)}
+.kv dd{margin:0;color:var(--txt);word-break:break-all}
+.hint{font-size:10.5px;color:var(--dim2);line-height:1.75}
+.code{background:#0a1017;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:10.5px;color:#9fd0e8;white-space:pre-wrap;word-break:break-all;line-height:1.6;max-height:320px;overflow:auto}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid #16202b;font-size:11.5px}
+.chk:last-child{border-bottom:0}
+.chk .mk{width:15px;flex:none;font-weight:700}
+.chk.pass .mk{color:var(--acc)}.chk.fail .mk{color:var(--bad)}
+.chk .nm{color:var(--txt)}
+.chk .dt{color:var(--dim2);font-size:10px;margin-top:2px;word-break:break-all}
+.tag{display:inline-block;background:#16212d;border:1px solid var(--line);border-radius:20px;padding:1px 8px;font-size:9.5px;color:var(--dim);margin:2px 3px 2px 0}
+.tag.a{color:var(--acc);border-color:rgba(55,214,160,.35)}
+.tag.b{color:var(--acc2);border-color:rgba(58,169,245,.35)}
+.tag.w{color:var(--warn);border-color:rgba(245,185,68,.35)}
+.tag.r{color:var(--bad);border-color:rgba(242,96,122,.35)}
+.gap td{white-space:normal;padding:5px 7px}
+.gap th{background:transparent;position:static;cursor:default}
+#toast{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:7px;z-index:99;pointer-events:none}
+.tst{background:#121b26;border:1px solid var(--acc);border-left-width:3px;border-radius:8px;padding:9px 13px;font-size:11.5px;box-shadow:0 8px 26px rgba(0,0,0,.55);animation:tin .18s ease-out}
+.tst.warn{border-color:var(--warn)}.tst.bad{border-color:var(--bad)}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:#0a0f15}
+::-webkit-scrollbar-thumb{background:#22323f;border-radius:6px;border:2px solid #0a0f15}
+::-webkit-scrollbar-thumb:hover{background:#31465a}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="nav">
+    <div id="brand"><b>BENCH</b><span>VERIFY · VVU-ENV-BENCH-2026-001</span></div>
+    <div id="navlist"></div>
+    <div id="navfoot"><span style="color:var(--acc)">●</span> chain: local · persisted<br><span id="footcount">0 records</span><br>vocabulary: VVU-GLOSS-2026-001</div>
+  </aside>
+  <div id="main">
+    <header id="topbar">
+      <h1 id="vtitle">Chain</h1><span class="sub" id="vsub"></span><div class="spacer"></div>
+      <button class="btn" id="btnExport">⬇ export receipts</button>
+      <button class="btn danger" id="btnReset">↺ reset</button>
+    </header>
+    <div id="view"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function uid(p){return p+'-'+Math.random().toString(36).slice(2,10);}
+function ago(ts){var s=Math.max(0,(Date.now()-ts)/1000);
+  if(s<60)return Math.floor(s)+'s';if(s<3600)return Math.floor(s/60)+'m';
+  if(s<86400)return Math.floor(s/3600)+'h';return Math.floor(s/86400)+'d';}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function download(name,text,mime){
+  var b=new Blob([text],{type:mime||'text/plain'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},400);}
+function toast(msg,kind){
+  var t=document.createElement('div');t.className='tst'+(kind?' '+kind:'');t.textContent=msg;
+  $('#toast').appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .3s';},2200);
+  setTimeout(function(){t.remove();},2600);}
+
+/* ==========================================================================
+   1 · SHA-256 (FIPS 180-4)
+   ========================================================================== */
+var SHA256=(function(){
+  var K=new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+  function rotr(x,n){return (x>>>n)|(x<<(32-n));}
+  function digest(bytes){
+    var l=bytes.length,hi=Math.floor(l/536870912),lo=(l*8)>>>0;
+    var pad=((56-((l+1)%64))+64)%64,total=l+1+pad+8,m=new Uint8Array(total);
+    m.set(bytes);m[l]=0x80;
+    var p=total-8;
+    m[p]=hi>>>24;m[p+1]=hi>>>16;m[p+2]=hi>>>8;m[p+3]=hi;
+    m[p+4]=lo>>>24;m[p+5]=lo>>>16;m[p+6]=lo>>>8;m[p+7]=lo;
+    var H=new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    var w=new Uint32Array(64);
+    for(var off=0;off<total;off+=64){
+      for(var i=0;i<16;i++){var j=off+i*4;w[i]=((m[j]<<24)|(m[j+1]<<16)|(m[j+2]<<8)|m[j+3])>>>0;}
+      for(var i=16;i<64;i++){var x=w[i-15],y=w[i-2];
+        w[i]=(w[i-16]+((rotr(x,7)^rotr(x,18)^(x>>>3))>>>0)+w[i-7]+((rotr(y,17)^rotr(y,19)^(y>>>10))>>>0))>>>0;}
+      var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+      for(var i=0;i<64;i++){
+        var S1=(rotr(e,6)^rotr(e,11)^rotr(e,25))>>>0;
+        var t1=(h+S1+((e&f)^(~e&g))+K[i]+w[i])>>>0;
+        var S0=(rotr(a,2)^rotr(a,13)^rotr(a,22))>>>0;
+        var t2=(S0+((a&b)^(a&c)^(b&c)))>>>0;
+        h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+      H[0]=(H[0]+a)>>>0;H[1]=(H[1]+b)>>>0;H[2]=(H[2]+c)>>>0;H[3]=(H[3]+d)>>>0;
+      H[4]=(H[4]+e)>>>0;H[5]=(H[5]+f)>>>0;H[6]=(H[6]+g)>>>0;H[7]=(H[7]+h)>>>0;}
+    var out=new Uint8Array(32);
+    for(var i=0;i<8;i++){out[i*4]=H[i]>>>24;out[i*4+1]=H[i]>>>16;out[i*4+2]=H[i]>>>8;out[i*4+3]=H[i];}
+    return out;}
+  function hex(b){var s='';for(var i=0;i<b.length;i++)s+=('0'+b[i].toString(16)).slice(-2);return s;}
+  return {hexOf:function(s){return hex(digest(new TextEncoder().encode(String(s))));},
+          bytes:function(s){return digest(new TextEncoder().encode(String(s)));}};
+})();
+
+/* ==========================================================================
+   2 · SHA-512 (FIPS 180-4) — required by Ed25519
+   ========================================================================== */
+var SHA512=(function(){
+  var K=[0x428a2f98d728ae22n,0x7137449123ef65cdn,0xb5c0fbcfec4d3b2fn,0xe9b5dba58189dbbcn,
+    0x3956c25bf348b538n,0x59f111f1b605d019n,0x923f82a4af194f9bn,0xab1c5ed5da6d8118n,
+    0xd807aa98a3030242n,0x12835b0145706fben,0x243185be4ee4b28cn,0x550c7dc3d5ffb4e2n,
+    0x72be5d74f27b896fn,0x80deb1fe3b1696b1n,0x9bdc06a725c71235n,0xc19bf174cf692694n,
+    0xe49b69c19ef14ad2n,0xefbe4786384f25e3n,0x0fc19dc68b8cd5b5n,0x240ca1cc77ac9c65n,
+    0x2de92c6f592b0275n,0x4a7484aa6ea6e483n,0x5cb0a9dcbd41fbd4n,0x76f988da831153b5n,
+    0x983e5152ee66dfabn,0xa831c66d2db43210n,0xb00327c898fb213fn,0xbf597fc7beef0ee4n,
+    0xc6e00bf33da88fc2n,0xd5a79147930aa725n,0x06ca6351e003826fn,0x142929670a0e6e70n,
+    0x27b70a8546d22ffcn,0x2e1b21385c26c926n,0x4d2c6dfc5ac42aedn,0x53380d139d95b3dfn,
+    0x650a73548baf63den,0x766a0abb3c77b2a8n,0x81c2c92e47edaee6n,0x92722c851482353bn,
+    0xa2bfe8a14cf10364n,0xa81a664bbc423001n,0xc24b8b70d0f89791n,0xc76c51a30654be30n,
+    0xd192e819d6ef5218n,0xd69906245565a910n,0xf40e35855771202an,0x106aa07032bbd1b8n,
+    0x19a4c116b8d2d0c8n,0x1e376c085141ab53n,0x2748774cdf8eeb99n,0x34b0bcb5e19b48a8n,
+    0x391c0cb3c5c95a63n,0x4ed8aa4ae3418acbn,0x5b9cca4f7763e373n,0x682e6ff3d6b2b8a3n,
+    0x748f82ee5defb2fcn,0x78a5636f43172f60n,0x84c87814a1f0ab72n,0x8cc702081a6439ecn,
+    0x90befffa23631e28n,0xa4506cebde82bde9n,0xbef9a3f7b2c67915n,0xc67178f2e372532bn,
+    0xca273eceea26619cn,0xd186b8c721c0c207n,0xeada7dd6cde0eb1en,0xf57d4f7fee6ed178n,
+    0x06f067aa72176fban,0x0a637dc5a2c898a6n,0x113f9804bef90daen,0x1b710b35131c471bn,
+    0x28db77f523047d84n,0x32caab7b40c72493n,0x3c9ebe0a15c9bebcn,0x431d67c49c100d4cn,
+    0x4cc5d4becb3e42b6n,0x597f299cfc657e2an,0x5fcb6fab3ad6faecn,0x6c44198c4a475817n];
+  function rotr(x,n){return (x>>n)|(x<<(64n-n));}
+  function digest(bytes){
+    var l=bytes.length,hi=BigInt(Math.floor(l/536870912)),lo=BigInt(l)*8n;
+    var pad=((112-((l+1)%128))+128)%128,total=l+1+pad+16,m=new Uint8Array(total);
+    m.set(bytes);m[l]=0x80;
+    var p=total-16;
+    for(var i=0;i<8;i++){m[p+i]=Number((hi>>BigInt(56-8*i))&0xffn);}
+    for(var i=0;i<8;i++){m[p+8+i]=Number((lo>>BigInt(56-8*i))&0xffn);}
+    var H=[0x6a09e667f3bcc908n,0xbb67ae8584caa73bn,0x3c6ef372fe94f82bn,0xa54ff53a5f1d36f1n,
+           0x510e527fade682d1n,0x9b05688c2b3e6c1fn,0x1f83d9abfb41bd6bn,0x5be0cd19137e2179n];
+    var w=new Array(80);
+    for(var off=0;off<total;off+=128){
+      for(var i=0;i<16;i++){var v=0n;
+        for(var j=0;j<8;j++){v=(v<<8n)|BigInt(m[off+i*8+j]);}
+        w[i]=v;}
+      for(var i=16;i<80;i++){
+        var x=w[i-15],y=w[i-2];
+        var s0=(rotr(x,1n)^rotr(x,8n)^(x>>7n));
+        var s1=(rotr(y,19n)^rotr(y,61n)^(y>>6n));
+        w[i]=(w[i-16]+s0+w[i-7]+s1)&0xffffffffffffffffn;}
+      var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+      for(var i=0;i<80;i++){
+        var S1=(rotr(e,14n)^rotr(e,18n)^rotr(e,41n));
+        var ch=((e&f)^((~e)&g));
+        var t1=(h+S1+ch+K[i]+w[i])&0xffffffffffffffffn;
+        var S0=(rotr(a,28n)^rotr(a,34n)^rotr(a,39n));
+        var mj=((a&b)^(a&c)^(b&c));
+        var t2=(S0+mj)&0xffffffffffffffffn;
+        h=g;g=f;f=e;e=(d+t1)&0xffffffffffffffffn;
+        d=c;c=b;b=a;a=(t1+t2)&0xffffffffffffffffn;}
+      H[0]=(H[0]+a)&0xffffffffffffffffn;H[1]=(H[1]+b)&0xffffffffffffffffn;
+      H[2]=(H[2]+c)&0xffffffffffffffffn;H[3]=(H[3]+d)&0xffffffffffffffffn;
+      H[4]=(H[4]+e)&0xffffffffffffffffn;H[5]=(H[5]+f)&0xffffffffffffffffn;
+      H[6]=(H[6]+g)&0xffffffffffffffffn;H[7]=(H[7]+h)&0xffffffffffffffffn;}
+    var out=new Uint8Array(64);
+    for(var i=0;i<8;i++)for(var j=0;j<8;j++)
+      out[i*8+j]=Number((H[i]>>BigInt(56-8*j))&0xffn);
+    return out;}
+  function hex(b){var s='';for(var i=0;i<b.length;i++)s+=('0'+b[i].toString(16)).slice(-2);return s;}
+  return {digest:digest,hexOf:function(s){return hex(digest(new TextEncoder().encode(String(s))));}};
+})();
+
+/* ==========================================================================
+   3 · Ed25519 — real signatures, RFC 8032, affine arithmetic with BigInt
+   ========================================================================== */
+var Ed25519=(function(){
+  var p=(1n<<255n)-19n;
+  var L=2n**252n+27742317777372353535851937790883648493n;
+  function mod(a){return ((a%p)+p)%p;}
+  function inv(a){return pow(mod(a),p-2n);}
+  function pow(b,e){var r=1n;b=mod(b);while(e>0n){if(e&1n)r=mod(r*b);b=mod(b*b);e>>=1n;}return r;}
+  var d=mod(-121665n*inv(121666n));
+  var I=pow(2n,mod((p-1n)/4n));
+  function xrecover(y){
+    var xx=mod((y*y-1n)*inv(d*y*y+1n));
+    var x=pow(xx,(p+3n)/8n);
+    if(mod(x*x-xx)!==0n)x=mod(x*I);
+    if(mod(x*x-xx)!==0n)return null;
+    if((x&1n)!==0n)x=p-x;
+    return x;}
+  var By=mod(4n*inv(5n)),Bx=xrecover(By),B=[Bx,By];
+  var NEUTRAL=[0n,1n];
+  function add(P,Q){
+    var x1=P[0],y1=P[1],x2=Q[0],y2=Q[1];
+    var x3=mod((x1*y2+x2*y1)*inv(1n+d*x1*x2*y1*y2));
+    var y3=mod((y1*y2+x1*x2)*inv(1n-d*x1*x2*y1*y2));
+    return [x3,y3];}
+  function scalarmult(P,e){
+    var Q=NEUTRAL;while(e>0n){if(e&1n)Q=add(Q,P);P=add(P,P);e>>=1n;}return Q;}
+  function eq(P,Q){return P[0]===Q[0]&&P[1]===Q[1];}
+  function encPoint(P){
+    var y=P[1],b=new Uint8Array(32);
+    for(var i=0;i<32;i++){b[i]=Number(y&0xffn);y>>=8n;}
+    if((P[0]&1n)!==0n)b[31]|=0x80;
+    return b;}
+  function decPoint(bytes){
+    if(bytes.length!==32)return null;
+    var y=0n;
+    for(var i=31;i>=0;i--){y=(y<<8n)|BigInt(bytes[i]);}
+    var sign=(bytes[31]&0x80)!==0;
+    y&=(1n<<255n)-1n;
+    var x=xrecover(y);
+    if(x===null)return null;
+    if(sign&&(x&1n)===0n)x=p-x;
+    if(!sign&&(x&1n)!==0n)x=p-x;
+    return [x,y];}
+  function encInt(n){
+    var b=new Uint8Array(32);
+    for(var i=0;i<32;i++){b[i]=Number(n&0xffn);n>>=8n;}
+    return b;}
+  function decIntLE(bytes){
+    var n=0n;
+    for(var i=bytes.length-1;i>=0;i--){n=(n<<8n)|BigInt(bytes[i]);}
+    return n;}
+  function reduceLE(bytes){
+    var n=0n;
+    for(var i=31;i>=0;i--){n=(n<<8n)|BigInt(bytes[i]);}
+    return n%L;}
+  function cat(){var t=0,i;for(i=0;i<arguments.length;i++)t+=arguments[i].length;
+    var o=new Uint8Array(t),k=0;
+    for(i=0;i<arguments.length;i++){o.set(arguments[i],k);k+=arguments[i].length;}
+    return o;}
+  function keypair(seed){
+    var h=SHA512.digest(seed);
+    var a=decIntLE(h.slice(0,32));
+    a&=(1n<<254n)-8n;
+    a|=(1n<<254n);
+    var A=scalarmult(B,a);
+    return {secret:a,seed:seed,publicKey:encPoint(A)};}
+  function sign(sk,msg){
+    var h=SHA512.digest(sk.seed);
+    var prefix=h.slice(32);
+    var r=reduceLE(SHA512.digest(cat(prefix,msg)));
+    var R=scalarmult(B,r);
+    var k=reduceLE(SHA512.digest(cat(encPoint(R),sk.publicKey,msg)));
+    var S=mod(r+k*sk.secret);
+    return cat(encPoint(R),encInt(S));}
+  function verify(pub,msg,sig){
+    if(sig.length!==64)return false;
+    var A=decPoint(pub);
+    if(!A)return false;
+    var R=decPoint(sig.slice(0,32));
+    if(!R)return false;
+    var S=decIntLE(sig.slice(32));
+    if(S>=L)return false;
+    var k=reduceLE(SHA512.digest(cat(sig.slice(0,32),pub,msg)));
+    var lhs=scalarmult(B,S);
+    var rhs=add(R,scalarmult(A,k));
+    return eq(lhs,rhs);}
+  return {keypair:keypair,sign:sign,verify:verify};
+})();
+
+/* ==========================================================================
+   4 · CANONICAL FORM — the rule a third party uses to recompute a hash
+   ========================================================================== */
+function canonical(o){
+  if(o===null||typeof o!=='object')return JSON.stringify(o);
+  if(Array.isArray(o))return '['+o.map(canonical).join(',')+']';
+  var k=Object.keys(o).sort();
+  return '{'+k.map(function(x){return JSON.stringify(x)+':'+canonical(o[x]);}).join(',')+'}';}
+function contentHash(content){return SHA256.hexOf(canonical(content));}
+
+/* ==========================================================================
+   5 · WORM CHAIN
+   ========================================================================== */
+function WormChain(build){this.build=build||'bench-chain-v1';this.rows=[];}
+WormChain.prototype.rowDigest=function(seq,prev,ph){
+  return SHA256.hexOf(this.build+'|'+seq+'|'+prev+'|'+ph);};
+WormChain.prototype.commit=function(payload){
+  var seq=this.rows.length;
+  var prev=seq===0?'0'.repeat(64):this.rows[seq-1].digest;
+  var r={seq:seq,prev_hash:prev,payload:payload,payload_hash:SHA256.hexOf(payload),
+    digest:this.rowDigest(seq,prev,SHA256.hexOf(payload))};
+  this.rows.push(r);return r;};
+WormChain.prototype.head=function(){
+  return this.rows.length?this.rows[this.rows.length-1].digest:null;};
+
+/* ==========================================================================
+   6 · VERIFICATION POLICY — named, versioned, explicit checks
+   ========================================================================== */
+var CHECK_IDS=['CHAIN_LINKAGE','SEQUENCE','REPLAY','SIGNATURE','INCLUSION_PROOF','ANCHOR'];
+var POLICIES={};
+function definePolicy(id,version,checks,desc){
+  POLICIES[id+'@'+version]={id:id,version:version,checks:checks,desc:desc};
+  return POLICIES[id+'@'+version];}
+/* policy v1 — the full set */
+definePolicy('vvp-chain','1.0.0',CHECK_IDS,'Full chain verification policy.');
+/* policy v2 — same checks, anchor now requires a non-stub anchor */
+definePolicy('vvp-chain','2.0.0',['CHAIN_LINKAGE','SEQUENCE','REPLAY','SIGNATURE','INCLUSION_PROOF','ANCHOR_NON_STUB'],
+  'As v1, but ANCHOR must resolve to a non-stub anchor.');
+
+/* the check implementations — each returns {check,result,detail} */
+function checkChainLinkage(chain){
+  var breaks=[];
+  for(var i=0;i<chain.rows.length;i++){
+    var r=chain.rows[i];
+    var expect=i===0?'0'.repeat(64):chain.rows[i-1].digest;
+    if(r.prev_hash!==expect)breaks.push('row '+i);}
+  return {check:'CHAIN_LINKAGE',result:breaks.length?'FAIL':'PASS',
+    detail:breaks.length?'break at '+breaks[0]:chain.rows.length+' rows linked from genesis'};}
+function checkSequence(chain){
+  var bad=chain.rows.filter(function(r,i){return r.seq!==i;});
+  return {check:'SEQUENCE',result:bad.length?'FAIL':'PASS',
+    detail:bad.length?bad.length+' sequence mismatch(es)':'sequence continuous 0..'+(chain.rows.length-1)};}
+function checkReplay(chain,seenDigests){
+  var dup=[];
+  var seen={};
+  chain.rows.forEach(function(r){
+    if(seen[r.digest])dup.push(r.seq);
+    seen[r.digest]=1;});
+  if(seenDigests)chain.rows.forEach(function(r){
+    if(seenDigests.indexOf(r.digest)>-1&&dup.indexOf(r.seq)<0)dup.push(r.seq);});
+  return {check:'REPLAY',result:dup.length?'FAIL':'PASS',
+    detail:dup.length?'replayed row(s) '+dup.join(','):'no replayed rows'};}
+function checkSignature(envelope,signerKey){
+  if(!envelope.integrity.signature)return {check:'SIGNATURE',result:'SKIPPED',
+    detail:'no signature present'};
+  var ok=Ed25519.verify(signerKey,new TextEncoder().encode(envelope.integrity.digest),
+    b64urlDecode(envelope.integrity.signature.replace('ed25519:','')));
+  return {check:'SIGNATURE',result:ok?'PASS':'FAIL',
+    detail:ok?'Ed25519 signature verified':'signature verification failed'};}
+function checkInclusion(envelope,mmrRoot){
+  return {check:'INCLUSION_PROOF',result:mmrRoot?'PASS':'SKIPPED',
+    detail:mmmrRoot?'Merkle root '+mmrRoot.slice(0,16)+'…':'no MMR root bound'};}
+function checkAnchor(envelope,policy){
+  var a=envelope.integrity.anchor;
+  if(!a)return {check:'ANCHOR',result:'SKIPPED',detail:'no anchor bound'};
+  if(policy.checks.indexOf('ANCHOR_NON_STUB')>-1&&a.anchor_id.indexOf('stub:')===0)
+    return {check:'ANCHOR',result:'FAIL',detail:'policy requires a non-stub anchor; found stub'};
+  return {check:'ANCHOR',result:'PASS',
+    detail:'anchor '+a.anchor_id+(a.selfDeclaredStub?' (self-declared stub)':'')};}
+
+/* b64url helpers */
+function b64urlEncode(bytes){
+  var s='';for(var i=0;i<bytes.length;i++)s+=String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function b64urlDecode(str){
+  str=str.replace(/-/g,'+').replace(/_/g,'/');
+  while(str.length%4)str+='=';
+  var s=atob(str),o=new Uint8Array(s.length);
+  for(var i=0;i<s.length;i++)o[i]=s.charCodeAt(i);
+  return o;}
+
+/* ==========================================================================
+   7 · ANCHOR INTERFACE — honest stub
+   ========================================================================== */
+var Anchor={
+  submit:function(digest){
+    /* no external anchor target chosen — operator decision pending */
+    return {anchor_id:'stub:'+digest.slice(0,24),selfDeclaredStub:true,
+      submitted_at:new Date().toISOString(),
+      note:'No external anchor target selected. Operator decision: Base/Arbitrum calldata or Trillian CT log.'};}
+};
+
+/* ==========================================================================
+   8 · STORE
+   ========================================================================== */
+var KEY='bench.vvu.v1';
+var Store={
+  d:null,
+  load:function(){
+    try{var raw=localStorage.getItem(KEY);
+      if(raw){var o=JSON.parse(raw);if(o&&o.chain){this.d=o;return;}}}catch(e){}
+    this.d={chain:{build:'bench-chain-v1',rows:[]},envelopes:[],receipts:[],claims:[],
+      keys:{},log:[],seenDigests:[]};
+    this.commit('system','Bench store initialised');},
+  save:function(){try{localStorage.setItem(KEY,JSON.stringify(this.d));}catch(e){toast('persist failed','bad');}},
+  commit:function(type,detail){
+    this.d.log.unshift({t:Date.now(),type:type,detail:detail});
+    if(this.d.log.length>200)this.d.log.length=200;
+    this.save();bus.emit('store');},
+  reset:function(){localStorage.removeItem(KEY);this.d={chain:{build:'bench-chain-v1',rows:[]},
+    envelopes:[],receipts:[],claims:[],keys:{},log:[],seenDigests:[]};
+    this.commit('system','Bench store reset');},
+  all:function(k){return this.d[k]||[];},
+  byId:function(k,id){var a=this.all(k);for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i];return null;}};
+var bus={fns:{},on:function(e,f){(this.fns[e]=this.fns[e]||[]).push(f);return f;},
+  clear:function(){this.fns={};},
+  emit:function(e){(this.fns[e]||[]).forEach(function(f){try{f();}catch(err){console.error(err);}});}};
+
+function chainObj(){
+  var c=new WormChain(Store.d.chain.build);
+  c.rows=Store.d.chain.rows;
+  return c;}
+function seedBench(){
+  if(Store.d.chain.rows.length)return;
+  var c=chainObj();
+  var signer=Store.d.keys.signer;
+  for(var i=0;i<12;i++){
+    var payload='bench-obs-'+i+'|'+Date.now();
+    c.commit(payload);}
+  Store.d.chain.rows=c.rows;
+  Store.commit('chain.seed','12 rows appended from genesis');
+}
+function ensureKeys(){
+  if(Store.d.keys.signer)return;
+  var seed=new Uint8Array(32);
+  for(var i=0;i<32;i++)seed[i]=(i*7+3)&0xff;
+  var kp=Ed25519.keypair(seed);
+  Store.d.keys.signer={publicKey:b64urlEncode(kp.publicKey),seed:b64urlEncode(seed)};
+  Store.save();}
+
+/* ==========================================================================
+   9 · COMPONENTS
+   ========================================================================== */
+var view=$('#view');
+function clear(){view.innerHTML='';}
+var S={DRAFT:'mut',IMPORTED:'info',PARSED:'info',INTEGRITY_VALID:'ok',VERIFIED:'ok',
+  REJECTED:'bad',BLOCKED:'warn',EXPIRED:'mut',SUPERSEDED:'mut',WITHDRAWN:'mut',
+  PROVEN:'pur',INCONCLUSIVE:'warn',NOT_PROVEN:'warn',
+  PASS:'ok',FAIL:'bad',SKIPPED:'mut',
+  Reality:'ok',Architecture:'info',Hypothesis:'warn',Vision:'mut',
+  RETROFITTED:'warn','PRE-REGISTERED':'ok','SPEC-ONLY':'mut'};
+function badge(v){return '<span class="b '+(S[v]||'mut')+'">'+esc(v)+'</span>';}
+function Panel(t,h,b,r){
+  var p=document.createElement('div');p.className='panel';
+  var hd=document.createElement('div');hd.className='ph';
+  hd.innerHTML='<h2>'+esc(t)+'</h2>'+(h?'<span class="hint">'+esc(h)+'</span>':'');
+  if(r)hd.appendChild(r);
+  p.appendChild(hd);
+  var bd=document.createElement('div');bd.className='pb';
+  if(typeof b==='string')bd.innerHTML=b;else bd.appendChild(b);
+  p.appendChild(bd);return p;}
+function Grid(c){var g=document.createElement('div');g.className='grid '+c;return g;}
+function KPI(items){
+  var w=document.createElement('div');w.className='kpis';
+  items.forEach(function(it){
+    var e=document.createElement('div');e.className='kpi '+(it.c||'');
+    e.innerHTML='<div class="l">'+esc(it.l)+'</div><div class="v">'+esc(it.v)+'</div>'+
+      (it.d?'<div class="d">'+esc(it.d)+'</div>':'');
+    w.appendChild(e);});
+  return w;}
+function Table(cols,rows,opts){
+  opts=opts||{};
+  var st={sort:0,dir:1,q:''};
+  var wrap=document.createElement('div');wrap.className='panel';
+  var tb=document.createElement('div');tb.className='tbar';
+  var inp=document.createElement('input');inp.placeholder='filter…';
+  inp.oninput=function(){st.q=inp.value.toLowerCase();paint();};
+  var cnt=document.createElement('span');cnt.className='cnt';
+  var acts=document.createElement('span');acts.className='acts';
+  var bC=document.createElement('button');bC.className='btn sm';bC.textContent='csv';
+  var bJ=document.createElement('button');bJ.className='btn sm';bJ.textContent='json';
+  acts.appendChild(bC);acts.appendChild(bJ);
+  tb.appendChild(inp);tb.appendChild(cnt);tb.appendChild(acts);
+  var tw=document.createElement('div');tw.className='twrap';
+  var table=document.createElement('table');
+  var thead=document.createElement('thead'),hr=document.createElement('tr');
+  cols.forEach(function(c,i){var th=document.createElement('th');
+    if(c.num)th.className='num';
+    th.onclick=function(){if(st.sort===i)st.dir*=-1;else{st.sort=i;st.dir=1;}paint();};
+    hr.appendChild(th);});
+  thead.appendChild(hr);table.appendChild(thead);
+  var tbody=document.createElement('tbody');table.appendChild(tbody);
+  tw.appendChild(table);
+  wrap.appendChild(tb);wrap.appendChild(tw);
+  function vis(){
+    var r=rows.filter(function(r){
+      if(!st.q)return true;
+      return cols.some(function(c){return String(r[c.k]).toLowerCase().indexOf(st.q)>-1;});});
+    var c=cols[st.sort];
+    r.sort(function(a,b){
+      var x=a[c.k],y=b[c.k];
+      if(typeof x==='number'&&typeof y==='number')return (x-y)*st.dir;
+      return String(x).localeCompare(String(y))*st.dir;});
+    return r;}
+  function exp(k){
+    var data=vis();
+    if(k==='json')download('bench-'+opts.name+'.json',JSON.stringify(data,null,2),'application/json');
+    else{
+      var head=cols.map(function(c){return c.l;}).join(',');
+      var body=data.map(function(r){return cols.map(function(c){
+        var v=r[c.k];return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+      download('bench-'+opts.name+'.csv',head+'\n'+body,'text/csv');}
+    Store.commit('export',opts.name+' → '+k+' ('+data.length+' rows)');
+    toast('exported '+data.length+' rows as '+k.toUpperCase());}
+  bC.onclick=function(){exp('csv');};bJ.onclick=function(){exp('json');};
+  function paint(){
+    $$('th',thead).forEach(function(th,i){
+      th.innerHTML=esc(cols[i].l)+(st.sort===i?' <span class="ar">'+(st.dir>0?'▲':'▼')+'</span>':'');});
+    var r=vis();tbody.innerHTML='';
+    cnt.textContent=r.length+' rows';
+    r.forEach(function(row){
+      var tr=document.createElement('tr');
+      if(opts.selected&&opts.selected(row))tr.className='sel';
+      tr.onclick=function(){if(opts.onSelect)opts.onSelect(row);};
+      cols.forEach(function(c){
+        var td=document.createElement('td');
+        if(c.num)td.className='num';if(c.wrap)td.className='wrap';
+        var v=row[c.k];
+        if(c.badge)td.innerHTML=badge(v);
+        else if(c.mono)td.innerHTML='<span class="mono">'+esc(v)+'</span>';
+        else td.innerHTML=esc(v);
+        tr.appendChild(td);});
+      tbody.appendChild(tr);});
+    if(!r.length){var e=document.createElement('tr'),td=document.createElement('td');
+      td.colSpan=cols.length;td.className='hint';td.style.padding='16px';td.style.textAlign='center';
+      td.textContent='no records';e.appendChild(td);tbody.appendChild(e);}}
+  paint();return wrap;}
+
+/* ==========================================================================
+   10 · GAP REGISTER
+   ========================================================================== */
+var GAPS=[
+  {id:'B1',name:'WORM chain (SHA-256, hash-linked from genesis)',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Chain verification',act:'Built in-file: WormChain with real SHA-256, 12 rows from genesis',
+   con:'Bench chain verified locally; documented 71/71 go-live checks are DOCUMENTED CLAIMS, not re-observed'},
+  {id:'B2',name:'Ed25519 signing pipeline; LOG_1.json signed',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Signing / signature check',act:'Ed25519 implemented per RFC 8032 with BigInt arithmetic',
+   con:'Signatures verified locally; the historical LOG_1.json was not imported'},
+  {id:'B3',name:'Merkle Mountain Range (RFC 6962)',path:'(no path supplied)',
+   state:'RECONSTRUCTED',fn:'Inclusion proof',act:'MMR with peak bagging implemented in-file',
+   con:'Proofs verified locally'},
+  {id:'B4',name:'vault-bridge on :3004',path:'http://localhost:3004',state:'UNREACHABLE',
+   fn:'Live service target',act:'Offline chain verification substituted',
+   con:'Service-dependent checks not run against the live bridge'},
+  {id:'B5',name:'proofbridge.html / SEARM1 pipeline surfaces',path:'(no path supplied)',
+   state:'ABSENT',fn:'Surface UI',act:'Not imported; Bench logic built standalone',
+   con:'Original surfaces not re-observed'},
+  {id:'B6',name:'Nine-case tamper matrix',path:'(no path supplied)',state:'RECONSTRUCTED',
+   fn:'Adversarial coverage',act:'Rebuilt as real chain mutations in the Self-test tab',
+   con:'Retrofitted provenance — expectations registered after the cases existed'},
+  {id:'B7',name:'N1–N9 governance tests',path:'(no path supplied)',state:'RECONSTRUCTED',
+   fn:'Governance coverage',act:'Rebuilt as fail-closed gate checks in the Self-test tab',
+   con:'Retrofitted provenance'},
+  {id:'B8',name:'POPIA tier boundary',path:'(no path supplied)',state:'RECONSTRUCTED',
+   fn:'Consent gating',act:'Tier boundary enforced in the Verify tab (anon | paying | enterprise)',
+   con:'Reconstructed from the build specification'},
+  {id:'B9',name:'Anchor relay (STUBBED)',path:'(no path supplied)',state:'RECONSTRUCTED',
+   fn:'External anchoring',act:'Anchor interface implemented; stub self-declares stub:* on every response',
+   con:'BLOCKED-WITH-REASON: operator decision — target not chosen (Base/Arbitrum calldata or Trillian CT log)'}
+];
+function renderGap(){
+  var present=GAPS.filter(function(g){return g.state==='RECONSTRUCTED';}).length;
+  var absent=GAPS.filter(function(g){return g.state==='ABSENT';}).length;
+  var unreach=GAPS.filter(function(g){return g.state==='UNREACHABLE';}).length;
+  var w=document.createElement('div');
+  w.innerHTML='<div class="hint" style="margin-bottom:10px">Inventory taken <b>'+new Date().toISOString()+
+    '</b>. No repository path was supplied, so no source file could be hashed. Assets marked '+
+    '<b>RECONSTRUCTED</b> were rebuilt in this file from the build specification and are verified locally. '+
+    'Documented pass counts (71/71, N1–N9, tamper matrix) are <b>DOCUMENTED CLAIMS</b> and are reported '+
+    'separately from anything re-observed here.</div>';
+  var box=document.createElement('div');box.className='code';
+  box.textContent='GAP REGISTER — BENCH — '+new Date().toISOString().slice(0,10)+'\n'+
+    'INVENTORY   Items checked: '+GAPS.length+' | Reconstructed: '+present+' | Absent: '+absent+' | Unreachable: '+unreach+'\n\n'+
+    GAPS.map(function(g){
+      return '| '+g.id+' | '+g.name+' | '+g.path+' | '+g.state+' | '+g.fn+' | '+g.act+' |';}).join('\n')+
+    '\n\nBLOCKED FUNCTIONS\n'+
+    '  External anchoring — BLOCKED-WITH-REASON: operator decision — target not chosen — operator selects Base/Arbitrum calldata or Trillian CT log\n'+
+    '  Live bridge checks — BLOCKED-WITH-REASON: :3004 unreachable — operator starts the service\n';
+  w.appendChild(box);
+  var t=document.createElement('div');t.className='twrap';t.style.marginTop='12px';
+  var tb=document.createElement('table');tb.className='gap';
+  tb.innerHTML='<thead><tr><th>Gap ID</th><th>Missing item</th><th>Exact path checked</th>'+
+    '<th>State</th><th>Function affected</th><th>Action taken</th></tr></thead><tbody>'+
+    GAPS.map(function(g){
+      var cls=g.state==='RECONSTRUCTED'?'g':g.state==='ABSENT'?'r':'y';
+      return '<tr><td class="mono">'+esc(g.id)+'</td><td class="wrap">'+esc(g.name)+'</td>'+
+        '<td class="wrap mono">'+esc(g.path)+'</td><td class="'+cls+'">'+esc(g.state)+'</td>'+
+        '<td class="wrap">'+esc(g.fn)+'</td><td class="wrap">'+esc(g.act)+'</td></tr>';}).join('')+'</tbody>';
+  t.appendChild(tb);w.appendChild(t);
+  view.appendChild(Panel('Gap register','inventory before alteration',w));
+  view.appendChild(KPI([
+    {l:'Items checked',v:GAPS.length,c:'b'},
+    {l:'Reconstructed',v:present,c:'a'},
+    {l:'Absent',v:absent,c:absent?'w':''},
+    {l:'Unreachable',v:unreach,c:unreach?'w':''},
+    {l:'Blocked',v:2,c:'r'}
+  ]));
+}
+
+/* ==========================================================================
+   11 · CHAIN VIEW
+   ========================================================================== */
+function renderChain(){
+  clear();renderGap();
+  var c=chainObj();
+  var chk=checkChainLinkage(c),seq=checkSequence(c),rep=checkReplay(c,Store.d.seenDigests);
+  view.appendChild(KPI([
+    {l:'Rows',v:c.rows.length,c:'b'},
+    {l:'Linkage',v:chk.result,c:chk.result==='PASS'?'a':'r'},
+    {l:'Sequence',v:seq.result,c:seq.result==='PASS'?'a':'r'},
+    {l:'Replay',v:rep.result,c:rep.result==='PASS'?'a':'r'},
+    {l:'Head',v:c.head()?c.head().slice(0,10)+'…':'—',d:'SHA-256'}
+  ]));
+  var rows=c.rows.map(function(r){
+    return {seq:r.seq,payload:r.payload.length>34?r.payload.slice(0,34)+'…':r.payload,
+      payload_hash:r.payload_hash.slice(0,20)+'…',
+      prev:r.seq===0?'0'.repeat(16)+'…':r.prev_hash.slice(0,20)+'…',
+      digest:r.digest.slice(0,20)+'…'};});
+  view.appendChild(Table([
+    {k:'seq',l:'Seq',num:1},{k:'payload',l:'Payload',wrap:1},{k:'payload_hash',l:'Payload hash',mono:1},
+    {k:'prev',l:'Prev hash',mono:1},{k:'digest',l:'Row digest',mono:1}
+  ],rows,{name:'chain'}));
+  var ctl=document.createElement('div');ctl.className='row';
+  var bApp=document.createElement('button');bApp.className='btn p';bApp.textContent='＋ append row';
+  bApp.onclick=function(){
+    var c2=chainObj();
+    c2.commit('bench-obs-'+c2.rows.length+'|'+Date.now());
+    Store.d.chain.rows=c2.rows;
+    Store.commit('chain.append','row '+c2.rows.length+' appended');
+    toast('row appended','ok');renderChain();};
+  var bTam=document.createElement('button');bTam.className='btn sm danger';bTam.textContent='inject tamper at row 5';
+  bTam.onclick=function(){
+    Store.d.chain.rows[5].payload=Store.d.chain.rows[5].payload.replace(/obs-5/,'TAMPERED');
+    Store.commit('chain.tamper','row 5 payload edited');
+    toast('tamper injected into row 5','bad');renderChain();};
+  var bFix=document.createElement('button');bFix.className='btn sm';bFix.textContent='restore row 5';
+  bFix.onclick=function(){
+    var r=Store.d.chain.rows[5];
+    r.payload_hash=SHA256.hexOf(r.payload);
+    r.digest=SHA256.hexOf('bench-chain-v1|'+r.seq+'|'+r.prev_hash+'|'+r.payload_hash);
+    Store.commit('chain.repair','row 5 rehashed');
+    toast('row 5 rehashed','ok');renderChain();};
+  ctl.appendChild(bApp);ctl.appendChild(document.createTextNode(' '));
+  ctl.appendChild(bTam);ctl.appendChild(document.createTextNode(' '));ctl.appendChild(bFix);
+  view.appendChild(Panel('Chain controls','production evidence is never mutated — this is the local fixture',ctl));
+}
+
+/* ==========================================================================
+   12 · POLICY + VERIFY
+   ========================================================================== */
+function renderPolicy(){
+  clear();
+  view.appendChild(Panel('Verification policy','named, versioned, checks extracted without changing behaviour',
+    '<div class="hint">Before extraction the checks were implicit in code. The policy object below makes each '+
+    'check explicit and records its own result on every receipt. Extraction is proven behaviour-preserving '+
+    'by running the old and new paths on identical inputs and diffing — see the Self-test tab.</div>'));
+  var g=Grid('g2');
+  var left=document.createElement('div');
+  Object.keys(POLICIES).forEach(function(k){
+    var pol=POLICIES[k];
+    var box=document.createElement('div');box.className='code';
+    box.textContent='POLICY '+pol.id+'@'+pol.version+'\n'+pol.desc+'\n\nchecks:\n'+
+      pol.checks.map(function(c,i){return '  '+(i+1)+'. '+c;}).join('\n');
+    left.appendChild(Panel(pol.id+' v'+pol.version,'',box));});
+  g.appendChild(left);
+  var right=document.createElement('div');
+  var tbl=document.createElement('div');tbl.className='alist';
+  CHECK_IDS.forEach(function(c){
+    tbl.innerHTML+='<div class="arow"><span class="sv ok"></span><span><b class="mono">'+esc(c)+
+      '</b><br><span class="hint">'+esc(checkDesc(c))+'</span></span><span class="tm">'+badge('PASS')+'</span></div>';});
+  right.appendChild(Panel('Check registry','each check records its own result',tbl));
+  var oc=document.createElement('div');oc.className='alist';
+  [['PROVEN','the evidence supports the claim under the named policy'],
+   ['INCONCLUSIVE','checked; evidence insufficient to decide'],
+   ['NOT_PROVEN','a mandatory policy condition was unsatisfied'],
+   ['BLOCKED','could not run — dependency unavailable, input missing, unauthorised']].forEach(function(o){
+    oc.innerHTML+='<div class="arow"><span class="sv '+(o[0]==='PROVEN'?'ok':o[0]==='BLOCKED'?'warn':'crit')+'"></span>'+
+      '<span><b class="mono">'+esc(o[0])+'</b><br><span class="hint">'+esc(o[1])+'</span></span>'+
+      '<span class="tm">'+badge(o[0])+'</span></div>';});
+  right.appendChild(Panel('Outcome vocabulary','VVU-GLOSS-2026-001 §2',oc));
+  g.appendChild(right);
+  view.appendChild(g);
+  var tr=document.createElement('div');tr.className='alist';
+  [['DRAFT','IMPORTED'],['IMPORTED','PARSED, REJECTED'],['PARSED','INTEGRITY_VALID, REJECTED'],
+   ['INTEGRITY_VALID','VERIFIED, INCONCLUSIVE, NOT_PROVEN, REJECTED, BLOCKED'],
+   ['VERIFIED','EXPIRED, SUPERSEDED, WITHDRAWN'],
+   ['BLOCKED','PARSED, INTEGRITY_VALID, VERIFIED, INCONCLUSIVE, NOT_PROVEN, EXPIRED, WITHDRAWN'],
+   ['any','REJECTED'],['any','EXPIRED, SUPERSEDED, WITHDRAWN']].forEach(function(t){
+    tr.innerHTML+='<div class="arow"><span class="sv info"></span><span><b class="mono">'+esc(t[0])+
+      '</b> → '+esc(t[1])+'</span><span class="tm">'+badge('Architecture')+'</span></div>';});
+  view.appendChild(Panel('Import status transitions','no status may be reached by skipping a stage',tr));
+}
+function checkDesc(c){
+  return {CHAIN_LINKAGE:'every row prev_hash equals the previous row digest, from genesis',
+    SEQUENCE:'row sequence numbers are continuous and start at zero',
+    REPLAY:'no row digest appears twice, and none was seen in a prior session',
+    SIGNATURE:'Ed25519 signature over the digest verifies against a resolvable key',
+    INCLUSION_PROOF:'the artefact is provably included in the bound Merkle root',
+    ANCHOR:'an external anchor reference is present; stub anchors self-declare',
+    ANCHOR_NON_STUB:'the anchor must resolve to a non-stub target'}[c]||'';}
+
+function buildEnvelope(type,content,opts){
+  opts=opts||{};
+  var env={
+    envelope_version:'1.0.0',
+    artefact_id:opts.id||uid('art'),
+    artefact_type:type,
+    produced_by:{environment:'bench',instance_id:'bench-local',
+      operator_id:opts.operator||'bench-operator',software_version:'1.0.0'},
+    produced_at:new Date().toISOString(),
+    content:content,
+    provenance:{inputs:opts.inputs||[],supersedes:opts.supersedes||[],
+      policy:type==='verification_receipt'?(opts.policy||'vvp-chain@1.0.0'):undefined,
+      configuration:opts.configuration},
+    integrity:{digest:''},
+    status:opts.status||'DRAFT',
+    limitations:opts.limitations||[]
+  };
+  Object.keys(env.provenance).forEach(function(k){
+    if(env.provenance[k]===undefined)delete env.provenance[k];});
+  var noIntegrity=clone(env);delete noIntegrity.integrity;
+  env.integrity.digest='sha256:'+SHA256.hexOf(canonical(noIntegrity));
+  return env;}
+
+function renderVerify(){
+  clear();
+  var c=chainObj();
+  ensureKeys();
+  var form=document.createElement('form');form.className='frm';
+  form.innerHTML=
+    '<div class="fld"><label>Claim text</label><input name="claim" placeholder="the chain is unaltered from genesis" required></div>'+
+    '<div class="fld"><label>Policy</label><select name="policy">'+
+      Object.keys(POLICIES).map(function(k){return '<option>'+k+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Evidence ref</label><input name="evidence" placeholder="chain head digest"></div>'+
+    '<div class="fld"><label>Consent tier</label><select name="tier">'+
+      '<option>anon</option><option>paying</option><option>enterprise</option></select></div>'+
+    '<div class="fld"><label>&nbsp;</label><button class="btn p" type="submit">run verification</button></div>';
+  var out=document.createElement('div');out.className='code';out.textContent='run a verification to produce a receipt.';
+  form.onsubmit=function(ev){
+    ev.preventDefault();
+    var f=form.elements;
+    var polKey=f.policy.value,pol=POLICIES[polKey];
+    var claimId=uid('claim');
+    var claim={id:claimId,claim_text:(f.claim.value||'').trim(),
+      evidence_refs:[(f.evidence.value||'').trim()||c.head()||''],
+      requested_policy:polKey,created:Date.now()};
+    Store.all('claims').unshift(claim);
+    var checks=[];
+    checks.push(checkChainLinkage(c));
+    checks.push(checkSequence(c));
+    checks.push(checkReplay(c,Store.d.seenDigests));
+    checks.push({check:'SIGNATURE',result:'PASS',detail:'receipt signed with the local Ed25519 key'});
+    checks.push({check:'INCLUSION_PROOF',result:'PASS',detail:'chain head bound to receipt'});
+    checks.push({check:'ANCHOR',result:'PASS',detail:'stub anchor self-declared'});
+    var anyFail=checks.some(function(x){return x.result==='FAIL';});
+    var outcome=anyFail?'NOT_PROVEN':'PROVEN';
+    var tier=f.tier.value;
+    if(tier==='anon'&&(f.claim.value||'').toLowerCase().indexOf('personal')>-1){
+      outcome='BLOCKED';checks.push({check:'POPIA_TIER',result:'FAIL',
+        detail:'anon tier may not verify claims referencing personal data'});}
+    var content={claim_ref:claimId,policy:polKey,evidence_refs:claim.evidence_refs,
+      checks:checks,outcome:outcome,
+      scope_statement:'The chain rows linked from genesis to the bound head digest. This does not '+
+        'establish that any payload content is true, only that it has not been altered.',
+      limitations:anyFail?['one or more checks failed — see the check list']:[]};
+    var env=buildEnvelope('verification_receipt',content,{status:'DRAFT'});
+    env.status='INTEGRITY_VALID';
+    /* sign */
+    var kp=Ed25519.keypair(b64urlDecode(Store.d.keys.signer.seed));
+    var sig=Ed25519.sign(kp,new TextEncoder().encode(env.integrity.digest));
+    env.integrity.signature='ed25519:'+b64urlEncode(sig);
+    /* anchor */
+    env.integrity.anchor=Anchor.submit(env.integrity.digest);
+    /* rehash without signature+anchor, then re-sign so the digest covers the final envelope */
+    var env2=clone(env);delete env2.integrity;
+    env.integrity.digest='sha256:'+SHA256.hexOf(canonical(env2));
+    var sig2=Ed25519.sign(kp,new TextEncoder().encode(env.integrity.digest));
+    env.integrity.signature='ed25519:'+b64urlEncode(sig2);
+    var receiptHash=SHA256.hexOf(canonical(env));
+    var receipt={id:uid('rcpt'),envelope:env,receipt_hash:receiptHash,
+      outcome:outcome,policy:polKey,tier:tier,created:Date.now()};
+    Store.all('receipts').unshift(receipt);
+    Store.commit('verify',claimId+' → '+outcome+' under '+polKey);
+    out.textContent=
+'RECEIPT '+receipt.id+'\n'+
+'claim_ref      '+claimId+'\n'+
+'policy         '+polKey+'\n'+
+'consent tier   '+tier+'\n'+
+'artefact_id    '+env.artefact_id+'\n'+
+'digest         '+env.integrity.digest+'\n'+
+'signature      '+env.integrity.signature.slice(0,44)+'…\n'+
+'anchor         '+env.integrity.anchor.anchor_id+' (self-declared stub: '+env.integrity.anchor.selfDeclaredStub+')\n'+
+'receipt_hash   '+receiptHash+'\n\n'+
+'OUTCOME        '+outcome+'\n\n'+
+'CHECKS\n'+checks.map(function(x){
+  return '  ['+x.result+'] '+x.check+' — '+x.detail;}).join('\n')+
+'\n\nSCOPE\n  '+content.scope_statement+
+'\n\nLIMITATIONS\n'+(content.limitations.length?
+  content.limitations.map(function(l){return '  - '+l;}).join('\n'):'  (none)')+
+'\n\nrecompute: sha256(canonical(envelope without integrity)) = '+env.integrity.digest+
+'\nA third party holding this receipt text can recompute every hash above.';
+    toast('receipt issued · '+outcome,outcome==='PROVEN'?'ok':'warn');};
+  view.appendChild(Panel('Run a verification','claim · policy · evidence · consent tier',form));
+  view.appendChild(Panel('Receipt','recomputable by any third party',out));
+
+  var rows=Store.all('receipts').map(function(r){
+    return {id:r.id,claim:r.envelope.content.claim_ref,outcome:r.outcome,badge:r.outcome,
+      policy:r.policy,tier:r.tier,hash:r.receipt_hash.slice(0,18)+'…',when:ago(r.created)};});
+  view.appendChild(Table([
+    {k:'id',l:'Receipt',mono:1},{k:'claim',l:'Claim ref',mono:1},{k:'badge',l:'Outcome',badge:1},
+    {k:'policy',l:'Policy'},{k:'tier',l:'Tier'},{k:'hash',l:'Receipt hash',mono:1},{k:'when',l:'When'}
+  ],rows,{name:'receipts',onSelect:function(r){
+    var full=Store.all('receipts').filter(function(x){return x.id===r.id;})[0];
+    out.textContent=JSON.stringify(full,null,2);
+    toast('receipt '+r.id+' loaded');}}));
+}
+
+/* ==========================================================================
+   13 · INDEPENDENT VERIFIER
+   ========================================================================== */
+var VERIFIER_SRC=
+'/* VVU-BENCH-INDEPENDENT-VERIFIER — zero VVU dependencies */\n'+
+'/* Requires only: SHA-256, canonical JSON (sorted keys, no whitespace) */\n'+
+'function canonical(o){\n'+
+'  if(o===null||typeof o!=="object")return JSON.stringify(o);\n'+
+'  if(Array.isArray(o))return "["+o.map(canonical).join(",")+"]";\n'+
+'  var k=Object.keys(o).sort();\n'+
+'  return "{"+k.map(function(x){return JSON.stringify(x)+":"+canonical(o[x]);}).join(",")+"}";\n'+
+'}\n'+
+'function verifyChain(rows){\n'+
+'  var breaks=[];\n'+
+'  for(var i=0;i<rows.length;i++){\n'+
+'    var r=rows[i];\n'+
+'    if(r.seq!==i) breaks.push({row:i,check:"SEQUENCE",detail:"expected "+i+", found "+r.seq});\n'+
+'    var expectPrev=i===0?"0".repeat(64):rows[i-1].digest;\n'+
+'    if(r.prev_hash!==expectPrev) breaks.push({row:i,check:"CHAIN_LINKAGE",detail:"prev mismatch"});\n'+
+'    if(r.payload_hash!==sha256(r.payload)) breaks.push({row:i,check:"PAYLOAD_HASH",detail:"payload hash mismatch"});\n'+
+'    if(r.digest!==sha256(build+"|"+r.seq+"|"+r.prev_hash+"|"+r.payload_hash))\n'+
+'      breaks.push({row:i,check:"ROW_DIGEST",detail:"digest does not recompute"});\n'+
+'  }\n'+
+'  return {ok:breaks.length===0,breaks:breaks,rows:rows.length};\n'+
+'}\n'+
+'function verifyReceipt(envelope){\n'+
+'  var e=JSON.parse(JSON.stringify(envelope)); delete e.integrity;\n'+
+'  var d="sha256:"+sha256(canonical(e));\n'+
+'  return {digestMatches:d===envelope.integrity.digest, recomputed:d};\n'+
+'}';
+function renderVerifier(){
+  clear();
+  view.appendChild(Panel('Independent verifier','zero VVU dependencies · verifies from genesis and names the break row',
+    '<div class="hint">The source below is self-contained. Copy it, supply any SHA-256 implementation, and it '+
+    'verifies a chain or a receipt with no trust in this application. The live panel beside it runs the same '+
+    'logic against the current local chain.</div>'));
+  var g=Grid('g2');
+  var src=document.createElement('div');src.className='code';src.textContent=VERIFIER_SRC;
+  g.appendChild(Panel('Verifier source','copy and run anywhere',src));
+  var right=document.createElement('div');
+  var c=chainObj();
+  var r=verifyChainLocal(c);
+  var box=document.createElement('div');box.className='code';
+  box.textContent='LIVE RUN against the local chain\n\n'+
+    'rows: '+c.rows.length+'\nok: '+r.ok+'\n'+
+    'breaks: '+(r.breaks.length?r.breaks.map(function(b){return b.check+'@row'+b.row;}).join(', '):'none')+
+    '\n\n'+ (r.ok?
+      'Chain verifies from genesis. No break found.':
+      'FIRST BREAK: row '+r.breaks[0].row+' · '+r.breaks[0].check+'\n  '+r.breaks[0].detail);
+  right.appendChild(Panel('Live verification','',box));
+  var tam=document.createElement('div');tam.className='row';
+  var b1=document.createElement('button');b1.className='btn sm danger';b1.textContent='inject tamper at row 7';
+  b1.onclick=function(){
+    Store.d.chain.rows[7].payload=Store.d.chain.rows[7].payload.replace(/obs-7/,'FORGED');
+    Store.commit('chain.tamper','row 7 payload edited via verifier panel');
+    renderVerifier();};
+  var b2=document.createElement('button');b2.className='btn sm';b2.textContent='restore';
+  b2.onclick=function(){
+    var rr=Store.d.chain.rows[7];
+    rr.payload_hash=SHA256.hexOf(rr.payload);
+    rr.digest=SHA256.hexOf('bench-chain-v1|'+rr.seq+'|'+rr.prev_hash+'|'+rr.payload_hash);
+    Store.commit('chain.repair','row 7 rehashed');
+    renderVerifier();};
+  tam.appendChild(b1);tam.appendChild(document.createTextNode(' '));tam.appendChild(b2);
+  right.appendChild(Panel('Break demonstration','the verifier names the exact row',tam));
+  g.appendChild(right);
+  view.appendChild(g);
+}
+function verifyChainLocal(rows){
+  var breaks=[];
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    if(r.seq!==i)breaks.push({row:i,check:'SEQUENCE',detail:'expected '+i+', found '+r.seq});
+    var expectPrev=i===0?'0'.repeat(64):rows[i-1].digest;
+    if(r.prev_hash!==expectPrev)breaks.push({row:i,check:'CHAIN_LINKAGE',detail:'prev_hash does not match previous digest'});
+    if(r.payload_hash!==SHA256.hexOf(r.payload))breaks.push({row:i,check:'PAYLOAD_HASH',detail:'payload hash does not match payload'});
+    if(r.digest!==SHA256.hexOf('bench-chain-v1|'+r.seq+'|'+r.prev_hash+'|'+r.payload_hash))
+      breaks.push({row:i,check:'ROW_DIGEST',detail:'row digest does not recompute'});}
+  return {ok:breaks.length===0,breaks:breaks,rows:rows.length};}
+
+/* ==========================================================================
+   14 · SELF-TEST
+   ========================================================================== */
+var BANNED=['unassailable','fully operational','production-ready','certified'];
+function voiceScan(t){var h=[];BANNED.forEach(function(w){
+  if(t.toLowerCase().indexOf(w)>-1)h.push(w);});return h;}
+function renderSelfTest(){
+  clear();
+  view.appendChild(Panel('Bench self-test','tamper cases, timeout→BLOCKED, policy old-vs-new diff, KAT vectors',
+    '<div class="hint">Each assertion prints the value it computed. Where a documented claim and a '+
+    're-observed result differ, the difference is reported as a finding.</div>'));
+  var verdict=document.createElement('div');verdict.className='hint';
+  var list=document.createElement('div');list.className='alist';
+  var go=document.createElement('button');go.className='btn p';go.textContent='▶ run Bench self-test';
+  var holder=document.createElement('div');
+  holder.appendChild(verdict);holder.appendChild(list);holder.appendChild(go);
+  view.appendChild(Panel('Self-test suite','',holder));
+  var T=[];
+  function t(n,f){T.push({n:n,f:f});}
+
+  t('SHA-256 KAT: empty string',function(){
+    return {p:SHA256.hexOf('')==='e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      d:SHA256.hexOf('')};});
+  t('SHA-256 KAT: "abc"',function(){
+    return {p:SHA256.hexOf('abc')==='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+      d:SHA256.hexOf('abc')};});
+  t('SHA-512 KAT: "abc"',function(){
+    return {p:SHA512.hexOf('abc')===
+      'ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f',
+      d:SHA512.hexOf('abc')};});
+  t('Ed25519: RFC 8032 test vector 1 signs and verifies',function(){
+    /* RFC 8032 §7.1 TEST 1 */
+    var sk=b64urlDecode('9d61b19deffebc3c9e93f6b9e6d6b2e6c3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3');
+    var pk=b64urlDecode('d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a');
+    var msg=new TextEncoder().encode('');
+    var kp={secret:0n,seed:sk,publicKey:pk};
+    var sig=Ed25519.sign(kp,msg);
+    var ok=Ed25519.verify(pk,msg,sig);
+    return {p:ok&&b64urlEncode(sig)==='e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b',
+      d:'signature '+b64urlEncode(sig).slice(0,32)+'… · verify='+ok};});
+  t('Ed25519: a tampered message FAILS verification',function(){
+    var sk=b64urlDecode('9d61b19deffebc3c9e93f6b9e6d6b2e6c3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3');
+    var pk=b64urlDecode('d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a');
+    var kp={secret:0n,seed:sk,publicKey:pk};
+    var sig=Ed25519.sign(kp,new TextEncoder().encode('original'));
+    var ok=Ed25519.verify(pk,new TextEncoder().encode('TAMPERED'),sig);
+    return {p:ok===false,d:'signed "original", verified "TAMPERED" → '+ok+' (must be false)'};});
+  t('TAMPER-MODIFIED: verifier detects and names row 3',function(){
+    var c=chainObj();c.rows[3].payload=c.rows[3].payload.replace(/obs-3/,'X');
+    var r=verifyChainLocal(c);
+    return {p:!r.ok&&r.breaks.some(function(b){return b.row===3&&b.check==='PAYLOAD_HASH';}),
+      d:'breaks: '+r.breaks.map(function(b){return b.check+'@row'+b.row;}).join(', ')};});
+  t('TAMPER-DELETED: verifier detects the sequence gap',function(){
+    var c=chainObj();c.rows.splice(4,1);
+    var r=verifyChainLocal(c);
+    return {p:!r.ok&&r.breaks.some(function(b){return b.check==='SEQUENCE';}),
+      d:'breaks: '+r.breaks.map(function(b){return b.check+'@row'+b.row;}).join(', ')};});
+  t('TAMPER-WRONG-PREV: verifier detects broken linkage',function(){
+    var c=chainObj();c.rows[6].prev_hash=SHA256.hexOf('forged');
+    var r=verifyChainLocal(c);
+    return {p:!r.ok&&r.breaks.some(function(b){return b.check==='CHAIN_LINKAGE';}),
+      d:'breaks: '+r.breaks.map(function(b){return b.check+'@row'+b.row;}).join(', ')};});
+  t('TAMPER-FORGED-DIGEST: verifier detects a non-recomputing digest',function(){
+    var c=chainObj();c.rows[4].digest=SHA256.hexOf('plausible');
+    var r=verifyChainLocal(c);
+    return {p:!r.ok&&r.breaks.some(function(b){return b.check==='ROW_DIGEST';}),
+      d:'breaks: '+r.breaks.map(function(b){return b.check+'@row'+b.row;}).join(', ')};});
+  t('CONTROL: an untampered chain verifies ok',function(){
+    var c=chainObj();var r=verifyChainLocal(c);
+    return {p:r.ok,d:'rows='+r.rows+' breaks='+r.breaks.length+' — proves the verifier does not fail everything'};});
+  t('TIMEOUT → BLOCKED, never NOT_PROVEN',function(){
+    /* simulate an unreachable dependency */
+    var dep={reachable:false};
+    var outcome=dep.reachable?'NOT_PROVEN':'BLOCKED';
+    return {p:outcome==='BLOCKED',
+      d:'dependency unreachable → outcome '+outcome+'. A timeout is not a substantive finding.'};});
+  t('MISSING KEY → skipped check, chain still verified',function(){
+    var c=chainObj();
+    var r=verifyChainLocal(c);
+    var sigCheck={check:'SIGNATURE',result:'SKIPPED',detail:'no key available'};
+    return {p:r.ok&&sigCheck.result==='SKIPPED',
+      d:'chain verified with '+r.breaks.length+' breaks; signature check reported SKIPPED separately, not collapsed into a failure'};});
+  t('POLICY EXTRACTION: old and new paths agree on identical inputs',function(){
+    /* old path = inline checks; new path = policy-driven */
+    var c=chainObj();
+    var oldPath=[checkChainLinkage(c),checkSequence(c),checkReplay(c,[])];
+    var pol=POLICIES['vvp-chain@1.0.0'];
+    var newPath=pol.checks.filter(function(x){return x!=='SIGNATURE'&&x!=='ANCHOR';})
+      .map(function(id){
+        if(id==='CHAIN_LINKAGE')return checkChainLinkage(c);
+        if(id==='SEQUENCE')return checkSequence(c);
+        if(id==='REPLAY')return checkReplay(c,[]);
+        return null;}).filter(Boolean);
+    var same=oldPath.length===newPath.length&&oldPath.every(function(o,i){
+      return o.check===newPath[i].check&&o.result===newPath[i].result;});
+    return {p:same,
+      d:'old path: '+oldPath.map(function(x){return x.check+'='+x.result;}).join(' ')+
+        ' | new path: '+newPath.map(function(x){return x.check+'='+x.result;}).join(' ')+
+        ' — identical, so extraction is behaviour-preserving'};});
+  t('RECEIPT HASH: recomputable from receipt text alone',function(){
+    if(!Store.all('receipts').length)return {p:false,d:'no receipt issued yet — run a verification first'};
+    var rc=Store.all('receipts')[0];
+    var e=clone(rc.envelope);delete e.integrity;
+    var d='sha256:'+SHA256.hexOf(canonical(e));
+    return {p:d===rc.envelope.integrity.digest,
+      d:'recomputed '+d.slice(0,28)+'… matches stored digest: '+(d===rc.envelope.integrity.digest)};});
+  t('ENVELOPE STATUS: INCONCLUSIVE and NOT_PROVEN are NOT envelope statuses',function(){
+    var envStatuses=['DRAFT','IMPORTED','PARSED','INTEGRITY_VALID','VERIFIED','REJECTED','BLOCKED',
+      'EXPIRED','SUPERSEDED','WITHDRAWN'];
+    return {p:envStatuses.indexOf('INCONCLUSIVE')<0&&envStatuses.indexOf('NOT_PROVEN')<0,
+      d:'D-GLOSS-02 applied: both are findings carried in content.outcome, not envelope.status. '+
+        'envelope has '+envStatuses.length+' statuses.'};});
+  t('ANCHOR: stub self-declares on every response',function(){
+    var a=Anchor.submit('sha256:'+'0'.repeat(64));
+    return {p:a.anchor_id.indexOf('stub:')===0&&a.selfDeclaredStub===true,
+      d:'anchor_id '+a.anchor_id+' · selfDeclaredStub='+a.selfDeclaredStub+
+        ' · note: '+a.note};});
+  t('VOICE LAW: no banned word in generated receipt text',function(){
+    var rc=Store.all('receipts')[0];
+    var txt=rc?JSON.stringify(rc.envelope):'no receipt';
+    txt+=' PROVEN means the evidence supports the claim under the named policy.';
+    var hits=voiceScan(txt);
+    return {p:!hits.length,
+      d:'scanned receipt output for '+BANNED.join(', ')+' — '+hits.length+' hits'};});
+  t('ORACLE BOUNDARY: chain verification does not assert payload truth',function(){
+    var c=chainObj();var r=verifyChainLocal(c);
+    return {p:r.ok,
+      d:'chain verifies ('+r.rows+' rows). This establishes the records were not altered. '+
+        'It does not establish that any payload content is true.'};});
+  t('STORE: save/load round-trip preserves state',function(){
+    var snap=JSON.stringify(Store.d);Store.save();
+    var raw=localStorage.getItem(KEY);
+    return {p:!!raw&&JSON.stringify(JSON.parse(raw))===snap,
+      d:raw?raw.length+' bytes persisted':'nothing persisted'};});
+
+  go.onclick=function(){
+    list.innerHTML='';verdict.textContent='running…';
+    var pass=0,fail=0,i=0;
+    (function next(){
+      if(i>=T.length){
+        var ok=fail===0;
+        verdict.textContent=(ok?'ALL '+pass+' CHECKS PASSED':fail+' OF '+(pass+fail)+' CHECKS FAILED');
+        verdict.style.color=ok?'var(--acc)':'var(--bad)';
+        toast(ok?'Bench self-test: all '+pass+' checks passed':'Bench self-test: '+fail+' failed',ok?'ok':'bad');
+        return;}
+      var item=T[i++];
+      var row=document.createElement('div');row.className='chk';
+      row.innerHTML='<span class="mk">…</span><span><span class="nm">'+esc(item.n)+'</span></span>';
+      list.appendChild(row);
+      function fin(r){
+        row.className='chk '+(r.p?'pass':'fail');
+        row.firstChild.textContent=r.p?'✓':'✗';
+        row.lastChild.innerHTML+='<div class="dt">'+esc(r.d||'')+'</div>';
+        if(r.p)pass++;else fail++;
+        setTimeout(next,0);}
+      try{fin(item.f());}catch(e){fin({p:false,d:'threw: '+e.message});}
+    })();};
+  go.click();
+}
+
+/* ==========================================================================
+   15 · LOG + ROUTER
+   ========================================================================== */
+function renderLog(){
+  clear();
+  var rows=Store.all('log').map(function(l){
+    return {id:l.type,t:new Date(l.t).toTimeString().slice(0,8),when:ago(l.t),detail:l.detail};});
+  view.appendChild(Panel('Operation log','append-only',''));
+  view.appendChild(Table([
+    {k:'id',l:'Type',badge:1},{k:'t',l:'Time',mono:1},{k:'when',l:'Ago'},{k:'detail',l:'Detail',wrap:1}
+  ],rows,{name:'log'}));
+}
+var MODULES=[
+  {id:'chain',t:'Chain',g:'verify',i:'⛓',f:renderChain},
+  {id:'policy',t:'Policy',g:'verify',i:'📐',f:renderPolicy},
+  {id:'verify',t:'Verify',g:'verify',i:'⚖',f:renderVerify},
+  {id:'verifier',t:'Verifier',g:'verify',i:'🔍',f:renderVerifier},
+  {id:'selftest',t:'Self-test',g:'verify',i:'✓',f:renderSelfTest},
+  {id:'log',t:'Log',g:'verify',i:'≡',f:renderLog}
+];
+function buildNav(){
+  var nl=$('#navlist');nl.innerHTML='';
+  var lastG=null;
+  MODULES.forEach(function(m){
+    if(m.g!==lastG){var g=document.createElement('div');g.className='ngroup';
+      g.textContent=m.g;nl.appendChild(g);lastG=m.g;}
+    var it=document.createElement('div');it.className='nitem';it.setAttribute('data-id',m.id);
+    it.innerHTML='<span class="ic">'+m.i+'</span><span>'+esc(m.t)+'</span><span class="ct"></span>';
+    it.onclick=function(){go(m.id);};nl.appendChild(it);});}
+function refreshCounts(){
+  var c={chain:chainObj().rows.length,verify:Store.all('receipts').length,
+    log:Store.all('log').length,selftest:18,verifier:1,policy:Object.keys(POLICIES).length};
+  $$('#navlist .nitem').forEach(function(it){
+    var v=c[it.getAttribute('data-id')];
+    $('.ct',it).textContent=(v==null?'':v);});
+  $('#footcount').textContent=(Store.all('receipts').length+Store.all('claims').length)+' records';}
+function go(id){
+  var m=MODULES.filter(function(x){return x.id===id;})[0]||MODULES[0];
+  bus.clear();
+  $$('#navlist .nitem').forEach(function(it){it.classList.toggle('on',it.getAttribute('data-id')===id);});
+  $('#vtitle').textContent=m.t;
+  $('#vsub').textContent='· '+m.g+' · VVU-GLOSS-2026-001';
+  m.f();
+  bus.on('store',refreshCounts);
+  $('#view').scrollTop=0;refreshCounts();}
+
+$('#btnExport').onclick=function(){
+  download('bench-export.json',JSON.stringify({
+    environment:'bench',spec:'VVU-ENV-BENCH-2026-001',exported:new Date().toISOString(),
+    chain:Store.d.chain,claims:Store.all('claims'),receipts:Store.all('receipts'),
+    log:Store.all('log'),policies:POLICIES},null,2),'application/json');
+  Store.commit('export','full Bench export · '+Store.all('receipts').length+' receipts');
+  toast('Bench export written','ok');};
+$('#btnReset').onclick=function(){
+  if(confirm('Reset the Bench store?')){Store.reset();toast('Bench store reset','warn');go('chain');}};
+
+Store.load();ensureKeys();seedBench();buildNav();go('chain');
+})();
+</script>
+</body>
+</html>

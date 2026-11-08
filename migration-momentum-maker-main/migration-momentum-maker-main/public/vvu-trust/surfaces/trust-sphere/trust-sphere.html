@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VVU · Trust Sphere — 420-node state machine</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="trust-sphere-metrics.css" />
+    <script type="application/json" id="metrics-config">
+      {
+        "version": 1,
+        "composite_weights": { "sla": 0.3, "nodes": 0.3, "mesh": 0.25, "trend": 0.15 },
+        "poll_interval_ms": 15000,
+        "fetch_timeout_ms": 2500,
+        "sla_stale_after_ms": 60000,
+        "note": "Weights for the NETWORK HEALTH composite. The file contract allows exactly four files in this directory, so this config lives as a JSON data island inside trust-sphere.html — the metrics script READS it from here at runtime and hard-codes nothing. Changing a weight means editing this island, not the JS."
+      }
+    </script>
+    <script src="trust-sphere-metrics.js" defer></script>
+    <style>
+      /* trust-sphere.html — the sphere itself. Estate palette: no indigo, no blue. */
+      :root {
+        --bg: #060806;
+        --ink: #c9d4bd;
+        --dim: #7a8a6e;
+        --faint: #4a5744;
+        --lime: #c8ff00;
+        --amber: #e0a030;
+        --red: #e5484d;
+        --teal: #2ea8a0;
+        --green: #8fb35a;
+        --orange: #e5843d;
+        --rose: #d16a8c;
+        --grey: #7f95a5;
+        --mono: "Geist Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--mono);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+
+      /* ── header ─────────────────────────────────────────────── */
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-bottom: 1px solid rgba(107, 138, 64, 0.25);
+        flex-wrap: wrap;
+      }
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        min-width: 0;
+      }
+      .brand h1 {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        color: var(--lime);
+        white-space: nowrap;
+      }
+      .brand .sub {
+        font-size: 8px;
+        letter-spacing: 0.18em;
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .badges {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .badge {
+        font-size: 7.5px;
+        letter-spacing: 0.14em;
+        padding: 3px 6px;
+        border: 1px solid rgba(107, 138, 64, 0.35);
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .badge.seed {
+        color: var(--amber);
+        border-color: rgba(224, 160, 48, 0.45);
+      }
+      .badge.sphere-owned {
+        color: var(--teal);
+        border-color: rgba(46, 168, 160, 0.4);
+      }
+      .spacer {
+        flex: 1;
+      }
+      .scope-toggle {
+        display: flex;
+        border: 1px solid rgba(107, 138, 64, 0.4);
+        font-size: 8px;
+        letter-spacing: 0.16em;
+      }
+      .scope-toggle button {
+        background: none;
+        border: 0;
+        color: var(--dim);
+        font: inherit;
+        letter-spacing: inherit;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      .scope-toggle button[aria-pressed="true"] {
+        background: rgba(200, 255, 0, 0.12);
+        color: var(--lime);
+      }
+      .scope-toggle button:focus-visible {
+        outline: 1px solid var(--lime);
+        outline-offset: -1px;
+      }
+
+      /* ── stage: sphere + metrics column ─────────────────────── */
+      .stage {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        align-items: stretch;
+        position: relative;
+      }
+      .sphere-wrap {
+        flex: 1;
+        min-width: 0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* clip stray tooltips — absolute overlays must never widen the page */
+      }
+      #sphere-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        cursor: crosshair;
+        touch-action: none;
+      }
+
+      /* tooltip — the sphere owns it; the metrics panel must never break it */
+      #sphere-tooltip {
+        position: absolute;
+        pointer-events: none;
+        z-index: 40;
+        background: rgba(6, 8, 6, 0.94);
+        border: 1px solid rgba(107, 138, 64, 0.5);
+        border-left: 3px solid var(--lime);
+        padding: 6px 9px;
+        font-size: 9px;
+        line-height: 1.7;
+        letter-spacing: 0.08em;
+        color: var(--ink);
+        display: none;
+        white-space: nowrap;
+      }
+      #sphere-tooltip .tt-state {
+        font-weight: 700;
+      }
+
+      /* legend — bottom-left overlay of the sphere */
+      .legend {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background: rgba(6, 8, 6, 0.82);
+        border: 1px solid rgba(107, 138, 64, 0.25);
+        padding: 8px 10px;
+        max-width: 250px;
+      }
+      .legend .lg-title {
+        font-size: 7.5px;
+        letter-spacing: 0.2em;
+        color: var(--dim);
+        margin-bottom: 3px;
+      }
+      .lg-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 8.5px;
+        letter-spacing: 0.08em;
+        color: var(--ink);
+      }
+      .lg-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex: none;
+      }
+      .lg-count {
+        color: var(--dim);
+        margin-left: auto;
+        padding-left: 14px;
+      }
+      .lg-arrow {
+        color: var(--faint);
+        font-size: 8px;
+        letter-spacing: 0.1em;
+        margin: 1px 0 1px 3px;
+      }
+
+      /* the metrics panel column — 320px, right, stacked (metrics.css owns card
+     internals; this file owns ONLY the slot geometry) */
+      #metrics-panel {
+        width: 320px;
+        flex: none;
+        border-left: 1px solid rgba(107, 138, 64, 0.25);
+        background: rgba(6, 8, 6, 0.65);
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(107, 138, 64, 0.4) transparent;
+      }
+
+      /* ── footer — count · density · question ─────────────────── */
+      footer {
+        border-top: 1px solid rgba(107, 138, 64, 0.25);
+        background: rgba(6, 8, 6, 0.96);
+        padding: 8px 14px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      .foot-metric {
+        display: flex;
+        align-items: baseline;
+        gap: 7px;
+        white-space: nowrap;
+      }
+      .foot-metric .k {
+        font-size: 7.5px;
+        letter-spacing: 0.2em;
+        color: var(--dim);
+      }
+      .foot-metric .v {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .foot-metric.q .v {
+        color: var(--amber);
+      }
+      footer .prov {
+        margin-left: auto;
+        font-size: 7.5px;
+        letter-spacing: 0.14em;
+        color: var(--faint);
+        text-align: right;
+      }
+
+      /* ── mobile (<800px): metrics collapse to a horizontal band ─ */
+      @media (max-width: 799px) {
+        body {
+          overflow: auto;
+        }
+        .stage {
+          flex-direction: column;
+        }
+        .sphere-wrap {
+          min-height: 62vh;
+        }
+        .brand {
+          flex-basis: 100%;
+        }
+        .brand .sub {
+          white-space: normal;
+        } /* the header must wrap, never overflow */
+        #metrics-panel {
+          width: 100%;
+          border-left: 0;
+          border-top: 1px solid rgba(107, 138, 64, 0.25);
+          display: flex;
+          flex-direction: row;
+          gap: 8px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          padding: 8px;
+          -webkit-overflow-scrolling: touch;
+        }
+        #metrics-panel > * {
+          flex: none;
+        }
+        .legend {
+          max-width: 200px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <h1>TRUST SPHERE</h1>
+        <span class="sub">420 NODES · SEVEN-STATE MACHINE · FIBONACCI DISTRIBUTION</span>
+      </div>
+      <div class="badges">
+        <span class="badge seed">SEED DATA · NOT LIVE</span>
+        <span class="badge">STATE CLOCK · SIMULATED</span>
+        <span class="badge sphere-owned">SPHERE COLOURS OWNED BY THE SPHERE</span>
+      </div>
+      <div class="spacer"></div>
+      <div class="scope-toggle" role="group" aria-label="Scope">
+        <button id="scope-global" aria-pressed="true">GLOBAL</button>
+        <button id="scope-personal" aria-pressed="false">PERSONAL</button>
+      </div>
+    </header>
+
+    <main class="stage" id="stage">
+      <div class="sphere-wrap" id="sphere-wrap">
+        <canvas
+          id="sphere-canvas"
+          aria-label="Trust sphere — 420 nodes rotating on two axes. Hover a node for its state."
+        ></canvas>
+        <div id="sphere-tooltip" role="status"></div>
+        <div class="legend" id="legend" aria-label="State legend">
+          <div class="lg-title">STATE MACHINE</div>
+          <!-- legend rows are generated (state colours live in one place) -->
+        </div>
+      </div>
+      <!-- the metrics surface slot — trust-sphere-metrics.js fills this.
+       The sphere keeps the left; the metrics own this column. -->
+      <div id="metrics-panel" aria-label="Trust sphere metrics"></div>
+    </main>
+
+    <footer>
+      <div class="foot-metric">
+        <span class="k">COUNT</span><span class="v" id="fm-count">—</span>
+      </div>
+      <div class="foot-metric">
+        <span class="k">DENSITY</span><span class="v" id="fm-density">—</span>
+      </div>
+      <div class="foot-metric q">
+        <span class="k">QUESTION</span><span class="v" id="fm-question">—</span>
+      </div>
+      <div class="prov">
+        TRUST-SPHERE.HTML · ZERO DEPENDENCIES · SEED 20260921 · METRICS: SOURCE-LINE ON EVERY CARD
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        "use strict";
+
+        /* ════════════════════════════════════════════════════════════════════
+     TRUST SPHERE — the visualization. NOT the metrics surface.
+     Fibonacci-distributed 420-node point sphere, dual-axis rotation,
+     seven-state machine: unknown → identity → contribution → receipt →
+     hash → zk → trust. Legend, tooltip, Global/Personal scope, three
+     footer metrics (count · density · question).
+
+     Honesty: node states are SEEDED (deterministic mulberry32, fixed seed)
+     and the state clock is SIMULATED (one node advances per tick, 4s).
+     Nothing here claims to be live telemetry. The seed never changes, so
+     every reload shows the same sphere — no theatrical randomness.
+
+     Contract with trust-sphere-metrics.js (the ONLY coupling):
+       window.TrustSphereState = {
+         total, byState: {unknown,identity,contribution,receipt,hash,zk,trust},
+         tiers: { identity, verified, trusted },   // disjoint bands, sum ≤ total
+         scope: 'global'|'personal', sim: true, updatedAt
+       }
+     The metrics script reads it; it never writes it.
+     ════════════════════════════════════════════════════════════════════ */
+
+        var STATES = ["unknown", "identity", "contribution", "receipt", "hash", "zk", "trust"];
+        var STATE_COLOR = {
+          unknown: "#7f95a5",
+          identity: "#2ea8a0",
+          contribution: "#8fb35a",
+          receipt: "#e0a030",
+          hash: "#e5843d",
+          zk: "#d16a8c",
+          trust: "#c8ff00",
+        };
+        var STATE_LABEL = {
+          unknown: "UNKNOWN",
+          identity: "IDENTITY",
+          contribution: "CONTRIBUTION",
+          receipt: "RECEIPT",
+          hash: "HASH",
+          zk: "ZK",
+          trust: "TRUST",
+        };
+
+        var N = 420;
+        var SEED = 20260921;
+
+        /* deterministic PRNG — same sphere every load */
+        function mulberry32(a) {
+          return function () {
+            a |= 0;
+            a = (a + 0x6d2b79f5) | 0;
+            var t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        /* Fibonacci sphere: node i at golden-angle increments */
+        var GA = Math.PI * (3 - Math.sqrt(5));
+        var nodes = [];
+        (function build() {
+          var rnd = mulberry32(SEED);
+          for (var i = 0; i < N; i++) {
+            var y = 1 - (i / (N - 1)) * 2;
+            var r = Math.sqrt(Math.max(0, 1 - y * y));
+            var th = GA * i;
+            var st = i / (N - 1); // 0..1 along the spiral — used for seeding state
+            nodes.push({
+              i: i,
+              x: Math.cos(th) * r,
+              y: y,
+              z: Math.sin(th) * r,
+              state: seedState(st, rnd),
+              personal: rnd() < 0.34, // deterministic personal-scope membership
+              sx: 0,
+              sy: 0,
+              sz: 0,
+              vz: 0, // screen cache
+            });
+          }
+        })();
+
+        /* state seeding — weighted bands along the spiral + deterministic jitter */
+        function seedState(t, rnd) {
+          var j = (rnd() - 0.5) * 0.14;
+          var v = Math.min(1, Math.max(0, t + j));
+          if (v < 0.4) return "unknown";
+          if (v < 0.58) return "identity";
+          if (v < 0.72) return "contribution";
+          if (v < 0.82) return "receipt";
+          if (v < 0.9) return "hash";
+          if (v < 0.96) return "zk";
+          return "trust";
+        }
+
+        /* ── scope ── */
+        var scope = "global";
+        var scopeBtnG = document.getElementById("scope-global");
+        var scopeBtnP = document.getElementById("scope-personal");
+        function setScope(next) {
+          scope = next;
+          scopeBtnG.setAttribute("aria-pressed", String(next === "global"));
+          scopeBtnP.setAttribute("aria-pressed", String(next === "personal"));
+          publishState();
+          renderLegend();
+        }
+        scopeBtnG.addEventListener("click", function () {
+          setScope("global");
+        });
+        scopeBtnP.addEventListener("click", function () {
+          setScope("personal");
+        });
+
+        function visibleNodes() {
+          if (scope === "global") return nodes;
+          return nodes.filter(function (n) {
+            return n.personal;
+          });
+        }
+
+        /* ── the state export (metrics contract) ──
+     GLOBAL, ALWAYS: the metrics panels are global — toggling the sphere's
+     Personal scope changes the RENDERING (drawing + legend + footer), never
+     this published state (spec verification #9: "Metrics do not change —
+     they are global, not personal"). */
+        window.TrustSphereState = {
+          total: 0,
+          byState: {},
+          tiers: {},
+          scope: "global",
+          sim: true,
+          updatedAt: 0,
+        };
+        function publishState() {
+          var by = {
+            unknown: 0,
+            identity: 0,
+            contribution: 0,
+            receipt: 0,
+            hash: 0,
+            zk: 0,
+            trust: 0,
+          };
+          nodes.forEach(function (n) {
+            by[n.state] += 1;
+          }); /* the GLOBAL set */
+          /* disjoint tiers (the sum rule the metrics panel checks):
+       identity band = passed identity, not contribution → state 'identity'
+       verified band = passed identity + contribution, not final → contribution..zk
+       trusted band  = the final state → 'trust'
+       identity + verified + trusted = total − unknown ≤ total, always. */
+          var tiers = {
+            identity: by.identity,
+            verified: by.contribution + by.receipt + by.hash + by.zk,
+            trusted: by.trust,
+          };
+          window.TrustSphereState = {
+            total: nodes.length,
+            byState: by,
+            tiers: tiers,
+            scope: "global",
+            sim: true,
+            updatedAt: Date.now(),
+          };
+          /* the sphere's OWN footer follows the visible scope (rendering facts) */
+          var vis = visibleNodes();
+          var visUnknown = 0;
+          vis.forEach(function (n) {
+            if (n.state === "unknown") visUnknown += 1;
+          });
+          document.getElementById("fm-count").textContent = String(vis.length);
+          document.getElementById("fm-density").textContent =
+            (vis.length / (4 * Math.PI)).toFixed(1) + "/SR";
+          document.getElementById("fm-question").textContent = visUnknown + " UNANSWERED";
+        }
+
+        /* ── the simulated state clock (honestly labelled) ──
+     One GLOBAL node advances one step per 4s. It is a clock, not telemetry. */
+        var clockRnd = mulberry32(SEED ^ 0xc10c);
+        setInterval(function () {
+          for (var tries = 0; tries < 24; tries++) {
+            var n = nodes[Math.floor(clockRnd() * nodes.length)];
+            if (n.state !== "trust") {
+              n.state = STATES[STATES.indexOf(n.state) + 1];
+              publishState();
+              renderLegend();
+              return;
+            }
+          }
+        }, 4000);
+
+        /* ── legend ── (follows the VISIBLE scope — it describes the drawing) */
+        var legendEl = document.getElementById("legend");
+        function renderLegend() {
+          var vis = visibleNodes();
+          var by = {
+            unknown: 0,
+            identity: 0,
+            contribution: 0,
+            receipt: 0,
+            hash: 0,
+            zk: 0,
+            trust: 0,
+          };
+          vis.forEach(function (n) {
+            by[n.state] += 1;
+          });
+          var html = [
+            '<div class="lg-title">STATE MACHINE' +
+              (scope === "personal" ? " · PERSONAL" : "") +
+              "</div>",
+          ];
+          STATES.forEach(function (s, idx) {
+            if (idx > 0) html.push('<div class="lg-arrow">↓</div>');
+            html.push(
+              '<div class="lg-row"><span class="lg-dot" style="background:' +
+                STATE_COLOR[s] +
+                '"></span><span>' +
+                STATE_LABEL[s] +
+                '</span><span class="lg-count" data-lg="' +
+                s +
+                '">' +
+                by[s] +
+                "</span></div>",
+            );
+          });
+          legendEl.innerHTML = html.join("");
+        }
+
+        /* ── canvas + dual-axis rotation ── */
+        var canvas = document.getElementById("sphere-canvas");
+        var ctx = canvas.getContext("2d");
+        var wrap = document.getElementById("sphere-wrap");
+        var dpr = 1;
+        function resize() {
+          dpr = window.devicePixelRatio || 1;
+          var r = wrap.getBoundingClientRect();
+          canvas.width = Math.max(2, Math.floor(r.width * dpr));
+          canvas.height = Math.max(2, Math.floor(r.height * dpr));
+        }
+        window.addEventListener("resize", resize);
+
+        var ry = 0.6,
+          rx = -0.25; // orientation
+        var vy = 0.0016,
+          vx = 0.00042; // dual-axis angular velocities (rad/frame)
+        var dragging = false,
+          lastX = 0,
+          lastY = 0,
+          kickY = 0,
+          kickX = 0;
+
+        canvas.addEventListener("pointerdown", function (e) {
+          dragging = true;
+          lastX = e.clientX;
+          lastY = e.clientY;
+          canvas.setPointerCapture(e.pointerId);
+        });
+        canvas.addEventListener("pointermove", function (e) {
+          if (dragging) {
+            kickY = (e.clientX - lastX) * 0.0032;
+            kickX = (e.clientY - lastY) * 0.0032;
+            ry += kickY;
+            rx += kickX;
+            lastX = e.clientX;
+            lastY = e.clientY;
+          }
+          hover(e);
+        });
+        canvas.addEventListener("pointerup", function () {
+          dragging = false;
+        });
+        canvas.addEventListener("pointerleave", function () {
+          dragging = false;
+          tooltip.style.display = "none";
+          hoverIdx = -1;
+        });
+
+        /* ── tooltip (the sphere owns it — the metrics must never break it) ── */
+        var tooltip = document.getElementById("sphere-tooltip");
+        var hoverIdx = -1;
+        function hover(e) {
+          var rect = canvas.getBoundingClientRect();
+          var mx = (e.clientX - rect.left) * dpr;
+          var my = (e.clientY - rect.top) * dpr;
+          var best = -1,
+            bestD = 18 * dpr * 18 * dpr;
+          for (var i = 0; i < nodes.length; i++) {
+            var n = nodes[i];
+            if (scope === "personal" && !n.personal) continue;
+            var dx = n.sx - mx,
+              dy = n.sy - my;
+            var d = dx * dx + dy * dy;
+            if (d < bestD) {
+              bestD = d;
+              best = i;
+            }
+          }
+          hoverIdx = best;
+          if (best < 0) {
+            tooltip.style.display = "none";
+            return;
+          }
+          var node = nodes[best];
+          tooltip.innerHTML =
+            '<span class="tt-state" style="color:' +
+            STATE_COLOR[node.state] +
+            '">' +
+            STATE_LABEL[node.state] +
+            "</span><br>NODE #" +
+            node.i +
+            " · SPHERE SEED " +
+            SEED +
+            "<br>STATE " +
+            (STATES.indexOf(node.state) + 1) +
+            "/7 · SIMULATED CLOCK";
+          tooltip.style.display = "block";
+          var wr = wrap.getBoundingClientRect();
+          tooltip.style.left = Math.min(e.clientX - wr.left + 14, wr.width - 190) + "px";
+          tooltip.style.top = Math.max(8, e.clientY - wr.top - 10) + "px";
+        }
+
+        function frame() {
+          if (!dragging) {
+            ry += vy + kickY;
+            rx += vx + kickX;
+            kickY *= 0.92;
+            kickX *= 0.92;
+          }
+          rx = Math.max(-1.35, Math.min(1.35, rx));
+
+          var W = canvas.width,
+            H = canvas.height;
+          var cx = W / 2,
+            cy = H / 2;
+          var R = Math.min(W, H) * 0.4;
+          var cosY = Math.cos(ry),
+            sinY = Math.sin(ry);
+          var cosX = Math.cos(rx),
+            sinX = Math.sin(rx);
+
+          ctx.clearRect(0, 0, W, H);
+
+          /* faint equatorial rings — spatial reference, not decoration */
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.strokeStyle = "rgba(107,138,64,0.10)";
+          ctx.lineWidth = 1;
+          for (var g = 1; g <= 3; g++) {
+            ctx.beginPath();
+            ctx.ellipse(
+              0,
+              0,
+              R * (g / 3),
+              R * (g / 3) * Math.abs(Math.sin(rx + 0.4)),
+              0,
+              0,
+              Math.PI * 2,
+            );
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          /* rotate + project (painter's order) */
+          var vis = [];
+          for (var i = 0; i < nodes.length; i++) {
+            var n = nodes[i];
+            if (scope === "personal" && !n.personal) continue;
+            var x1 = n.x * cosY + n.z * sinY;
+            var z1 = -n.x * sinY + n.z * cosY;
+            var y1 = n.y * cosX - z1 * sinX;
+            var z2 = n.y * sinX + z1 * cosX;
+            n.sx = cx + x1 * R;
+            n.sy = cy + y1 * R;
+            n.vz = z2;
+            vis.push(n);
+          }
+          vis.sort(function (a, b) {
+            return a.vz - b.vz;
+          });
+
+          for (var k = 0; k < vis.length; k++) {
+            var p = vis[k];
+            var depth = (p.vz + 1) / 2; // 0 back → 1 front
+            var rad = (0.9 + depth * 2.1) * (dpr > 1 ? dpr * 0.75 : 1);
+            var alpha = 0.28 + depth * 0.72;
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = STATE_COLOR[p.state];
+            if (p.state === "trust" && depth > 0.62) {
+              ctx.shadowColor = STATE_COLOR.trust;
+              ctx.shadowBlur = 8 * depth;
+            } else {
+              ctx.shadowBlur = 0;
+            }
+            ctx.beginPath();
+            ctx.arc(p.sx, p.sy, Math.max(0.6, rad), 0, Math.PI * 2);
+            ctx.fill();
+            if (p.i === hoverIdx) {
+              ctx.shadowBlur = 0;
+              ctx.globalAlpha = 1;
+              ctx.strokeStyle = "#f3e38a";
+              ctx.lineWidth = 1.2 * dpr * 0.75;
+              ctx.beginPath();
+              ctx.arc(p.sx, p.sy, Math.max(3, rad + 3.5), 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          }
+          ctx.globalAlpha = 1;
+          ctx.shadowBlur = 0;
+          requestAnimationFrame(frame);
+        }
+
+        resize();
+        publishState();
+        renderLegend();
+        requestAnimationFrame(frame);
+      })();
+    </script>
+  </body>
+</html>

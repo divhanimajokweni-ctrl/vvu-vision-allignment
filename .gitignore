@@ -1,0 +1,102 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# VVU EARTH TECH — cryptographic keys & licenses (NEVER commit)
+/keys/
+golden-rule-report.json
+dashboard-validator-report.json
+
+# database
+/db/
+
+# storage-intensive binary assets (built/fetched in CI, never committed locally)
+*.glb
+*.stl
+*.gltf
+*.bin
+public/twin/vendor/
+public/twin/vendor/**/*
+
+# uploads & downloads
+/upload/
+/download/
+/tool-results/
+/agent-ctx/
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+local-*
+
+# Kilo CLI persistence (contains auth/config)
+.tools/
+
+.claude
+.z-ai-config
+*.log
+dev.log
+dev.out.log
+test
+prompt
+
+server.log
+# Skills directory
+/skills/
+# REA plugin artifacts — content-addressed evidence (regenerated on scan, not committed)
+/mini-services/rea/artifacts/*.json
+/mini-services/rea/artifacts/_append-log.jsonl
+# Keep the dir itself
+!/mini-services/rea/artifacts/.gitkeep
+
+# Debugger runtime session files (WORM chain state, regenerated on each run)
+/mini-services/debugger/.sessions/
+/mini-services/debugger/debugger.log
+/mini-services/rea/rea.log
+
+# Runtime logs
+*.log
+.zscripts/*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# Screenshots
+founders/screenshots/
+.tools/

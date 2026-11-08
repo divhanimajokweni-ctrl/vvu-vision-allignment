@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Digital Twin — OpenMapTiles 3D</title>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <style>
+      :root {
+        --bg: #06080c;
+        --panel: rgba(8, 11, 16, 0.92);
+        --line: rgba(80, 90, 110, 0.22);
+        --ink: #d8e0e8;
+        --dim: #7f95a5;
+        --amber: #f2b84b;
+        --ember: #ff8a3d;
+        --red: #e5484d;
+        --teal: #2ea8a0;
+        --lime: #c8ff00;
+        --green: #7a8a6e;
+        --cyan: #3fb950;
+        --blue: #58a6ff;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          10px/1.45 "SF Mono",
+          Menlo,
+          Consolas,
+          monospace;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      header#hud-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        z-index: 3;
+      }
+      .hud-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.6px;
+        color: #fff;
+        white-space: nowrap;
+      }
+      .hud-title small {
+        display: block;
+        font-weight: 400;
+        font-size: 8px;
+        letter-spacing: 1.2px;
+        color: var(--dim);
+      }
+      .hud-right {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .hud-honesty {
+        font-size: 8px;
+        letter-spacing: 1.4px;
+        color: var(--cyan);
+        border: 1px solid rgba(63, 185, 80, 0.4);
+        padding: 3px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+      .hud-honesty.amber {
+        color: var(--amber);
+        border-color: rgba(242, 184, 75, 0.4);
+      }
+      #hud-mid {
+        flex: 1;
+        display: flex;
+        min-height: 0;
+        position: relative;
+      }
+      nav#hud-left {
+        width: 148px;
+        flex: none;
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-y: auto;
+        z-index: 2;
+      }
+      .nav-cap {
+        font-size: 7.5px;
+        letter-spacing: 1.6px;
+        color: var(--dim);
+        margin: 6px 0 2px;
+      }
+      .lay {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 5px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .lay:hover {
+        border-color: var(--line);
+      }
+      .lay .sw {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 1px solid var(--dim);
+        flex: none;
+      }
+      .lay.on .sw {
+        background: var(--cyan);
+        border-color: var(--cyan);
+        box-shadow: 0 0 6px rgba(63, 185, 80, 0.7);
+      }
+      .lay .nm {
+        font-size: 8.5px;
+        letter-spacing: 0.8px;
+        color: var(--ink);
+        flex: 1;
+      }
+      .lay .tag {
+        font-size: 6.5px;
+        letter-spacing: 0.6px;
+        color: var(--dim);
+        text-align: right;
+      }
+      .lay:not(.on) .nm {
+        color: var(--dim);
+      }
+      #legend {
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+        font-size: 7px;
+        color: var(--dim);
+        line-height: 1.8;
+      }
+      #legend b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      main#stage {
+        flex: 1;
+        position: relative;
+        min-width: 0;
+      }
+      #map {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: #0a0e14;
+      }
+      .maplibregl-ctrl-attrib {
+        font-size: 7px !important;
+        background: rgba(8, 11, 16, 0.85) !important;
+      }
+      .maplibregl-ctrl-attrib a {
+        color: var(--cyan) !important;
+      }
+      .maplibregl-ctrl button {
+        background: rgba(8, 11, 16, 0.92) !important;
+      }
+      .maplibregl-ctrl button:hover {
+        background: rgba(63, 185, 80, 0.15) !important;
+      }
+      .maplibregl-ctrl-icon {
+        filter: invert(1) hue-rotate(60deg);
+      }
+      #clock {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        text-align: right;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 1px;
+        line-height: 1.7;
+        z-index: 500;
+        text-shadow: 0 1px 2px #000;
+        background: rgba(8, 11, 16, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+      }
+      #clock b {
+        color: var(--cyan);
+        font-weight: 400;
+      }
+      #tile-info {
+        position: absolute;
+        left: 10px;
+        top: 8px;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 0.8px;
+        z-index: 500;
+        text-shadow: 0 1px 2px #000;
+        background: rgba(8, 11, 16, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        line-height: 1.7;
+      }
+      #tile-info b {
+        color: var(--cyan);
+        font-weight: 400;
+      }
+      #pitch-info {
+        position: absolute;
+        left: 10px;
+        bottom: 10px;
+        font-size: 8px;
+        color: var(--ink);
+        letter-spacing: 0.8px;
+        z-index: 500;
+        background: rgba(8, 11, 16, 0.85);
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        line-height: 1.7;
+      }
+      #pitch-info b {
+        color: var(--cyan);
+        font-weight: 400;
+      }
+      footer#hud-bottom {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 6px 12px;
+        background: var(--panel);
+        border-top: 1px solid var(--line);
+        z-index: 3;
+      }
+      .worm-label {
+        font-size: 8px;
+        letter-spacing: 1.8px;
+        color: var(--lime);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .worm-cell {
+        font-size: 8px;
+        letter-spacing: 1px;
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .worm-cell b {
+        color: var(--ink);
+        font-weight: 400;
+      }
+      .worm-cell .h {
+        color: var(--teal);
+      }
+      .worm-tier {
+        margin-left: auto;
+        font-size: 8px;
+        letter-spacing: 1.2px;
+        color: var(--cyan);
+        border: 1px solid rgba(63, 185, 80, 0.4);
+        border-radius: 4px;
+        padding: 2px 6px;
+        white-space: nowrap;
+      }
+      #worm-last {
+        font-size: 8px;
+        color: var(--dim);
+        letter-spacing: 0.5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+        min-width: 120px;
+      }
+      @media (max-width: 720px) {
+        nav#hud-left {
+          width: 118px;
+          padding: 6px;
+        }
+        .hud-title small {
+          display: none;
+        }
+        .hud-honesty {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header id="hud-top">
+      <div class="hud-title">
+        DIGITAL TWIN — OPENMAPTILES 3D<small
+          >VECTOR · 3D BUILDINGS · MAPLIBRE 4.7 · TERRAIN MESH</small
+        >
+      </div>
+      <div class="hud-right">
+        <span class="hud-honesty">3D EXTRUDE · PITCH 60°</span>
+        <span class="hud-honesty amber">SEED DATA · NOT LIVE</span>
+      </div>
+    </header>
+    <div id="hud-mid">
+      <nav id="hud-left">
+        <div class="nav-cap">LAYER CONTROL</div>
+        <div class="lay on" data-layer="vector">
+          <span class="sw" style="background: #1a2030"></span><span class="nm">VECTOR BASE</span
+          ><span class="tag">MVT</span>
+        </div>
+        <div class="lay on" data-layer="3d">
+          <span class="sw" style="background: var(--cyan)"></span
+          ><span class="nm">3D BUILDINGS</span><span class="tag">EXTRUDE</span>
+        </div>
+        <div class="lay on" data-layer="devices">
+          <span class="sw" style="background: var(--blue)"></span><span class="nm">DEVICES</span
+          ><span class="tag">12</span>
+        </div>
+        <div class="lay" data-layer="terrain">
+          <span class="sw" style="background: var(--amber)"></span><span class="nm">TERRAIN</span
+          ><span class="tag">DEM</span>
+        </div>
+        <div class="lay" data-layer="heatmap">
+          <span class="sw" style="background: var(--ember)"></span><span class="nm">HEATMAP</span
+          ><span class="tag">SIG</span>
+        </div>
+        <div class="nav-cap">TELEMETRY</div>
+        <div class="lay on" data-layer="links">
+          <span class="sw" style="background: var(--teal)"></span><span class="nm">MESH LINKS</span
+          ><span class="tag">18</span>
+        </div>
+        <div class="lay" data-layer="alerts">
+          <span class="sw" style="background: var(--red)"></span><span class="nm">ALERTS</span
+          ><span class="tag">0</span>
+        </div>
+        <div id="legend">
+          <b>SECTOR 4 · GQEBERHA</b><br />
+          LAT −33.9249° · LON 25.5701°<br />
+          PITCH 60° · BEARING 38°<br />
+          © OpenMapTiles · OSM<br />
+          <b>WORM</b> 4e8b9c21… · T2
+        </div>
+      </nav>
+      <main id="stage">
+        <div id="map"></div>
+        <div id="tile-info">
+          TILE: <b>OPENMAPTILES · MVT</b><br />
+          STYLE: <b>liberty · 3d-buildings</b><br />
+          PITCH: <b>60° · BEARING 38°</b>
+        </div>
+        <div id="clock">
+          <span id="clk-time">--:--:--</span><br />
+          <b>SEED</b> 20260921 · Z+02:00<br />
+          <b>FRAME</b> <span id="clk-frame">0</span>
+        </div>
+        <div id="pitch-info">
+          <b>3D TWIN</b> · DRAG TO ROTATE<br />
+          RIGHT-DRAG · TILT<br />
+          SCROLL · ZOOM
+        </div>
+      </main>
+    </div>
+    <footer id="hud-bottom">
+      <span class="worm-label">WORM · OPENMAPTILES_3D_TWIN</span>
+      <span class="worm-cell">SEAL <b class="h">4e8b9c21</b></span>
+      <span class="worm-cell">TIER <b>T2 · SEED_UNVERIFIED</b></span>
+      <span class="worm-cell">NODES <b>12</b></span>
+      <span class="worm-cell">LINKS <b>18</b></span>
+      <span id="worm-last"
+        >SCENARIO_OPEN · OPENMAPTILES_3D_TWIN · style=liberty · extrude=3d_buildings ·
+        seed=20260921</span
+      >
+      <span class="worm-tier">OPENMAPTILES_3D_TWIN · READY</span>
+    </footer>
+    <script>
+      (function(){
+        var frame=0;
+        function tick(){
+          var d=new Date();
+          document.getElementById('clk-time').textContent=d.toTimeString().slice(0,8);
+          document.getElementById('clk-frame').textContent=frame++;
+        }
+        setInterval(tick,1000);tick();
+        var mapEl=document.getElementById('map');
+        function offlineNote(){
+          var n=document.createElement('div');
+          n.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#7f95a5;font-size:11px;letter-spacing:1px;text-align:center;padding:20px';
+          n.innerHTML='<div style="font-size:14px;color:#3fb950;font-weight:700;letter-spacing:2px;margin-bottom:8px">OPENMAPTILES 3D · OFFLINE</div><div>CDN unreachable in this sandbox. The 3D vector surface boots in production<br>from OpenFreeMap Liberty via MapLibre GL 4.7 with 3D building extrusions.</div>';
+          mapEl.appendChild(n);
+        }
+        if(typeof maplibregl==='undefined'){offlineNote();return}
+        try{
+          var map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[25.5701,-33.9249],zoom:14,pitch:60,bearing:38,attributionControl:true});
+          map.on('load',function(){
+            // 3D buildings layer
+            var layers=map.getStyle().layers;
+            var labelLayer;
+            for(var i=0;i<layers.length;i++){if(layers[i].type==='symbol' && layers[i].layout && layers[i].layout['text-field']){labelLayer=layers[i].id;break}}
+            try{
+              map.addLayer({id:'3d-buildings',source:'composite',source-layer:'building',type:'fill-extrusion',minzoom:14,filter:['==','extrude','true'],paint:{'fill-extrusion-color':['interpolate',['linear'],['get','render_height'],0:'#3a4358',50,'#5a6478',100,'#7a8498',200:'#9aa4b8'],'fill-extrusion-height':['interpolate',['linear'],['get','render_height'],0,0,200,200],'fill-extrusion-base':['interpolate',['linear'],['get','render_min_height'],0,0,200,0],'fill-extrusion-opacity':0.85}},labelLayer);
+            }catch(e){/* style has no composite source */}
+            // devices as markers
+            var devices=[[25.5701,-33.9249],[25.5712,-33.9258],[25.5725,-33.9240],[25.5690,-33.9265],[25.5705,-33.9235],[25.5730,-33.9270],[25.5745,-33.9220],[25.5680,-33.9285],[25.5720,-33.9215],[25.5750,-33.9290],[25.5760,-33.9205],[25.5700,-33.9300]];
+            devices.forEach(function(d,i){
+              var el=document.createElement('div');
+              el.style.cssText='width:10px;height:10px;border-radius:50%;background:#58a6ff;border:1px solid #fff;box-shadow:0 0 8px #58a6ff';
+              new maplibregl.Marker(el).setLngLat([d[0],d[1]]).setPopup(new maplibregl.Popup({offset:10}).setHTML('<b>N'+String(i+1).padStart(2,'0')+'</b> · EDGE NODE · 3D TWIN')).addTo(map);
+            });
+          });
+          map.addControl(new maplibregl.NavigationControl({visualizePitch:true}));
+        }catch(e){offlineNote()}
+        document.querySelectorAll('.lay').forEach(function(el){
+          el.addEventListener('click',function(){el.classList.toggle('on')});
+        });
+      })();
+    </script>
+  </body>
+</html>

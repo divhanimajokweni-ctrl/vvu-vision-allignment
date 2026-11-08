@@ -1,0 +1,8 @@
+{
+  "client": "E-commerce SA (Generic)",
+  "release": "B.01",
+  "generated": "20261108_141713",
+  "framework": "VVU Trust OS targeted validation",
+  "metrics": ["asset_uptime_pct","throughput_units_hr","energy_kwh","defect_rate_pct"],
+  "inference": "Bayesian circuit-breaker scored, fail-closed"
+}

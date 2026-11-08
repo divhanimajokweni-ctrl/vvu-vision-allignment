@@ -1,0 +1,4 @@
+record_id,source_metric,client_value,vvu_inference,delta,delta_pct,confidence,status
+R001,gait_detection_accuracy,87.3,99.9,12.6,14.433,0.9593,REVIEW
+R002,biometric_consent_rate,62.0,77.0821,15.082,24.326,0.9638,REVIEW
+R003,stress_prediction_auc,0.84,0.952,0.112,13.333,0.9672,REVIEW

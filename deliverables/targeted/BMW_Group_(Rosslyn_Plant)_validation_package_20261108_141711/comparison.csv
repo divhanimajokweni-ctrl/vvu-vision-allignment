@@ -1,0 +1,3 @@
+record_id,source_metric,client_value,vvu_inference,delta,delta_pct,confidence,status
+R001,first_pass_yield,94.2,99.9,5.7,6.051,0.9479,REVIEW
+R002,quality_escape_rate,0.8,0.2428,-0.557,-69.65,0.9623,REVIEW

@@ -1,0 +1,5 @@
+record_id,source_metric,client_value,vvu_inference,delta,delta_pct,confidence,status
+R001,recall_rate,0.42,0.2014,-0.219,-52.048,0.9853,REVIEW
+R002,first_pass_yield,94.2,98.8024,4.602,4.886,0.9419,REVIEW
+R003,production_downtime_cost,22000.0,20610.4791,-1389.521,-6.316,0.9794,REVIEW
+R004,quality_escape_rate,0.8,0.3321,-0.468,-58.488,0.9771,REVIEW

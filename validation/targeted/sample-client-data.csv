@@ -1,0 +1,9 @@
+record_id,source_metric,client_value,vvu_inference,confidence
+R001,asset_uptime_pct,98.2,97.9,0.96
+R002,asset_uptime_pct,95.1,94.8,0.94
+R003,throughput_units_hr,1240,1235,0.97
+R004,throughput_units_hr,980,972,0.93
+R005,energy_kwh,412.5,409.1,0.95
+R006,energy_kwh,388.0,390.2,0.91
+R007,defect_rate_pct,1.8,1.9,0.92
+R008,defect_rate_pct,2.4,2.3,0.90

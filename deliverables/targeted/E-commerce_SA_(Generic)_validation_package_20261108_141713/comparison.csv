@@ -1,0 +1,2 @@
+record_id,source_metric,client_value,vvu_inference,delta,delta_pct,confidence,status
+R001,avg_page_weight,2450.0,2450.0,0.0,0.0,0.9819,PASS

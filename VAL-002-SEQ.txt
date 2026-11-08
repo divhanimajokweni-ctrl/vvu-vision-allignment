@@ -1,0 +1,75 @@
+cat > /home/claude/v3/CHANGES.md <<'FILE_END'
+# VVU-VAL-002 evidence pipeline: round 3
+
+Ready-to-copy overlay. Paths mirror the repository root:
+
+    validation/VVU-VAL-002/evidence/   scripts (folder renamed from VVU-VAL-001)
+    .github/workflows/                 hourly + publish, and release
+    tests/                             integration tests and stubs
+
+Copy the overlay onto the repo, then rename `validation/VVU-VAL-001/` to
+`validation/VVU-VAL-002/` in the frozen commit or in a new freeze (see Decisions).
+
+## Decisions taken in this round
+
+1. **Append-only evidence branch `val-002-evidence`.** Hourly evidence is persisted to a
+   dedicated branch by a separate `publish` job. That job is the only job with `contents: write`.
+   Each hour is appended once. The script refuses to overwrite a published hour, and the workflow
+   does not force-push. Protect the branch against force-push and deletion.
+2. **Cross-run assembly reads that branch.** `validation-002-release.yml` checks out the branch and
+   runs `archive.sh` against it. Nothing is assembled from per-run artifacts, so the archive does not
+   depend on which runs still exist. Artifacts are kept for 7 days as a transient transfer, not as storage.
+3. **Folder renamed `VVU-VAL-001` to `VVU-VAL-002`.** Scripts use relative paths, so only the
+   workflow `VAL_DIR` changed. The test suite checks the new path.
+4. **Every action pinned to a commit SHA.** Resolved with `git ls-remote` on the newest v4 tag at build time:
+   - `actions/checkout` v4.4.0 `11d5960a326750d5838078e36cf38b85af677262`
+   - `actions/upload-artifact` v4.6.2 `ea165f8d65b6e75b540449e92b4886f43607fa02`
+   - `actions/download-artifact` v4.3.0 `d3f86a106a0bac45b974a628896c90dbdf5c8093`
+   - `azure/setup-kubectl` v4.0.1 `776406bce94f63e41d621b960d78ee25c8b76ede`
+   Re-check these against GitHub before the first real run, and again on each bump.
+5. **Runtime requirements are unchanged, and they are blocking.** Until the runtime exports the
+   `--at` ledger commands and the nine counters, every hour is INCOMPLETE (exit 3 in `bundle.sh`,
+   which fails the hour job). The first real run tests the instrumentation, not the system.
+
+## Changes in this round
+
+- `archive.sh`: reads from `BUNDLES_DIR` and `SHA256SUMS_FILE` overrides (default unchanged);
+  release pins the tag to the frozen commit with `--target`.
+- `publish-hour.sh` (new): appends one hour to a ledger checkout. Refuses if the hour exists, if the
+  sidecar does not match the zip, or if the ledger already lists the hour. Copies every `Hour-NN.*`
+  file and commits with the hour state in the message. Pushing is left to the workflow.
+- `validation-002.yml`: pinned actions; read-only `hour` job; flat artifact staging (upload strips
+  the common path, which would otherwise nest the files and break `publish-hour.sh`); `publish` job in
+  environment `evidence-publish` with a concurrency group.
+- `validation-002-release.yml` (new): `workflow_dispatch` with `publish` and `draft` inputs. The release
+  is refused unless the evidence is complete.
+- `tests/run-tests.sh`: 21 checks, including publish against a local bare `origin`.
+
+## Test results
+
+    passed: 21   failed: 0
+
+Covers: bundle, replay, INCOMPLETE propagation, tamper detection (zip and ledger), append-only checks,
+observer mode, publish (first, duplicate, INCOMPLETE kept, sidecar mismatch, bad hour), archive
+override, and the release refusal.
+
+## Not tested here
+
+- The workflows on GitHub Actions: the `environment` protection, branch protection, and the
+  `contents: write` push from `GITHUB_TOKEN` need a real run to confirm.
+- `git push` to a real remote. Tests use a local bare repo.
+- Real `kubectl`, Prometheus, and `air` CLI. Stubbed.
+- One-time bootstrap of the branch (see workflow header) is manual.
+
+## Before the first real run
+
+1. Runtime exports `air ledger checksum|mmr-root --at N` and the nine counters (or accept that every hour
+   is INCOMPLETE).
+2. Create `val-002-evidence` as an orphan branch with `evidence/.keep`, and protect it.
+3. Create environments `validation`, `evidence-publish`, and `release`, with required reviewers on
+   `evidence-publish` and `release`.
+4. Set repository variables `VVU_VAL_COMMIT_HASH` and `VVU_VAL_START_EPOCH`, and secret `VVU_VAL_KUBECONFIG`.
+5. Protocol: rename the folder references and record the replay semantics (prefix consistency, see the
+   earlier CHANGES note).
+FILE_END
+cp /home/claude/v3/CHANGES.md /home/claude/v3/overlay/CHANGES.md && echo "changes written"

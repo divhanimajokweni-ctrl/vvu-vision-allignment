@@ -1,0 +1,3 @@
+record_id,source_metric,client_value,vvu_inference,delta,delta_pct,confidence,status
+R001,first_pass_yield,94.2,99.6361,5.436,5.771,0.9474,REVIEW
+R002,production_downtime_cost,22000.0,21419.6716,-580.328,-2.638,0.9427,REVIEW

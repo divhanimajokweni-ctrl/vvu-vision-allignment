@@ -84,7 +84,7 @@ jobs:
       # spec exists, so this key is always computed from a real spec — a
       # missing spec can never yield a usable cache key (it fails first).
       - name: Cache Buildozer and Gradle state
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.buildozer

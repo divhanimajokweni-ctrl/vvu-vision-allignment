@@ -47,7 +47,7 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Gate 1: required project paths BEFORE build activity
       - name: Validate required project paths

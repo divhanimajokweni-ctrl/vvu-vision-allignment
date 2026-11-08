@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # ── Gate 1: required project paths — before cache and build activity ──
       # A missing buildozer.spec must fail here, before actions/cache runs,
